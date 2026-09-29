@@ -33,3 +33,6 @@ front/playwright-report/
 
 # builds
 build/
+
+# Locks de editor (LibreOffice/OnlyOffice)
+.~lock.*

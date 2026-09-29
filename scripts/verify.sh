@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 bash scripts/preflight.sh
+bash scripts/check-invariantes.sh
 
 npm --prefix front run typecheck
 npm --prefix front run lint

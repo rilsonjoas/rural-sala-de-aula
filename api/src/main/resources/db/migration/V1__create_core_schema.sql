@@ -48,8 +48,8 @@ CREATE TABLE tarefa (
     disciplina_id UUID NOT NULL REFERENCES disciplina(id) ON DELETE CASCADE,
     titulo VARCHAR(200) NOT NULL CHECK (length(btrim(titulo)) > 0),
     descricao VARCHAR(4000),
-    tipo tarefa_tipo NOT NULL,
-    prioridade tarefa_prioridade NOT NULL,
+    tipo tarefa_tipo,
+    prioridade tarefa_prioridade,
     status tarefa_status NOT NULL DEFAULT 'PENDENTE',
     prazo_em TIMESTAMPTZ,
     concluida_em TIMESTAMPTZ,
@@ -67,7 +67,7 @@ CREATE TABLE prova (
     disciplina_id UUID NOT NULL REFERENCES disciplina(id) ON DELETE CASCADE,
     titulo VARCHAR(200) NOT NULL CHECK (length(btrim(titulo)) > 0),
     data_prova TIMESTAMPTZ NOT NULL,
-    peso NUMERIC(5, 2) NOT NULL CHECK (peso >= 0 AND peso <= 100),
+    peso NUMERIC(5, 2) CHECK (peso IS NULL OR (peso >= 0 AND peso <= 100)),
     nota NUMERIC(5, 2) CHECK (nota IS NULL OR (nota >= 0 AND nota <= 100)),
     observacoes VARCHAR(4000),
     criado_em TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -152,3 +152,72 @@ CREATE TRIGGER horario_atualizado_em
 CREATE TRIGGER config_notificacao_atualizado_em
     BEFORE UPDATE ON config_notificacao
     FOR EACH ROW EXECUTE FUNCTION atualizar_timestamp();
+
+-- Invariante: um cancelamento só existe para uma data que realmente cai no dia da aula.
+-- Sem esta guarda, POST /horarios/{id}/cancelamentos aceita qualquer data e grava lixo
+-- silenciosamente (CHECK não valida isso: não pode referenciar outra tabela).
+CREATE OR REPLACE FUNCTION validar_dia_do_cancelamento() RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    dia_aula SMALLINT;
+BEGIN
+    SELECT dia_semana INTO dia_aula FROM horario WHERE id = NEW.horario_id;
+    IF dia_aula IS NULL THEN
+        RAISE EXCEPTION 'horario % não existe', NEW.horario_id USING ERRCODE = '23503';
+    END IF;
+    IF EXTRACT(ISODOW FROM NEW.data_cancelamento)::SMALLINT <> dia_aula THEN
+        RAISE EXCEPTION 'a data % é dia ISO % e a aula é dia ISO %',
+            NEW.data_cancelamento, EXTRACT(ISODOW FROM NEW.data_cancelamento), dia_aula
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER cancelamento_data_confere_dia_semana
+    BEFORE INSERT OR UPDATE ON cancelamento
+    FOR EACH ROW EXECUTE FUNCTION validar_dia_do_cancelamento();
+
+-- Invariante: trocar o dia da aula deixaria os cancelamentos apontando para a data errada
+-- (a aula reaparece no dia antigo e some no novo). Bloqueia enquanto houver exceções.
+CREATE OR REPLACE FUNCTION bloquear_mudanca_de_dia_com_cancelamento() RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NEW.dia_semana IS DISTINCT FROM OLD.dia_semana
+        AND EXISTS (SELECT 1 FROM cancelamento WHERE horario_id = OLD.id) THEN
+        RAISE EXCEPTION 'a aula % tem cancelamentos registrados no dia ISO %; desfaça-os antes de mudar o dia',
+            OLD.id, OLD.dia_semana
+            USING ERRCODE = '23514';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER horario_dia_semana_bloqueado_com_cancelamento
+    BEFORE UPDATE ON horario
+    FOR EACH ROW EXECUTE FUNCTION bloquear_mudanca_de_dia_com_cancelamento();
+
+-- Antecedências do MVP: fixas, sem tela de preferências (RF12 adiado).
+-- Semear por trigger, e não por código de aplicação, tem duas consequências:
+--   1. nenhum caminho de criação de usuário pode esquecer de criar as três linhas;
+--   2. sendo o trigger o único escritor, os únicos valores que existem na tabela são
+--      estes — as brechas do CHECK (sem teto, sem dedup) ficam inalcançáveis por construção.
+-- Quando RF12 voltar, estas passam a ser o default que o aluno poderá sobrescrever,
+-- e não o lugar onde a verdade mora.
+CREATE OR REPLACE FUNCTION semear_preferencias_notificacao() RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    INSERT INTO config_notificacao (usuario_id, evento, antecedencias_minutos) VALUES
+        (NEW.id, 'TAREFA', '{1440}'),
+        (NEW.id, 'PROVA', '{10080, 4320, 1440}'),
+        (NEW.id, 'AULA', '{1440}');
+    RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER usuario_preferencias_notificacao_padrao
+    AFTER INSERT ON usuario
+    FOR EACH ROW EXECUTE FUNCTION semear_preferencias_notificacao();

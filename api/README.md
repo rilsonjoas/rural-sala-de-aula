@@ -3,7 +3,7 @@
 Backend **Spring Boot** (Java 21): REST + JPA + Flyway + PostgreSQL.
 
 - **Fase 0:** contrato de API em [`../docs/openapi.yaml`](../docs/openapi.yaml), resumo em [`../docs/api.md`](../docs/api.md), migration inicial em `src/main/resources/db/migration/V1__create_core_schema.sql` e health check em `GET /api/v1/health`.
-- **Fase 1:** `usuario` + auth (Google OAuth + e-mail/senha, cookie httpOnly, refresh rotativo, rate limit), `periodo`, `disciplina`, `tarefa`/`prova`, `horario` + `cancelamento`.
+- **Fase 1:** `usuario` + auth por e-mail/senha (cookie httpOnly, refresh rotativo, rate limit; Google OAuth fica para depois, RF13/P3), `periodo`, `disciplina`, `tarefa`/`prova`, `horario` + `cancelamento`.
 - **Fase 2:** job cron de web push (tarefa 24h; prova 7-3-1).
 - **Fase 3:** módulo `gamificacao` (eventos de domínio → XP/nível/streak/conquistas).
 

@@ -26,6 +26,13 @@ O contrato de integração do StudyPath está em [`openapi.yaml`](openapi.yaml).
 - `config_notificacao.antecedencias_minutos` é uma lista para suportar a cascata de provas (7-3-1) e o prazo único de tarefas.
 - Erros seguem `ApiError`, com `code`, `message`, `requestId` e `timestamp`.
 
+## Pendências do contrato
+
+Itens já previstos nos requisitos (README e documento de visão) que ainda não estão no `openapi.yaml`:
+
+- **Login com Google (RF13, P3):** endpoints de início e callback do OAuth, e o vínculo com a conta por e-mail. `usuario.hash_senha` já é anulável para contas sem senha.
+- **Cancelamento em data passada (UC05, FE01):** `POST /horarios/{horarioId}/cancelamentos` deve recusar `date` anterior a hoje no fuso do usuário, com `400` e um `code` específico em `ApiError`.
+
 ## Ordem de implementação
 
 1. `GET /api/v1/health` e o proxy entre os serviços.

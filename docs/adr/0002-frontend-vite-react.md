@@ -14,4 +14,5 @@ App **autenticado** (usuário logado, SEO só de uma landing pré-login), com **
 
 - Landing pré-login é página estática leve; SEO profundo fora de escopo (irrelevante para app logado).
 - Evita o conflito entre SSR do Next e cookie httpOnly do Spring.
+- O PWA é o produto: não há app nas lojas, e o aviso é Web Push (ver ADR-0006).
 - **Next.js permanece** a escolha nos projetos onde SEO manda (Lecionário, AlternativasBR, etc.).

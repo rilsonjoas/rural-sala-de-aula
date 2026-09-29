@@ -14,7 +14,7 @@ O Rota de Estudo é uma agenda acadêmica web-first para organizar o semestre: a
 - Contrato de integração: OpenAPI em [`openapi.yaml`](openapi.yaml), cobrindo auth, períodos, disciplinas, tarefas, provas, horários e cancelamentos.
 - Tipos do frontend são gerados a partir do contrato.
 - Migration inicial do domínio já está versionada.
-- i18n pt-BR/en desde o início.
+- Interface **em português** no MVP (Fases 1–3). O texto de interface vive num dicionário de chaves desde o primeiro commit, o que mantém a porta do inglês aberta sem custo; o catálogo em inglês e a troca de idioma são da Fase 4 (ADR-0003).
 - Produção: banco `rota_de_estudo_db` no `postgres-shared` da VPS Hetzner, role isolada `rota_app`, Traefik e containers na `proxy-network`.
 - O Compose local é somente desenvolvimento; não é o banco de produção.
 - shadcn/ui é a base de componentes. A identidade visual será neutra e orientada a ferramenta; a Rota não herda o Design Narniano.
@@ -76,6 +76,6 @@ docker compose up --build
 
 - [`docs/api.md`](api.md) — convenções do contrato.
 - [`docs/engineering.md`](engineering.md) — alinhamento P0–P9.
-- [`docs/design.md`](design.md) — shadcn/ui e direção visual.
+- [`docs/DESIGN.md`](DESIGN.md) — shadcn/ui e direção visual.
 - [`docs/pre-meeting.md`](pre-meeting.md) — checklist técnico.
 - [`../hetzner-infra/rota-de-estudo/README.md`](../hetzner-infra/rota-de-estudo/README.md) — runbook de produção.

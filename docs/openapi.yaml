@@ -1017,8 +1017,6 @@ components:
       type: object
       required:
         - title
-        - type
-        - priority
       additionalProperties: false
       properties:
         title:
@@ -1031,8 +1029,10 @@ components:
           nullable: true
         type:
           $ref: '#/components/schemas/TarefaTipo'
+          nullable: true
         priority:
           $ref: '#/components/schemas/Prioridade'
+          nullable: true
         status:
           $ref: '#/components/schemas/TarefaStatus'
         dueAt:
@@ -1097,7 +1097,6 @@ components:
       required:
         - title
         - startsAt
-        - weight
       additionalProperties: false
       properties:
         title:

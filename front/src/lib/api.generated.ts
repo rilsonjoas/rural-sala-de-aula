@@ -435,8 +435,8 @@ export interface components {
         TarefaRequest: {
             title: string;
             description?: string | null;
-            type: components["schemas"]["TarefaTipo"];
-            priority: components["schemas"]["Prioridade"];
+            type?: components["schemas"]["TarefaTipo"];
+            priority?: components["schemas"]["Prioridade"];
             status?: components["schemas"]["TarefaStatus"];
             /** Format: date-time */
             dueAt?: string | null;
@@ -465,7 +465,7 @@ export interface components {
             title: string;
             /** Format: date-time */
             startsAt: string;
-            weight: number;
+            weight?: number;
             grade?: number | null;
             notes?: string | null;
         };

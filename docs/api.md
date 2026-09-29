@@ -23,7 +23,7 @@ O contrato de integração do StudyPath está em [`openapi.yaml`](openapi.yaml).
 - Concluir uma tarefa exige `status=CONCLUIDA` e `completedAt`; o estado e o instante precisam ser coerentes.
 - Paginação começa em zero, usa `page` e `size`, e limita `size` a 100.
 - Recursos de outra conta respondem `404`, sem revelar se o ID existe.
-- `config_notificacao.antecedencias_minutos` é uma lista para suportar a cascata de provas (7-3-1) e o prazo único de tarefas.
+- `config_notificacao.antecedencias_minutos` é uma lista para suportar a cascata de provas (7-3-1) e o prazo único de tarefas. No MVP os valores são **fixos e semeados por trigger** — ver `CONTEXT.md`; por isso não há endpoint de preferências.
 - Erros seguem `ApiError`, com `code`, `message`, `requestId` e `timestamp`.
 
 ## Pendências do contrato
@@ -32,6 +32,8 @@ Itens já previstos nos requisitos (README e documento de visão) que ainda não
 
 - **Login com Google (RF13, P3):** endpoints de início e callback do OAuth, e o vínculo com a conta por e-mail. `usuario.hash_senha` já é anulável para contas sem senha.
 - **Cancelamento em data passada (UC05, FE01):** `POST /horarios/{horarioId}/cancelamentos` deve recusar `date` anterior a hoje no fuso do usuário, com `400` e um `code` específico em `ApiError`.
+- **Erro de invariante (`23514`):** as triggers de `cancelamento` e `horario` levantam `23514`; falta o `@RestControllerAdvice` que traduz para `400` com `code` em `ApiError`.
+- **Preferências de notificação (RF12, adiado):** fora do MVP de propósito. A tabela existe, mas o contrato não ganha endpoint até RF12 voltar — e quando voltar, é revisão de contrato, não adendo.
 
 ## Ordem de implementação
 

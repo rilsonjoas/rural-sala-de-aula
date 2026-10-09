@@ -7,13 +7,25 @@ import App from './App';
 import { queryClient } from './lib/query-client';
 import './styles.css';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-      <Toaster position="top-center" />
-    </QueryClientProvider>
-  </StrictMode>,
-);
+async function iniciarApiSimulada() {
+  if (import.meta.env.VITE_API_MOCK !== 'true') return;
+  const { worker } = await import('./mocks/browser');
+  await worker.start({ onUnhandledRequest: 'bypass' });
+}
+
+async function iniciar() {
+  await iniciarApiSimulada();
+
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+        <Toaster position="top-center" />
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+}
+
+void iniciar();

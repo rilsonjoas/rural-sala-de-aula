@@ -30,7 +30,9 @@ export function createApiClient({ baseUrl, fetch: fetchImpl }: Opcoes = {}) {
   const base = baseUrl ?? (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api/v1';
   // Absoluta (resolvida contra a origem da página): o Request do Node, usado nos testes, não aceita URL relativa.
   const baseAbsoluta = new URL(base, window.location.origin).toString().replace(/\/$/, '');
-  const client = createClient<paths>({ baseUrl: baseAbsoluta, credentials: 'include', fetch: fetchImpl });
+  // Resolve o fetch na hora da chamada: assim o MSW (que troca o fetch global) intercepta o cliente já criado.
+  const fetchNaChamada: typeof fetch = (entrada, init) => globalThis.fetch(entrada, init);
+  const client = createClient<paths>({ baseUrl: baseAbsoluta, credentials: 'include', fetch: fetchImpl ?? fetchNaChamada });
   client.use(tratarErros);
   return client;
 }

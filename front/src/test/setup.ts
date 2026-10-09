@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom/vitest';
+import { Blob as BlobDoNode, File as FileDoNode } from 'node:buffer';
 import { cleanup } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { resetDb } from '@/mocks/db';
@@ -34,3 +35,11 @@ window.matchMedia ??= ((consulta: string) => ({
   removeListener: () => {},
   dispatchEvent: () => false,
 })) as typeof window.matchMedia;
+
+// O File/FormData do jsdom e o fetch do Node não se entendem (o nome do arquivo some no multipart).
+// Nos testes usamos as classes do próprio Node, as mesmas que o fetch e o MSW enxergam.
+const FormDataDoNode = (await new Response(new URLSearchParams()).formData()).constructor as typeof FormData;
+// O jsdom do Vitest troca o Request por uma versão que converte File do jsdom e perde o nome do arquivo.
+// O Request original do Node é o protótipo dela.
+const RequestDoNode = Object.getPrototypeOf(globalThis.Request) as typeof Request;
+Object.assign(globalThis, { Blob: BlobDoNode, File: FileDoNode, FormData: FormDataDoNode, Request: RequestDoNode });

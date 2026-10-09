@@ -1,12 +1,30 @@
-import { ALUNA, ALUNO, PROFESSOR, USUARIOS_INICIAIS, type Usuario, type UsuarioComSenha } from './fixtures';
+import type { AtividadeDb, AvaliacaoDb, EntregaDb, InscricaoDb, TurmaDb } from './domain';
+import {
+  ALUNA,
+  ALUNO,
+  PROFESSOR,
+  USUARIOS_INICIAIS,
+  dadosIniciais,
+  type Usuario,
+  type UsuarioComSenha,
+} from './fixtures';
 
 type Estado = {
   usuarios: UsuarioComSenha[];
+  turmas: TurmaDb[];
+  inscricoes: InscricaoDb[];
+  atividades: AtividadeDb[];
+  entregas: EntregaDb[];
+  avaliacoes: AvaliacaoDb[];
   sessaoUsuarioId: string | null;
 };
 
 function estadoInicial(): Estado {
-  return { usuarios: USUARIOS_INICIAIS.map((u) => ({ ...u })), sessaoUsuarioId: null };
+  return {
+    usuarios: USUARIOS_INICIAIS.map((u) => ({ ...u })),
+    ...dadosIniciais(),
+    sessaoUsuarioId: null,
+  };
 }
 
 export const db: Estado = estadoInicial();

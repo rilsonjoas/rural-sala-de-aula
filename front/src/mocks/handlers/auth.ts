@@ -1,20 +1,15 @@
 import { HttpResponse, http } from 'msw';
 import type { components } from '@/lib/api.generated';
-import { db, semSenha, usuarioDaSessao } from './db';
+import { db, semSenha, usuarioDaSessao } from '../db';
+import { naoAutenticado, problem } from './problem';
 
-type Problem = components['schemas']['Problem'];
 type RegisterRequest = components['schemas']['RegisterRequest'];
 type LoginRequest = components['schemas']['LoginRequest'];
+type Problem = components['schemas']['Problem'];
 
 const API = '*/api/v1';
 
-function problem(status: number, message: string, campos?: Problem['campos']) {
-  return HttpResponse.json<Problem>({ status, message, ...(campos ? { campos } : {}) }, { status });
-}
-
-export const naoAutenticado = () => problem(401, 'Não autenticado.');
-
-export const handlers = [
+export const authHandlers = [
   http.get(`${API}/health`, () =>
     HttpResponse.json({
       status: 'ok',

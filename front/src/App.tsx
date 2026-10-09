@@ -4,7 +4,7 @@ import { PublicLayout } from './components/shell/public-layout';
 import { PublicOnly, RequireAuth, RequireRole } from './features/session/guards';
 import { SessionWatcher } from './features/session/session-watcher';
 import { messages as copy } from './i18n/messages';
-import { EntrarPage } from './pages/EntrarPage';
+import { AuthPage } from './features/auth/auth-page';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
@@ -17,7 +17,7 @@ export default function App() {
 
         <Route element={<PublicOnly />}>
           <Route element={<PublicLayout />}>
-            <Route path="/entrar" element={<EntrarPage />} />
+            <Route path="/entrar" element={<AuthPage />} />
           </Route>
         </Route>
 

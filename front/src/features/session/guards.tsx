@@ -24,9 +24,10 @@ export function RequireRole({ papel }: { papel: Usuario['papel'] }) {
 
 export function PublicOnly() {
   const { usuario, isLoading, isError, recarregar } = useSession();
+  const destino = (useLocation().state as { de?: string } | null)?.de ?? '/turmas';
 
   if (isLoading) return <PageSkeleton />;
   if (isError) return <ErrorState mensagem={copy.loadError} onRetry={recarregar} />;
-  if (usuario) return <Navigate to="/turmas" replace />;
+  if (usuario) return <Navigate to={destino} replace />;
   return <Outlet />;
 }

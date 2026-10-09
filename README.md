@@ -8,7 +8,7 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 
 | Camada | Escolha |
 |---|---|
-| Frontend | Vite + React + TypeScript + Tailwind + shadcn/ui (ADR-0002) |
+| Frontend | Vite + React 19 + TypeScript + Tailwind 4 + shadcn/ui (ADR-0002) |
 | Backend | Spring Boot (Java 21) + JPA + Flyway (ADR-0001) |
 | Banco | PostgreSQL 16 |
 | Infra | Docker Compose |
@@ -28,6 +28,8 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 | 9 | RF16 | Acessar e baixar entregas — **por último** | professor |
 
 RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
+
+**Estado (09/10/2026):** o front dos nove P1 está pronto e testado contra uma API simulada (`front/src/mocks/`, ligada com `VITE_API_MOCK=true`); o contrato (`docs/openapi.yaml`) e o schema estão fechados. Falta o back-end implementar os endpoints e integrarmos tela por tela. Ver `docs/design/plano-de-design.md` §8.
 
 ## Backlog (sem data)
 

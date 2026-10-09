@@ -14,7 +14,7 @@ export function ComplexidadeIndicator({ nivel }: { nivel: Complexidade }) {
   const { cheias, texto } = NIVEIS[nivel];
 
   return (
-    <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+    <span className="inline-flex items-center gap-2 whitespace-nowrap text-sm text-muted-foreground">
       <span aria-hidden="true" className="flex items-center gap-0.5">
         {[1, 2, 3].map((posicao) => (
           <span

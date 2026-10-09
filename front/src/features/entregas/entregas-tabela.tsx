@@ -1,3 +1,4 @@
+import { NomeDeArquivo } from '@/components/nome-de-arquivo';
 import { formatTamanho } from '@/lib/format';
 import { enviadaEm } from './entrega-formatos';
 import { AcoesDaEntrega, NotaChip, SituacaoBadge } from './entrega-partes';
@@ -27,7 +28,7 @@ export function EntregasTabela({ entregas, onAvaliar }: Props) {
             <tr key={e.id} className="border-b border-border last:border-0">
               <td className="px-3 py-3 font-semibold text-primary">{e.alunoNome}</td>
               <td className="px-3 py-3">
-                <span className="break-all">{e.nomeOriginal}</span>
+                <NomeDeArquivo nome={e.nomeOriginal} />
                 <span className="block text-muted-foreground">{formatTamanho(e.tamanhoBytes)}</span>
               </td>
               <td className="px-3 py-3 whitespace-nowrap">{enviadaEm(e).replace('Enviada em ', '')}</td>

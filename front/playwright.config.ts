@@ -12,6 +12,8 @@ export default defineConfig({
     command: 'npm run dev -- --host 127.0.0.1',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: true,
+    // O app sobe com a API simulada (MSW); cada teste começa deslogado pelo parâmetro ?mockUser=
+    env: { VITE_API_MOCK: 'true', VITE_API_MOCK_USER: '' },
   },
   projects: [
     {

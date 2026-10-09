@@ -10,7 +10,7 @@ export function SituacaoBadge({ atrasada }: { atrasada: boolean }) {
   return (
     <span
       className={cn(
-        'inline-flex min-h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold',
+        'inline-flex min-h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-semibold',
         atrasada ? 'bg-danger-tint text-destructive' : 'bg-secondary text-primary',
       )}
     >
@@ -22,9 +22,9 @@ export function SituacaoBadge({ atrasada }: { atrasada: boolean }) {
 
 export function NotaChip({ nota }: { nota: number | null | undefined }) {
   return nota != null ? (
-    <span className="inline-flex min-h-6 items-center rounded-md bg-success-tint px-2 text-xs font-semibold text-success">{`Nota ${formatNota(nota)}`}</span>
+    <span className="inline-flex min-h-6 items-center whitespace-nowrap rounded-md bg-success-tint px-2 text-xs font-semibold text-success">{`Nota ${formatNota(nota)}`}</span>
   ) : (
-    <span className="inline-flex min-h-6 items-center rounded-md bg-secondary px-2 text-xs font-semibold text-muted-foreground">Sem nota</span>
+    <span className="inline-flex min-h-6 items-center whitespace-nowrap rounded-md bg-secondary px-2 text-xs font-semibold text-muted-foreground">Sem nota</span>
   );
 }
 

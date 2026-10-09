@@ -5,6 +5,7 @@ import { useSession } from '@/features/session/use-session';
 import { useTurmas } from '@/features/turmas/api';
 import { plural } from '@/lib/format';
 import { useMediaQuery } from '@/lib/use-media-query';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useMinhasAtividades } from './api';
 import { AtividadeCard } from './atividade-card';
 import { AtividadesTabela } from './atividades-tabela';
@@ -33,6 +34,7 @@ function Esqueleto() {
 
 export function MinhasAtividadesPage() {
   const { usuario } = useSession();
+  usePageTitle('Minhas atividades');
   const [filtros, setFiltros] = useFiltrosSalvos(`filtros:${usuario?.id ?? 'anonimo'}`);
   const atividades = useMinhasAtividades(filtros);
   const turmas = useTurmas();

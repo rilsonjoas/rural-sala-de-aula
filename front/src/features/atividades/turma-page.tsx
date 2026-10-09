@@ -9,6 +9,7 @@ import { CopiarCodigo } from '@/features/turmas/copiar-codigo';
 import { useTurma } from '@/features/turmas/api';
 import { ApiError } from '@/lib/api-error';
 import { formatDias } from '@/lib/format';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useAtividadesDaTurma } from './api';
 import { AtividadeCard } from './atividade-card';
 import { FilterChips, type GrupoDeChips } from './filter-chips';
@@ -50,6 +51,7 @@ export function TurmaPage() {
   const { usuario } = useSession();
   const professor = usuario?.papel === 'PROFESSOR';
   const turma = useTurma(turmaId);
+  usePageTitle(turma.data?.nome ?? 'Turma');
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [folhaAberta, setFolhaAberta] = useState(false);
   const atividades = useAtividadesDaTurma(turmaId, filtros);
@@ -73,7 +75,7 @@ export function TurmaPage() {
   const lista = atividades.data ?? [];
   const botaoNova = professor ? (
     <Button type="button" className="w-full sm:w-auto" onClick={() => setFolhaAberta(true)}>
-      Nova atividade
+      Cadastrar atividade
     </Button>
   ) : null;
 
@@ -125,7 +127,7 @@ export function TurmaPage() {
             <span className="ml-2 rounded-full bg-secondary px-2.5 py-0.5 text-sm">{lista.length}</span>
           ) : null}
         </h3>
-        {botaoNova}
+        {atividades.isSuccess && lista.length === 0 && !temFiltroAtivo(filtros) ? null : botaoNova}
       </div>
 
       <FilterChips grupos={gruposDaTurma(professor)} filtros={filtros} onChange={setFiltros} />

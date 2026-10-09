@@ -1,12 +1,8 @@
 export const messages = {
   appName: 'Rural Sala de Aula',
   navigationLabel: 'Navegação principal',
-  signIn: 'Entrar',
   classes: 'Turmas',
-  classDetail: 'Turma',
   activities: 'Atividades',
-  activityDetail: 'Atividade',
-  deliveries: 'Entregas da atividade',
   loading: 'Carregando',
   tryAgain: 'Tentar de novo',
   loadError: 'Não conseguimos carregar. Verifique a conexão e tente de novo.',
@@ -19,10 +15,4 @@ export const messages = {
   notFoundDescription: 'Esse endereço não existe ou foi movido.',
   backToClasses: 'Voltar para Turmas',
   sessionExpired: 'Sua sessão expirou. Entre de novo.',
-  signInDescription: 'Cadastro e login de alunos e professores.',
-  classesDescription: 'Turmas em que você está inscrito ou que administra.',
-  classDetailDescription: 'Atividades da turma.',
-  activitiesDescription: 'Atividades com filtros e ordenação.',
-  activityDetailDescription: 'Detalhes da atividade e envio.',
-  deliveriesDescription: 'Entregas dos alunos e avaliação.',
 } as const;

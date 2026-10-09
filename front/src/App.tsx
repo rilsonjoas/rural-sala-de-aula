@@ -4,14 +4,13 @@ import { AppShell } from './components/shell/app-shell';
 import { PublicLayout } from './components/shell/public-layout';
 import { PublicOnly, RequireAuth, RequireRole } from './features/session/guards';
 import { SessionWatcher } from './features/session/session-watcher';
-import { messages as copy } from './i18n/messages';
 import { AuthPage } from './features/auth/auth-page';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { DetalheAtividadePage } from './features/entregas/detalhe-page';
 import { EntregasPage } from './features/entregas/entregas-page';
 import { MinhasAtividadesPage } from './features/atividades/minhas-page';
 import { TurmaPage } from './features/atividades/turma-page';
 import { TurmasPage } from './features/turmas/turmas-page';
-import { PlaceholderPage } from './pages/PlaceholderPage';
 
 export default function App() {
   return (
@@ -34,10 +33,7 @@ export default function App() {
 
             <Route element={<RequireRole papel="ALUNO" />}>
               <Route path="/atividades" element={<MinhasAtividadesPage />} />
-              <Route
-                path="/atividades/:atividadeId"
-                element={<PlaceholderPage title={copy.activityDetail} description={copy.activityDetailDescription} />}
-              />
+              <Route path="/atividades/:atividadeId" element={<DetalheAtividadePage />} />
             </Route>
 
             <Route element={<RequireRole papel="PROFESSOR" />}>

@@ -33,9 +33,19 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - Recuperação de senha, edição de perfil e tema escuro.
 - Filtros do aluno salvos no servidor (hoje ficam no navegador).
 - Versão desktop das telas no Stitch: Turmas com menu lateral, Minhas atividades (tabela) e Entregas (tabela); o resto segue o DESIGN.md §5.
+- **Aviso de privacidade (LGPD)** no cadastro: o app coleta nome e e-mail e não informa a finalidade na coleta.
+- **Marcar como entregue** (o professor registra uma entrega feita fora do sistema), para a atividade não ficar "Atrasada" por engano.
+- **Botão Voltar do celular** fecha as folhas (hoje elas não são rotas; o Voltar sai da tela).
+- **Progresso real do upload** (hoje a barra é indeterminada; `fetch` não informa progresso; pede `XMLHttpRequest`).
+- Dividir o código por rota (o pacote principal tem ~700 KB, 215 KB comprimido).
+- Tabela também nas atividades de uma turma no desktop (hoje cards em 2 colunas).
+- `GET /me` responde 401 para visitante e o navegador registra isso no console; um endpoint que devolva 200 com `null` evitaria o ruído.
+- **Testar em aparelho real** (leitor de tela TalkBack/VoiceOver, fonte grande): a auditoria automática não substitui.
 - Fonte oficial da UFRPE (Akzidenz-Grotesk ou Myriad Pro), se a universidade exigir.
 
 ## Back-end e infraestrutura (com o Luiz)
+
+- **Contrato mudou durante o front (ver `plano-de-design.md` C7):** `Atividade.nota`, `modalidade`/`disponivelEm` obrigatórios, `diasAula` com ao menos um dia, `GET /atividades` com os filtros do RF05 (inclui complexidade e turma). A API simulada do front (`front/src/mocks/`, com testes) é uma especificação executável do comportamento esperado.
 
 - **P1, mas ainda não implementado:** Spring Security com sessão em cookie httpOnly (ADR-0004) e proteção contra CSRF; todos os endpoints do `docs/openapi.yaml`; armazenamento dos arquivos (ADR-0003).
 - Confirmar que o professor define só o **prazo final** (a data de entrega é a do aluno) e ajustar o texto do RF10 no documento de requisitos.

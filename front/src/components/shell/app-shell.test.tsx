@@ -111,3 +111,27 @@ describe('página não encontrada', () => {
     expect(await screen.findByRole('heading', { name: 'Entrar', level: 2 })).toBeInTheDocument();
   });
 });
+
+describe('troca de tela', () => {
+  it('a cada tela o título do documento muda e o foco vai para o conteúdo', async () => {
+    const usuario = userEvent.setup();
+    await entrarComo(ALUNA);
+    renderApp('/turmas');
+    await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 });
+    expect(document.title).toBe('Minhas turmas · Rural Sala de Aula');
+
+    await usuario.click((await screen.findAllByRole('link', { name: /Ver atividades/ }))[0]);
+
+    expect(await screen.findByRole('heading', { name: /Turma [AB] —/, level: 2 })).toBeInTheDocument();
+    expect(document.title).toMatch(/^Turma [AB] — .+ · Rural Sala de Aula$/);
+    expect(screen.getByRole('main')).toHaveFocus();
+  });
+
+  it('a página não encontrada tem o próprio título', async () => {
+    await entrarComo(ALUNA);
+    renderApp('/essa-rota-nao-existe');
+
+    await screen.findByRole('heading', { name: 'Página não encontrada', level: 2 });
+    expect(document.title).toBe('Página não encontrada · Rural Sala de Aula');
+  });
+});

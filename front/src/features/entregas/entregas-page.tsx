@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAtividade } from '@/features/atividades/api';
 import { ApiError } from '@/lib/api-error';
 import { plural } from '@/lib/format';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useMediaQuery } from '@/lib/use-media-query';
 import { useEntregas, type Entrega } from './api';
 import { AvaliarSheet } from './avaliar-sheet';
@@ -27,6 +28,7 @@ export function EntregasPage() {
   const { atividadeId = '' } = useParams();
   const atividade = useAtividade(atividadeId);
   const entregas = useEntregas(atividadeId);
+  usePageTitle(atividade.data ? `Entregas · ${atividade.data.nome}` : 'Entregas');
   const desktop = useMediaQuery('(min-width: 1024px)');
   const [avaliando, setAvaliando] = useState<Entrega | null>(null);
 

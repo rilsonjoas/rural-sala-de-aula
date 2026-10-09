@@ -4,6 +4,7 @@ import { ErrorState } from '@/components/error-state';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/features/session/use-session';
 import { plural } from '@/lib/format';
+import { usePageTitle } from '@/lib/use-page-title';
 import { useTurmas, type Turma } from './api';
 import { EntrarEmTurmaSheet } from './entrar-em-turma-sheet';
 import { NovaTurmaSheet } from './nova-turma-sheet';
@@ -23,6 +24,7 @@ function Esqueleto() {
 export function TurmasPage() {
   const { usuario } = useSession();
   const professor = usuario?.papel === 'PROFESSOR';
+  usePageTitle('Minhas turmas');
   const turmas = useTurmas();
   const [escolhido, setEscolhido] = useState<string>();
   const [folhaAberta, setFolhaAberta] = useState(false);
@@ -34,7 +36,7 @@ export function TurmasPage() {
 
   const acao = (
     <Button type="button" className="w-full sm:w-auto" onClick={() => setFolhaAberta(true)}>
-      {professor ? 'Nova turma' : 'Entrar em turma'}
+      {professor ? 'Cadastrar turma' : 'Entrar em turma'}
     </Button>
   );
 
@@ -48,7 +50,7 @@ export function TurmasPage() {
         <h2 id="titulo-pagina" className="text-2xl font-bold text-primary">
           Minhas turmas
         </h2>
-        {acao}
+        {turmas.isSuccess && todas.length === 0 ? null : acao}
       </div>
 
       {turmas.isPending ? <Esqueleto /> : null}

@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { FileText } from 'lucide-react';
+import { NomeDeArquivo } from '@/components/nome-de-arquivo';
 import { formatTamanho, iniciais } from '@/lib/format';
 import { enviadaEm } from './entrega-formatos';
 import { AcoesDaEntrega, NotaChip, SituacaoBadge } from './entrega-partes';
@@ -20,14 +21,12 @@ function Item({ entrega, onAvaliar }: { entrega: Entrega; onAvaliar: Props['onAv
         </h3>
         <SituacaoBadge atrasada={entrega.atrasada} />
       </div>
-      <div className="flex items-center justify-between gap-3 rounded-lg bg-secondary p-3">
-        <div className="min-w-0">
-          <p className="flex items-center gap-2 font-medium text-primary">
-            <FileText aria-hidden="true" className="size-4 shrink-0" />
-            <span className="break-all">{entrega.nomeOriginal}</span>
-          </p>
-          <p className="text-sm text-muted-foreground">{`${formatTamanho(entrega.tamanhoBytes)} · ${enviadaEm(entrega)}`}</p>
-        </div>
+      <div className="space-y-2 rounded-lg bg-secondary p-3">
+        <p className="flex items-center gap-2 font-medium text-primary">
+          <FileText aria-hidden="true" className="size-4 shrink-0" />
+          <NomeDeArquivo nome={entrega.nomeOriginal} />
+        </p>
+        <p className="text-sm text-muted-foreground">{`${formatTamanho(entrega.tamanhoBytes)} · ${enviadaEm(entrega)}`}</p>
         <NotaChip nota={entrega.nota} />
       </div>
       <AcoesDaEntrega entrega={entrega} onAvaliar={onAvaliar} />

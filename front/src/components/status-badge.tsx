@@ -25,7 +25,7 @@ export function StatusBadge({ estado, nota }: { estado: EstadoAtividade; nota?: 
   const texto = estado === 'CONCLUIDA' && nota != null ? `${rotulo} · nota ${formatNota(nota)}` : rotulo;
 
   return (
-    <span className={cn('inline-flex min-h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold', classes)}>
+    <span className={cn('inline-flex min-h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-semibold', classes)}>
       <Icone aria-hidden="true" className="size-3.5 shrink-0" />
       {texto}
     </span>

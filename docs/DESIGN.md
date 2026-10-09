@@ -5,7 +5,7 @@ Fonte de verdade do design. Especificação das telas em [`design/telas.md`](des
 ## 1. Princípios
 
 1. **Mobile-first, responsivo de verdade.** Aluno usa o celular entre aulas; professor avalia entregas, muitas vezes no desktop. Os dois layouts são projetados, não improvisados (§5).
-2. **Uma tela, uma ação primária.** Aluno: "Entrar em turma". Professor: "Nova turma" / "Nova atividade".
+2. **Uma tela, uma ação primária.** Aluno: "Entrar em turma". Professor: "Cadastrar turma" / "Cadastrar atividade".
 3. **O estado pesa mais que o enfeite.** Atrasada e pendente precisam saltar aos olhos; o resto é sóbrio.
 4. **Sem nada que o P1 não pede:** sem gamificação, média, frequência, créditos, sincronização, calendário, grupos, avisos ou comentários.
 
@@ -59,7 +59,7 @@ Raio 12 px em cards e folhas, 8 px em campos e chips, 999 px em selos. Cards tê
 | Cai em | **Turmas** | **Turmas** |
 | Mobile (barra inferior) | Turmas · Atividades | só Turmas (sem barra; só o cabeçalho) |
 | Desktop (menu lateral) | Turmas · Atividades | Turmas |
-| Ação primária | Entrar em turma | Nova turma |
+| Ação primária | Entrar em turma | Cadastrar turma |
 | Menu do avatar | nome, papel, **Sair** | nome, papel, **Sair** |
 
 A tela "Atividades" geral existe só para o aluno (RF05). O professor chega às atividades pela turma.
@@ -81,7 +81,7 @@ A tela "Atividades" geral existe só para o aluno (RF05). O professor chega às 
 |---|---|
 | < 640 px (mobile) | coluna única; cabeçalho fixo; barra inferior (aluno); folhas sobem de baixo; chips rolam na horizontal |
 | 640–1023 px (tablet) | cards em 2 colunas; mesma barra inferior do mobile (uma só navegação, que só vira menu lateral a partir de 1024 px) |
-| ≥ 1024 px (desktop) | menu lateral fixo (240 px); cards em 2–3 colunas; listas de atividades e entregas viram **tabela** com chips acima; folhas viram modais centrados |
+| ≥ 1024 px (desktop) | menu lateral fixo (240 px); cards em 2–3 colunas; "Minhas atividades" e as entregas viram **tabela** (as atividades de uma turma ficam em cards de 2 colunas); folhas viram modais centrados |
 
 A tela do professor "Entregas da atividade" é tabela no desktop (aluno, enviada em, atraso, nota, ações) e lista de cards no mobile.
 
@@ -90,10 +90,10 @@ A tela do professor "Entregas da atividade" é tabela no desktop (aluno, enviada
 | # | Tela | RF | Quem |
 |---|---|---|---|
 | 1 | Entrar / Criar conta (escolha de papel Aluno ou Professor) | RF01 | todos |
-| 2 | Turmas do professor + folha **Nova turma** | RF09 | professor |
+| 2 | Turmas do professor + folha **Nova turma** (botão "Cadastrar turma") | RF09 | professor |
 | 3 | Turmas do aluno + folha **Entrar em turma** (código) | RF02, RF03 | aluno |
 | 4 | Atividades da turma (aluno vê; professor vê e cria) | RF10, RF05 | ambos |
-| 5 | Folha **Nova atividade** | RF10 | professor |
+| 5 | Folha **Nova atividade** (botão "Cadastrar atividade") | RF10 | professor |
 | 6 | **Minhas atividades** (todas as turmas, com chips) | RF05 | aluno |
 | 7 | Entregas da atividade + folha **Avaliar** | RF15, RF16 | professor |
 | 8 | Detalhe da atividade + **Enviar arquivo** | RF04 | aluno |
@@ -157,3 +157,25 @@ Decididas: "Concluída" = entrega avaliada pelo professor (o texto de origem nã
 - Foco de teclado visível (anel navy de 2 px com 2 px de afastamento) e não encoberto pelo cabeçalho fixo.
 - Alvos de toque ≥ 44 px; layout íntegro com fonte a 200%.
 - Ordem do DOM = ordem visual; folhas prendem o foco e fecham com Esc.
+
+## 12. Revisão de qualidade e ética (09/10/2026)
+
+Feita com os checklists do cofre (`qualidade-de-interface` e `revisao-de-interface-etica`), mais auditoria automática (axe, WCAG 2.2 A e AA, `front/e2e/acessibilidade.spec.ts`) em todas as telas e estados, no celular (360 px) e no desktop (1280 px).
+
+**Resultado da auditoria automática:** uma violação real (contraste da aba inativa "Criar conta"), corrigida; o resto passou. O axe não prova conformidade (não avalia a qualidade dos rótulos nem a ordem de foco): por isso a revisão manual abaixo e o teste em aparelho real, que ainda falta.
+
+**Ajustes feitos na revisão**
+- Botões seguem verbo + objeto: "Nova turma/atividade" no topo viraram "Cadastrar turma/atividade" (as folhas continuam se chamando "Nova turma" e "Nova atividade").
+- Um só alarme por fato: a atividade atrasada tem o selo "Atrasada" e uma faixa informativa; saiu o selo "Prazo expirado", que repetia o aviso, e a faixa deixou de ser `role="alert"`.
+- Uma só ação primária por tela: no estado vazio o botão fica só no aviso.
+- Foco e leitura: título do documento por tela, foco no conteúdo a cada troca de tela, foco em "Sua entrega" depois do envio (o botão some), "Ordenar por" com rótulo visível, `scroll-padding` para o cabeçalho e a barra fixos não cobrirem o elemento focado.
+- Acabamento: nomes de arquivo quebram entre palavras, selos não quebram linha, chips de filtro quebram linha no desktop e têm fade na borda no celular, `prefers-reduced-motion`, tema claro fixo.
+- Reflow: sem rolagem horizontal a 320 px nas telas principais.
+
+**Revisão ética (números e decisões que movem a pessoa)**
+- Todo número na tela é fato calculado agora: contadores de turmas, "N pendentes/atrasadas" (vêm da API), "Restam N dias" (do prazo real), resumo das entregas (da lista).
+- "Atrasada" é verdade por definição (sem entrega depois do prazo final), mas o sistema só sabe do que foi enviado por ele. O texto não acusa: diz o que fazer ("Você ainda pode enviar"). Se a escola aceitar entrega fora do sistema, isso precisa de uma forma de o professor marcar como entregue (backlog).
+- Não há anúncio, upsell, contador de sequência, notificação de cobrança nem prazo artificial. Nada vem pré-marcado no cadastro (papel). Os padrões da folha Nova atividade (Atividade, Média, Individual) são do próprio professor e passam por uma etapa de confirmação com o resumo.
+- Dados pessoais (nome, e-mail): o cadastro não tem aviso de privacidade. É requisito da LGPD informar a finalidade na coleta (backlog).
+
+**Desvios assumidos:** nenhum botão do P1 desvia da regra; o "Baixar" do professor é só verbo, com o objeto no nome acessível ("Baixar arquivo de Maria…").

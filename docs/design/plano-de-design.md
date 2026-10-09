@@ -37,6 +37,12 @@ Reconcilia o que o Stitch gerou com o que o P1 exige. Sistema de design: [`../DE
 | D17 | "Minhas atividades" abre com **todas**, `prazoFinal` mais próximo primeiro; o chip "Pendente" não vem ativo por padrão. |
 | D18 | Cabeçalho usa texto + capelo provisório (Lucide `GraduationCap`) até a logo própria sair. |
 | D19 | Uma só navegação adaptável: barra inferior até 1023 px (só para o aluno; o professor tem um item e fica só com o cabeçalho) e menu lateral de 240 px a partir de 1024 px. |
+| D20 | Botões no topo: "Cadastrar turma" e "Cadastrar atividade" (verbo + objeto). As folhas mantêm "Nova turma" e "Nova atividade". |
+| D21 | Atividade atrasada: selo "Atrasada" + faixa informativa sem `role="alert"`; o selo "Prazo expirado" saiu (alarme duplicado). |
+| D22 | Título do documento por tela; foco no conteúdo a cada troca de tela; foco em "Sua entrega" depois do envio. |
+| D23 | Estado vazio: a ação primária fica só no aviso, não repetida no topo. |
+| D24 | Filtros: um chip ativo por grupo (casa com os parâmetros únicos da API); grupos se combinam; clicar no ativo desliga. |
+| D25 | Tabela só em "Minhas atividades" e nas entregas; as atividades de uma turma ficam em cards de 2 colunas no desktop. |
 
 ## 3. Correções por tela
 
@@ -65,6 +71,7 @@ O front não consegue montar estas telas só com o `docs/openapi.yaml` atual. **
 | C3 ✅ | Não existe "detalhe da atividade" nem "minha entrega" | `GET /atividades/{id}` retornando `Atividade` com `estado` e `minhaEntrega` (opcional) | Detalhe (aluno) |
 | C4 ✅ | Lista de entregas precisa do nome do aluno e do tamanho do arquivo | acrescentar `alunoNome` e `tamanhoBytes` em `Entrega` | Entregas (professor) |
 | C5 ✅ | Tamanho máximo e tipos de arquivo | 25 MB; pdf, ppt, pptx, doc, docx, txt; `submitEntrega` responde 413 (tamanho), 415 (tipo), 409 (já avaliada) | Detalhe (aluno) |
+| C7 ✅ | Selo "Concluída · nota 9,5" na lista de atividades | `Atividade.nota` (só aluno, quando avaliada); `modalidade` e `disponivelEm` sempre presentes na resposta; `TurmaInput.diasAula` com `minItems: 1`; `GET /atividades` (Minhas atividades) com filtro por complexidade e turma; `POST /inscricoes` | Atividades, Turmas |
 | C6 | Aluno entrega atividade "Em grupo" | decidido: entrega individualmente até grupos entrarem (**o Luiz ainda precisa confirmar**) | Detalhe (aluno) |
 
 
@@ -116,19 +123,20 @@ Tokens: usar os do DESIGN.md §2 como variáveis CSS do shadcn em `front/src/sty
 
 ## 8. Ordem de implementação do front (casa com o plano do P1)
 
-| Etapa | RF | Telas | Endpoints do contrato |
-|---|---|---|---|
-| 0 | — | Fundação: tokens (a troca do tema escuro verde do projeto antigo pelos tokens da UFRPE já está em `styles.css`; falta aplicá-los nos componentes), shell (cabeçalho, barra inferior, menu lateral), rotas e guardas, cliente da API, `ResponsiveSheet`, estados. **Remover o andaime do shell atual**: selo "API conectada", "Entrega P1 · 19/10", "Em construção" e `connectionHelp` não vão para o usuário | `getHealth` (só em dev), `getMe` |
-| 1 | RF01 | Entrar / Criar conta | `register`, `login`, `logout`, `getMe` |
-| 2 | RF09 | Turmas do professor + Nova turma | `listTurmas`, `createTurma` |
-| 3 | RF02, RF03 | Turmas do aluno + Entrar em turma | `listTurmas`, `enrollTurma` (`POST /inscricoes`) |
-| 4 | RF10 | Atividades da turma (professor) + Nova atividade | `listAtividades`, `createAtividade` |
-| 5 | RF05 | Atividades da turma (aluno) e **Minhas atividades** com chips | `listMinhasAtividades` (estado, tipo, modalidade, complexidade, turmaId, ordenar, direcao) e `listAtividades` (da turma) |
-| 6 | RF15 | Avaliar entrega | `evaluateEntrega` |
-| 7 | RF04 | Detalhe da atividade + envio | `submitEntrega` (+ C3) |
-| 8 | RF16 | Baixar arquivos da entrega | `listEntregas`, `downloadEntrega` |
+**Estado em 09/10/2026: todas as etapas do P1 estão implementadas e testadas contra a API simulada (MSW).** Falta integrar com o back-end real, tela por tela, na mesma ordem (o Luiz implementa os endpoints na ordem abaixo).
 
-RF15 vem antes de RF04 porque a avaliação depende só da lista de entregas, e RF04 e RF16 são os últimos pelo combinado de 08/10. Enquanto não há entrega real, a tela de avaliação roda contra dados de teste.
+| Etapa | RF | Telas | Endpoints do contrato | Estado |
+|---|---|---|---|---|
+| 0 | — | Fundação: tokens, shell, rotas e guardas, cliente da API, folha responsiva, estados, API simulada | `getMe` | ✅ |
+| 1 | RF01 | Entrar / Criar conta | `register`, `login`, `logout`, `getMe` | ✅ |
+| 2 | RF09 | Turmas do professor + Nova turma | `listTurmas`, `createTurma` | ✅ |
+| 3 | RF02, RF03 | Turmas do aluno + Entrar em turma | `listTurmas`, `enrollTurma` (`POST /inscricoes`) | ✅ |
+| 4 | RF10 | Atividades da turma (professor e aluno) + Nova atividade | `getTurma`, `listAtividades`, `createAtividade` | ✅ |
+| 5 | RF05 | Minhas atividades (chips, ordenação, filtros lembrados, tabela) | `listMinhasAtividades` | ✅ |
+| 6 | RF15, RF16 | Entregas do professor, Avaliar, baixar arquivos | `getAtividade`, `listEntregas`, `evaluateEntrega`, `downloadEntrega` | ✅ |
+| 7 | RF04 | Detalhe da atividade e envio do arquivo | `getAtividade`, `submitEntrega` | ✅ |
+
+Ordem de integração com o Luiz: auth → turmas → inscrições → atividades → Minhas atividades → entregas e avaliação → envio e download. Cada etapa troca o mock pelo endpoint real (o app liga o simulador com `VITE_API_MOCK=true`; sem isso fala com a API).
 
 ## 9. Critérios de aceite do design (para cada tela implementada)
 

@@ -74,7 +74,7 @@ describe('Atividades da turma (aluno)', () => {
     await abrirTurma(ALUNA);
     await screen.findAllByRole('article');
 
-    expect(screen.queryByRole('button', { name: 'Nova atividade' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cadastrar atividade' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Ver entregas' })).not.toBeInTheDocument();
   });
 
@@ -101,6 +101,14 @@ describe('Atividades da turma (aluno)', () => {
 
     expect(await screen.findByText('Nenhuma atividade com esses filtros.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Limpar filtros' }).length).toBeGreaterThan(0);
+  });
+
+  it('o seletor de ordenação tem rótulo visível', async () => {
+    await abrirTurma(ALUNA);
+    await screen.findAllByRole('article');
+
+    expect(screen.getByText('Ordenar por')).toBeVisible();
+    expect(screen.getByRole('combobox', { name: 'Ordenar por' })).toBeInTheDocument();
   });
 
   it('ordena por complexidade, da maior para a menor', async () => {
@@ -131,7 +139,7 @@ describe('Atividades da turma (professor)', () => {
     expect(await screen.findAllByRole('article')).toHaveLength(6);
     expect(screen.getByText('ALG202')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copiar código' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Nova atividade' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cadastrar atividade' })).toBeInTheDocument();
     expect(within(card(/Projeto Final/)).getByText(/^Disponível a partir de \d{2}\/\d{2}/)).toBeInTheDocument();
   });
 
@@ -163,7 +171,7 @@ describe('Atividades da turma (professor)', () => {
     renderApp(`/turmas/${nova.data!.id}`);
 
     expect(await screen.findByText('Nenhuma atividade por aqui ainda.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Nova atividade' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Cadastrar atividade' })).toHaveLength(1);
     void user;
   });
 });
@@ -172,7 +180,7 @@ describe('Nova atividade', () => {
   async function abrirFolha() {
     const user = await abrirTurma(PROFESSOR);
     await screen.findAllByRole('article');
-    await user.click(screen.getByRole('button', { name: 'Nova atividade' }));
+    await user.click(screen.getByRole('button', { name: 'Cadastrar atividade' }));
     const folha = await screen.findByRole('dialog', { name: 'Nova atividade' });
     return { user, folha };
   }

@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react';
+import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -13,11 +14,12 @@ export type GrupoDeChips = {
 type Props = { grupos: GrupoDeChips[]; filtros: Filtros; onChange: (filtros: Filtros) => void };
 
 export function FilterChips({ grupos, filtros, onChange }: Props) {
+  const idOrdenar = useId();
   return (
     <div className="space-y-3">
-      <div className="flex gap-4 overflow-x-auto pb-1">
+      <div className="flex gap-4 overflow-x-auto pb-1 [mask-image:linear-gradient(to_right,black_90%,transparent)] lg:flex-wrap lg:overflow-visible lg:[mask-image:none]">
         {grupos.map((grupo) => (
-          <div key={grupo.chave} role="group" aria-label={grupo.rotulo} className="flex shrink-0 items-center gap-2">
+          <div key={grupo.chave} role="group" aria-label={grupo.rotulo} className="flex shrink-0 items-center gap-2 lg:flex-wrap">
             <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{grupo.rotulo}</span>
             {grupo.opcoes.map((opcao) => {
               const ativo = filtros[grupo.chave] === opcao.valor;
@@ -41,19 +43,24 @@ export function FilterChips({ grupos, filtros, onChange }: Props) {
         ))}
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Select value={filtros.ordenar} onValueChange={(valor) => onChange({ ...filtros, ordenar: valor as Ordenacao })}>
-          <SelectTrigger aria-label="Ordenar por" className="w-full sm:w-80">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.entries(ORDENACOES) as [Ordenacao, string][]).map(([valor, rotulo]) => (
-              <SelectItem key={valor} value={valor}>
-                {rotulo}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1.5">
+          <span id={idOrdenar} className="text-sm font-semibold text-primary">
+            Ordenar por
+          </span>
+          <Select value={filtros.ordenar} onValueChange={(valor) => onChange({ ...filtros, ordenar: valor as Ordenacao })}>
+            <SelectTrigger aria-labelledby={idOrdenar} className="w-full sm:w-80">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.entries(ORDENACOES) as [Ordenacao, string][]).map(([valor, rotulo]) => (
+                <SelectItem key={valor} value={valor}>
+                  {rotulo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         {temFiltroAtivo(filtros) ? (
           <Button type="button" variant="ghost" onClick={() => onChange(limparFiltros(filtros))}>
             Limpar filtros

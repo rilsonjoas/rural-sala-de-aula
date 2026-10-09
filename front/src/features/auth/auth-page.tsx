@@ -3,15 +3,17 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { messages as copy } from '@/i18n/messages';
+import { usePageTitle } from '@/lib/use-page-title';
 import { LoginForm } from './login-form';
 import { RegisterForm } from './register-form';
 
 const GATILHO =
-  'min-h-11 text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground';
+  'min-h-11 text-base font-semibold text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground';
 
 export function AuthPage() {
   const aviso = (useLocation().state as { aviso?: string } | null)?.aviso;
   const [aba, setAba] = useState('entrar');
+  usePageTitle(aba === 'entrar' ? 'Entrar' : 'Criar conta');
 
   return (
     <div className="space-y-6">

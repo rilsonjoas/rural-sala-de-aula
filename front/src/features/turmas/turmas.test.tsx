@@ -108,7 +108,8 @@ describe('Turmas do aluno', () => {
     await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 });
 
     expect(await screen.findByText('Você ainda não está em nenhuma turma. Peça o código ao professor e entre.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Entrar em turma' })).toHaveLength(2);
+    // uma só ação primária: no estado vazio ela fica no aviso, não repetida no topo
+    expect(screen.getAllByRole('button', { name: 'Entrar em turma' })).toHaveLength(1);
   });
 
   it('se a API falhar, mostra o erro com "Tentar de novo" e recupera', async () => {
@@ -140,7 +141,7 @@ describe('Turmas do professor', () => {
     await abrirTurmas(PROFESSOR);
 
     expect(await screen.findByText('1 turma')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Nova turma' })[0]).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]).toBeInTheDocument();
     const a = within(card('Turma A — Algoritmos'));
     expect(a.getByText('Código de inscrição')).toBeInTheDocument();
     expect(a.getByText('ALG202')).toBeInTheDocument();
@@ -167,7 +168,7 @@ describe('Turmas do professor', () => {
     const user = await abrirTurmas(PROFESSOR);
     await screen.findByText('1 turma');
 
-    await user.click(screen.getAllByRole('button', { name: 'Nova turma' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Nova turma' });
     expect(within(folha).getByText('Formato: 2026.1 ou 2026.2')).toBeInTheDocument();
     expect(within(folha).queryByLabelText('Código')).not.toBeInTheDocument();
@@ -192,7 +193,7 @@ describe('Turmas do professor', () => {
   it('valida os campos da turma no próprio campo', async () => {
     const user = await abrirTurmas(PROFESSOR);
     await screen.findByText('1 turma');
-    await user.click(screen.getAllByRole('button', { name: 'Nova turma' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Nova turma' });
 
     await user.clear(within(folha).getByLabelText('Semestre'));
@@ -208,7 +209,7 @@ describe('Turmas do professor', () => {
   it('o semestre já vem preenchido com o semestre corrente', async () => {
     const user = await abrirTurmas(PROFESSOR);
     await screen.findByText('1 turma');
-    await user.click(screen.getAllByRole('button', { name: 'Nova turma' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Nova turma' });
 
     expect(within(folha).getByLabelText('Semestre')).toHaveValue(
@@ -221,7 +222,7 @@ describe('Turmas do professor', () => {
     renderApp('/turmas');
 
     expect(await screen.findByText('Você ainda não criou turmas.')).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: 'Nova turma' })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Cadastrar turma' })).toHaveLength(1);
   });
 });
 

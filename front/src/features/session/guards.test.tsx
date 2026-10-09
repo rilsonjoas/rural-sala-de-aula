@@ -60,7 +60,7 @@ describe('guardas de rota', () => {
     cleanup();
 
     renderApp(`/atividades/${IDATIVIDADE}`);
-    expect(await screen.findByRole('heading', { name: 'Atividade', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /Lista 1/, level: 2 })).toBeInTheDocument();
   });
 
   it('professor em /atividades (tela do aluno) vai para /turmas', async () => {

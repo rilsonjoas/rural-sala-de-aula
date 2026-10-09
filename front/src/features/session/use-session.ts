@@ -40,6 +40,7 @@ export function useSession() {
     usuario: query.data ?? undefined,
     isLoading: query.isPending,
     isError: query.isError,
+    recarregar: () => void query.refetch(),
     limparSessao,
     logout,
   };

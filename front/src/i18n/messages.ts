@@ -8,6 +8,8 @@ export const messages = {
   activityDetail: 'Atividade',
   deliveries: 'Entregas da atividade',
   loading: 'Carregando',
+  tryAgain: 'Tentar de novo',
+  loadError: 'Não conseguimos carregar. Verifique a conexão e tente de novo.',
   accountMenu: 'Menu da conta',
   roleStudent: 'Aluno',
   roleTeacher: 'Professor',

@@ -1,5 +1,8 @@
 import { act, cleanup, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { HttpResponse, http } from 'msw';
 import { afterEach, describe, expect, it } from 'vitest';
+import { server } from '@/mocks/server';
 import { api } from '@/lib/api-client';
 import { SESSION_EXPIRED_EVENT } from '@/lib/api-client';
 import { ALUNA, PROFESSOR } from '@/mocks/fixtures';
@@ -92,5 +95,20 @@ describe('guardas de rota', () => {
 
     expect(await screen.findByRole('heading', { name: 'Entrar', level: 2 })).toBeInTheDocument();
     expect(screen.getByText('Sua sessão expirou. Entre de novo.')).toBeInTheDocument();
+  });
+
+  it('se a API cair ao conferir a sessão, mostra o erro com "Tentar de novo" (e não manda para o login)', async () => {
+    server.use(
+      http.get('*/api/v1/me', () => HttpResponse.json({ status: 500, message: 'Erro interno.' }, { status: 500 })),
+    );
+    renderApp('/turmas');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não conseguimos carregar. Verifique a conexão e tente de novo.');
+    expect(screen.queryByRole('heading', { name: 'Entrar', level: 2 })).not.toBeInTheDocument();
+
+    server.resetHandlers();
+    await userEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+
+    expect(await screen.findByRole('heading', { name: 'Entrar', level: 2 })).toBeInTheDocument();
   });
 });

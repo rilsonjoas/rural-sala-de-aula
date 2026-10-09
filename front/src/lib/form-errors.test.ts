@@ -25,13 +25,21 @@ describe('aplicarErroDaApi', () => {
     const form = formFalso();
     const erro = new ApiError(409, 'Esse e-mail já está cadastrado. Entre ou use outro e-mail.');
 
-    const geral = aplicarErroDaApi(form, erro, { campoDoConflito: 'email' });
+    const geral = aplicarErroDaApi(form, erro, { campoPorStatus: { 409: 'email' } });
 
     expect(form.setError).toHaveBeenCalledWith('email', {
       type: 'server',
       message: 'Esse e-mail já está cadastrado. Entre ou use outro e-mail.',
     });
     expect(geral).toBeUndefined();
+  });
+
+  it('mapeia também outros status, como o 404 de um código inexistente', () => {
+    const form = formFalso();
+    const erro = new ApiError(404, 'Não encontramos uma turma com esse código.');
+
+    expect(aplicarErroDaApi(form, erro, { campoPorStatus: { 404: 'codigo' } })).toBeUndefined();
+    expect(form.setError).toHaveBeenCalledWith('codigo', { type: 'server', message: 'Não encontramos uma turma com esse código.' });
   });
 
   it('devolve a mensagem para ser mostrada como erro geral quando não dá para ligar a um campo', () => {

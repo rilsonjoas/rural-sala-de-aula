@@ -6,7 +6,7 @@ import { createQueryClient } from '@/lib/query-client';
 
 export function renderApp(caminho = '/') {
   return render(
-    <QueryClientProvider client={createQueryClient()}>
+    <QueryClientProvider client={createQueryClient({ semEspera: true })}>
       <MemoryRouter initialEntries={[caminho]}>
         <App />
       </MemoryRouter>

@@ -31,7 +31,7 @@ export function formatDias(dias: number[]): string {
 
 const MS_POR_DIA = 24 * 60 * 60 * 1000;
 const inicioDoDia = (data: Date) => new Date(data.getFullYear(), data.getMonth(), data.getDate()).getTime();
-const plural = (n: number) => `${n} ${n === 1 ? 'dia' : 'dias'}`;
+const quantosDias = (n: number) => `${n} ${n === 1 ? 'dia' : 'dias'}`;
 
 /** Apoio ao prazo final: "Restam 2 dias", "Prazo final hoje", "Prazo final passou há 1 dia". Conta dias de calendário. */
 export function formatPrazoRelativo(prazoFinalIso: string, agora: Date = new Date()): string {
@@ -43,5 +43,10 @@ export function formatPrazoRelativo(prazoFinalIso: string, agora: Date = new Dat
     return dias === 1 ? 'Resta 1 dia' : `Restam ${dias} dias`;
   }
   if (dias === 0) return 'Prazo final passou hoje';
-  return `Prazo final passou há ${plural(-dias)}`;
+  return `Prazo final passou há ${quantosDias(-dias)}`;
+}
+
+/** "1 turma" / "3 turmas". Para plurais irregulares, passe a forma no plural. */
+export function plural(n: number, singular: string, formaPlural = `${singular}s`): string {
+  return `${n} ${n === 1 ? singular : formaPlural}`;
 }

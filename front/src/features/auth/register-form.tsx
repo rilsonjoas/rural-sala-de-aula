@@ -33,7 +33,7 @@ export function RegisterForm() {
       const { data } = await api.POST('/auth/register', { body: valores });
       queryClient.setQueryData(ME_QUERY_KEY, data);
     } catch (erro) {
-      setErroGeral(aplicarErroDaApi(form, erro, { campoDoConflito: 'email' }));
+      setErroGeral(aplicarErroDaApi(form, erro, { campoPorStatus: { 409: 'email' } }));
     }
   });
 

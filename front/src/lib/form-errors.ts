@@ -1,16 +1,16 @@
 import type { FieldPath, FieldValues, UseFormSetError } from 'react-hook-form';
 import { ApiError, MENSAGEM_PADRAO } from './api-error';
 
-type OpcoesErro<T extends FieldValues> = { campoDoConflito?: FieldPath<T> };
+type OpcoesErro<T extends FieldValues> = { campoPorStatus?: Partial<Record<number, FieldPath<T>>> };
 
 /**
- * Leva um erro da API para o formulário: erros por campo (422) e o conflito (409) vão para o campo certo;
+ * Leva um erro da API para o formulário: erros por campo (422) e os status mapeados (ex.: 409, 404) vão para o campo certo;
  * o que não der para ligar a um campo volta como mensagem, para ser mostrada como erro geral do formulário.
  */
 export function aplicarErroDaApi<T extends FieldValues>(
   form: { setError: UseFormSetError<T> },
   erro: unknown,
-  { campoDoConflito }: OpcoesErro<T> = {},
+  { campoPorStatus = {} }: OpcoesErro<T> = {},
 ): string | undefined {
   if (!(erro instanceof ApiError)) return MENSAGEM_PADRAO;
 
@@ -21,8 +21,9 @@ export function aplicarErroDaApi<T extends FieldValues>(
     return undefined;
   }
 
-  if (erro.status === 409 && campoDoConflito) {
-    form.setError(campoDoConflito, { type: 'server', message: erro.message });
+  const campoDoStatus = campoPorStatus[erro.status];
+  if (campoDoStatus) {
+    form.setError(campoDoStatus, { type: 'server', message: erro.message });
     return undefined;
   }
 

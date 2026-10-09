@@ -34,7 +34,7 @@ describe('Entrar', () => {
     await usuario.type(screen.getByLabelText('Senha'), ALUNA.senha);
     await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByRole('heading', { name: 'Turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
     expect((await api.GET('/me')).data?.email).toBe(ALUNA.email);
   });
 
@@ -144,7 +144,7 @@ describe('Criar conta', () => {
     await usuario.click(screen.getByRole('radio', { name: /Professor/ }));
     await usuario.click(screen.getByRole('button', { name: 'Criar conta' }));
 
-    expect(await screen.findByRole('heading', { name: 'Turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
     expect((await api.GET('/me')).data).toMatchObject({ nome: 'Ana Souza', papel: 'PROFESSOR' });
   });
 

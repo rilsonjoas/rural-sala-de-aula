@@ -21,14 +21,14 @@ describe('guardas de rota', () => {
     renderApp('/turmas');
 
     expect(await screen.findByRole('heading', { name: 'Entrar', level: 2 })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Turmas', level: 2 })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Minhas turmas', level: 2 })).not.toBeInTheDocument();
   });
 
   it('enquanto confere a sessão, mostra o estado de carregando e não a tela errada', async () => {
     renderApp('/turmas');
 
     expect(screen.getByRole('status', { name: 'Carregando' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'Turmas', level: 2 })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Minhas turmas', level: 2 })).not.toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Entrar', level: 2 })).toBeInTheDocument();
   });
 
@@ -43,14 +43,14 @@ describe('guardas de rota', () => {
     await entrarComo(ALUNA);
     renderApp('/entrar');
 
-    expect(await screen.findByRole('heading', { name: 'Turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
   });
 
   it('a raiz leva o logado a /turmas', async () => {
     await entrarComo(PROFESSOR);
     renderApp('/');
 
-    expect(await screen.findByRole('heading', { name: 'Turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
   });
 
   it('aluno acessa /atividades e /atividades/:id', async () => {
@@ -67,14 +67,14 @@ describe('guardas de rota', () => {
     await entrarComo(PROFESSOR);
     renderApp('/atividades');
 
-    expect(await screen.findByRole('heading', { name: 'Turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
   });
 
   it('aluno em /atividades/:id/entregas (tela do professor) vai para /turmas', async () => {
     await entrarComo(ALUNA);
     renderApp(`/atividades/${IDATIVIDADE}/entregas`);
 
-    expect(await screen.findByRole('heading', { name: 'Turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
   });
 
   it('professor acessa /atividades/:id/entregas', async () => {
@@ -87,7 +87,7 @@ describe('guardas de rota', () => {
   it('sessão expirada no meio do uso volta para /entrar com o aviso', async () => {
     await entrarComo(ALUNA);
     renderApp('/turmas');
-    await screen.findByRole('heading', { name: 'Turmas', level: 2 });
+    await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 });
 
     act(() => {
       window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));

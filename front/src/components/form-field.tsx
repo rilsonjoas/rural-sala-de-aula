@@ -2,7 +2,7 @@ import { AlertCircle } from 'lucide-react';
 import { useId, type ReactNode } from 'react';
 import { Label } from '@/components/ui/label';
 
-type PropsDoControle = { id: string; 'aria-invalid': boolean; 'aria-describedby'?: string };
+type PropsDoControle = { id: string; 'aria-invalid': boolean; 'aria-describedby'?: string; 'aria-required'?: true };
 
 type Props = {
   rotulo: string;
@@ -21,11 +21,18 @@ export function Campo({ rotulo, erro, dica, obrigatorio, children }: Props) {
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold text-primary">
+      <Label
+        htmlFor={id}
+        className={`text-sm font-semibold text-primary ${obrigatorio ? "after:ml-0.5 after:text-destructive after:content-['*']" : ''}`}
+      >
         {rotulo}
-        {obrigatorio ? <span aria-hidden="true"> *</span> : null}
       </Label>
-      {children({ id, 'aria-invalid': Boolean(erro), 'aria-describedby': descrito })}
+      {children({
+        id,
+        'aria-invalid': Boolean(erro),
+        'aria-describedby': descrito,
+        ...(obrigatorio ? { 'aria-required': true as const } : {}),
+      })}
       {dica ? (
         <p id={idDica} className="text-sm text-muted-foreground">
           {dica}

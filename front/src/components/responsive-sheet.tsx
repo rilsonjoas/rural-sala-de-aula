@@ -24,7 +24,7 @@ export function ResponsiveSheet({ open, onOpenChange, titulo, descricao, childre
   if (desktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent data-variante="modal" aria-describedby={descricao ? undefined : undefined}>
+        <DialogContent data-variante="modal">
           <DialogHeader>
             <DialogTitle>{titulo}</DialogTitle>
             {descricao ? <DialogDescription>{descricao}</DialogDescription> : null}
@@ -46,7 +46,7 @@ export function ResponsiveSheet({ open, onOpenChange, titulo, descricao, childre
           <SheetTitle>{titulo}</SheetTitle>
           {descricao ? <SheetDescription>{descricao}</SheetDescription> : null}
         </SheetHeader>
-        {children}
+        <div className="px-4 pb-6">{children}</div>
       </SheetContent>
     </Sheet>
   );

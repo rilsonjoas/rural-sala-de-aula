@@ -1,4 +1,4 @@
-import { USUARIOS_INICIAIS, type Usuario, type UsuarioComSenha } from './fixtures';
+import { ALUNA, ALUNO, PROFESSOR, USUARIOS_INICIAIS, type Usuario, type UsuarioComSenha } from './fixtures';
 
 type Estado = {
   usuarios: UsuarioComSenha[];
@@ -21,4 +21,12 @@ export function usuarioDaSessao(): UsuarioComSenha | undefined {
 
 export function semSenha(usuario: UsuarioComSenha): Usuario {
   return { id: usuario.id, nome: usuario.nome, email: usuario.email, papel: usuario.papel };
+}
+
+const SESSOES_DE_TESTE: Record<string, UsuarioComSenha> = { professor: PROFESSOR, aluna: ALUNA, aluno: ALUNO };
+
+/** Atalho de desenvolvimento (VITE_API_MOCK_USER): abre a sessão sem passar pela tela de login. */
+export function abrirSessaoDeTeste(chave: string) {
+  const usuario = SESSOES_DE_TESTE[chave];
+  if (usuario) db.sessaoUsuarioId = usuario.id;
 }

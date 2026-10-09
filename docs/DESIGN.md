@@ -80,7 +80,7 @@ A tela "Atividades" geral existe só para o aluno (RF05). O professor chega às 
 | Ponto de quebra | Layout |
 |---|---|
 | < 640 px (mobile) | coluna única; cabeçalho fixo; barra inferior (aluno); folhas sobem de baixo; chips rolam na horizontal |
-| 640–1023 px (tablet) | cards em 2 colunas; sem barra inferior, menu no cabeçalho |
+| 640–1023 px (tablet) | cards em 2 colunas; mesma barra inferior do mobile (uma só navegação, que só vira menu lateral a partir de 1024 px) |
 | ≥ 1024 px (desktop) | menu lateral fixo (240 px); cards em 2–3 colunas; listas de atividades e entregas viram **tabela** com chips acima; folhas viram modais centrados |
 
 A tela do professor "Entregas da atividade" é tabela no desktop (aluno, enviada em, atraso, nota, ações) e lista de cards no mobile.

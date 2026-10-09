@@ -5,12 +5,11 @@ import { renderApp } from '@/test/render';
 afterEach(() => cleanup());
 
 describe('App', () => {
-  it('mostra a marca e a navegação', async () => {
+  it('a tela de entrada não tem cabeçalho nem navegação do app', async () => {
     renderApp('/entrar');
 
-    expect(await screen.findByRole('heading', { name: 'Rural Sala de Aula', level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Turmas' })).toHaveAttribute('href', '/turmas');
-    expect(screen.getByRole('link', { name: 'Atividades' })).toHaveAttribute('href', '/atividades');
+    await screen.findByRole('heading', { name: 'Entrar', level: 2 });
+    expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument();
   });
 
   it('não mostra andaime de desenvolvimento ao usuário', async () => {

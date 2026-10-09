@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { api } from '@/lib/api-client';
+import { abrirSessaoDeTeste } from './db';
 import { ALUNA, PROFESSOR } from './fixtures';
 
 describe('API simulada: autenticação', () => {
@@ -76,5 +77,25 @@ describe('API simulada: autenticação', () => {
     await expect(
       api.POST('/auth/login', { body: { email: 'ana@ufrpe.br', senha: 'senha1234' } }),
     ).rejects.toMatchObject({ status: 401 });
+  });
+});
+
+describe('API simulada: sessão de desenvolvimento', () => {
+  it('abrirSessaoDeTeste("professor") deixa o professor logado', async () => {
+    abrirSessaoDeTeste('professor');
+
+    expect((await api.GET('/me')).data?.papel).toBe('PROFESSOR');
+  });
+
+  it('abrirSessaoDeTeste("aluna") deixa a aluna logada', async () => {
+    abrirSessaoDeTeste('aluna');
+
+    expect((await api.GET('/me')).data?.email).toBe(ALUNA.email);
+  });
+
+  it('ignora um nome desconhecido sem abrir sessão', async () => {
+    abrirSessaoDeTeste('ninguem');
+
+    await expect(api.GET('/me')).rejects.toMatchObject({ status: 401 });
   });
 });

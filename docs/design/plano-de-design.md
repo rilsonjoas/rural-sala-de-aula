@@ -36,6 +36,7 @@ Reconcilia o que o Stitch gerou com o que o P1 exige. Sistema de design: [`../DE
 | D16 | Card de turma do aluno tem dois selos: amarelo "N pendentes" e vermelho "N atrasadas" (só aparece se N > 0); "Em dia" quando os dois são 0. Remove "Tudo entregue" e "Próxima entrega". |
 | D17 | "Minhas atividades" abre com **todas**, `prazoFinal` mais próximo primeiro; o chip "Pendente" não vem ativo por padrão. |
 | D18 | Cabeçalho usa texto + capelo provisório (Lucide `GraduationCap`) até a logo própria sair. |
+| D19 | Uma só navegação adaptável: barra inferior até 1023 px (só para o aluno; o professor tem um item e fica só com o cabeçalho) e menu lateral de 240 px a partir de 1024 px. |
 
 ## 3. Correções por tela
 

@@ -8,9 +8,11 @@ export type PlaceholderPageProps = {
 
 export function PlaceholderPage({ title, description, children }: PlaceholderPageProps) {
   return (
-    <section className="placeholder-page" aria-labelledby="page-title">
-      <h2 id="page-title">{title}</h2>
-      <p>{description}</p>
+    <section aria-labelledby="titulo-pagina" className="space-y-3">
+      <h2 id="titulo-pagina" className="text-2xl font-bold text-primary">
+        {title}
+      </h2>
+      <p className="max-w-prose text-muted-foreground">{description}</p>
       {children}
     </section>
   );

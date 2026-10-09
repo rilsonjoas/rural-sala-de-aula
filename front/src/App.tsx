@@ -7,6 +7,8 @@ import { SessionWatcher } from './features/session/session-watcher';
 import { messages as copy } from './i18n/messages';
 import { AuthPage } from './features/auth/auth-page';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { EntregasPage } from './features/entregas/entregas-page';
+import { MinhasAtividadesPage } from './features/atividades/minhas-page';
 import { TurmaPage } from './features/atividades/turma-page';
 import { TurmasPage } from './features/turmas/turmas-page';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -31,10 +33,7 @@ export default function App() {
             <Route path="/turmas/:turmaId" element={<TurmaPage />} />
 
             <Route element={<RequireRole papel="ALUNO" />}>
-              <Route
-                path="/atividades"
-                element={<PlaceholderPage title={copy.activities} description={copy.activitiesDescription} />}
-              />
+              <Route path="/atividades" element={<MinhasAtividadesPage />} />
               <Route
                 path="/atividades/:atividadeId"
                 element={<PlaceholderPage title={copy.activityDetail} description={copy.activityDetailDescription} />}
@@ -42,10 +41,7 @@ export default function App() {
             </Route>
 
             <Route element={<RequireRole papel="PROFESSOR" />}>
-              <Route
-                path="/atividades/:atividadeId/entregas"
-                element={<PlaceholderPage title={copy.deliveries} description={copy.deliveriesDescription} />}
-              />
+              <Route path="/atividades/:atividadeId/entregas" element={<EntregasPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

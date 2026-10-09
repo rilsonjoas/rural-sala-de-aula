@@ -58,3 +58,27 @@ export function paraConsulta({ ordenar, ...filtros }: Filtros) {
   const [campo, direcao] = ordenar.split(':') as ['prazo' | 'complexidade', 'asc' | 'desc'];
   return { ...filtros, ordenar: campo, direcao };
 }
+
+const ESTADOS = Object.keys(ROTULO_ESTADO);
+const TIPOS = Object.keys(ROTULO_TIPO);
+const MODALIDADES = Object.keys(ROTULO_MODALIDADE);
+const COMPLEXIDADES = Object.keys(ROTULO_COMPLEXIDADE);
+
+/** Lê os filtros guardados no navegador, descartando o que for inválido (texto quebrado, valor desconhecido). */
+export function lerFiltrosSalvos(texto: string | null): Filtros {
+  let bruto: Record<string, unknown>;
+  try {
+    const lido: unknown = texto ? JSON.parse(texto) : null;
+    bruto = typeof lido === 'object' && lido !== null ? (lido as Record<string, unknown>) : {};
+  } catch {
+    bruto = {};
+  }
+
+  const filtros: Filtros = { ordenar: (bruto.ordenar as Ordenacao) in ORDENACOES ? (bruto.ordenar as Ordenacao) : 'prazo:asc' };
+  if (ESTADOS.includes(bruto.estado as string)) filtros.estado = bruto.estado as EstadoAtividade;
+  if (TIPOS.includes(bruto.tipo as string)) filtros.tipo = bruto.tipo as AtividadeTipo;
+  if (MODALIDADES.includes(bruto.modalidade as string)) filtros.modalidade = bruto.modalidade as AtividadeModalidade;
+  if (COMPLEXIDADES.includes(bruto.complexidade as string)) filtros.complexidade = bruto.complexidade as Complexidade;
+  if (typeof bruto.turmaId === 'string' && bruto.turmaId) filtros.turmaId = bruto.turmaId;
+  return filtros;
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatData, formatDataHora, formatDias, formatNota, formatPrazoRelativo, iniciais, paraInputDataHora, plural } from './format';
+import { formatData, formatDataHora, formatDias, formatNota, formatPrazoRelativo, formatTamanho, iniciais, paraInputDataHora, plural } from './format';
 
 // Datas locais (e não UTC) para o teste valer em qualquer fuso do computador.
 const local = (ano: number, mes: number, dia: number, h = 12, min = 0) => new Date(ano, mes - 1, dia, h, min);
@@ -106,5 +106,14 @@ describe('plural', () => {
     expect(plural(3, 'turma')).toBe('3 turmas');
     expect(plural(0, 'pendente')).toBe('0 pendentes');
     expect(plural(2, 'mês', 'meses')).toBe('2 meses');
+  });
+});
+
+describe('formatTamanho', () => {
+  it('escolhe a unidade e usa vírgula decimal', () => {
+    expect(formatTamanho(512)).toBe('512 B');
+    expect(formatTamanho(950 * 1024)).toBe('950 KB');
+    expect(formatTamanho(1800 * 1024)).toBe('1,8 MB');
+    expect(formatTamanho(25 * 1024 * 1024)).toBe('25,0 MB');
   });
 });

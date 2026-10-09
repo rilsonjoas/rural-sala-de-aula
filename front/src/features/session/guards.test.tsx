@@ -56,7 +56,7 @@ describe('guardas de rota', () => {
   it('aluno acessa /atividades e /atividades/:id', async () => {
     await entrarComo(ALUNA);
     renderApp('/atividades');
-    expect(await screen.findByRole('heading', { name: 'Atividades', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas atividades', level: 2 })).toBeInTheDocument();
     cleanup();
 
     renderApp(`/atividades/${IDATIVIDADE}`);

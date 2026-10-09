@@ -109,7 +109,7 @@ describe('Entrar a partir de outra tela', () => {
     await usuario.type(screen.getByLabelText('Senha'), ALUNA.senha);
     await usuario.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByRole('heading', { name: 'Atividades', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas atividades', level: 2 })).toBeInTheDocument();
   });
 });
 

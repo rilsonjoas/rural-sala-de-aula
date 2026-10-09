@@ -62,3 +62,10 @@ export function formatData(iso: string, agora: Date = new Date()): string {
 export function paraInputDataHora(data: Date): string {
   return `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}T${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}`;
 }
+
+/** Tamanho de arquivo legível: "512 B", "950 KB", "1,8 MB". */
+export function formatTamanho(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+}

@@ -50,3 +50,15 @@ export function formatPrazoRelativo(prazoFinalIso: string, agora: Date = new Dat
 export function plural(n: number, singular: string, formaPlural = `${singular}s`): string {
   return `${n} ${n === 1 ? singular : formaPlural}`;
 }
+
+/** "20/10", com o ano só quando for diferente do atual. */
+export function formatData(iso: string, agora: Date = new Date()): string {
+  const data = new Date(iso);
+  const ano = data.getFullYear() === agora.getFullYear() ? '' : `/${data.getFullYear()}`;
+  return `${doisDigitos(data.getDate())}/${doisDigitos(data.getMonth() + 1)}${ano}`;
+}
+
+/** Valor para <input type="datetime-local">: "2026-10-15T23:59" no fuso do navegador. */
+export function paraInputDataHora(data: Date): string {
+  return `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}T${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}`;
+}

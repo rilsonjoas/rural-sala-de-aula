@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDataHora, formatDias, formatNota, formatPrazoRelativo, iniciais } from './format';
+import { formatData, formatDataHora, formatDias, formatNota, formatPrazoRelativo, iniciais, paraInputDataHora, plural } from './format';
 
 // Datas locais (e não UTC) para o teste valer em qualquer fuso do computador.
 const local = (ano: number, mes: number, dia: number, h = 12, min = 0) => new Date(ano, mes - 1, dia, h, min);
@@ -81,5 +81,30 @@ describe('formatPrazoRelativo', () => {
 
   it('diz que passou hoje quando venceu algumas horas atrás', () => {
     expect(formatPrazoRelativo(local(2026, 10, 13, 8, 0).toISOString(), agora)).toBe('Prazo final passou hoje');
+  });
+});
+
+describe('formatData', () => {
+  const agora = local(2026, 10, 9);
+
+  it('mostra só dia/mês no ano atual e inclui o ano nos outros', () => {
+    expect(formatData(local(2026, 10, 20).toISOString(), agora)).toBe('20/10');
+    expect(formatData(local(2027, 1, 5).toISOString(), agora)).toBe('05/01/2027');
+  });
+});
+
+describe('paraInputDataHora', () => {
+  it('formata a data local como o campo datetime-local espera', () => {
+    expect(paraInputDataHora(local(2026, 3, 5, 8, 5))).toBe('2026-03-05T08:05');
+    expect(paraInputDataHora(local(2030, 12, 31, 23, 59))).toBe('2030-12-31T23:59');
+  });
+});
+
+describe('plural', () => {
+  it('concorda com o número', () => {
+    expect(plural(1, 'turma')).toBe('1 turma');
+    expect(plural(3, 'turma')).toBe('3 turmas');
+    expect(plural(0, 'pendente')).toBe('0 pendentes');
+    expect(plural(2, 'mês', 'meses')).toBe('2 meses');
   });
 });

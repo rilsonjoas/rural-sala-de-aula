@@ -338,8 +338,13 @@ export interface components {
             /** Format: uuid */
             turmaId: string;
             turmaNome: string;
+            modalidade: components["schemas"]["AtividadeModalidade"];
+            /** Format: date-time */
+            disponivelEm: string;
             /** @description Derivado; só para ALUNO */
             estado?: components["schemas"]["EstadoAtividade"];
+            /** @description Só para ALUNO: nota da entrega, quando já avaliada (para o selo Concluída · nota 9,5) */
+            nota?: number | null;
         };
         AtividadeDetalhe: components["schemas"]["Atividade"] & {
             professorNome: string;

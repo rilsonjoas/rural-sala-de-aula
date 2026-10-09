@@ -25,6 +25,11 @@ export function estadoParaAluno(atividade: AtividadeDb, alunoId: string) {
   return estadoDaAtividade(atividade, entrega, entrega ? avaliacaoDaEntrega(entrega.id) : undefined, agora());
 }
 
+export function notaDoAluno(atividadeId: string, alunoId: string) {
+  const entrega = entregaDoAluno(atividadeId, alunoId);
+  return (entrega && avaliacaoDaEntrega(entrega.id)?.nota) ?? null;
+}
+
 export function estaInscrito(turmaId: string, alunoId: string) {
   return db.inscricoes.some((i) => i.turmaId === turmaId && i.alunoId === alunoId);
 }
@@ -73,7 +78,9 @@ export function paraAtividadeApi(atividade: AtividadeDb, usuario: UsuarioComSenh
     modalidade: atividade.modalidade,
     prazoFinal: atividade.prazoFinal,
     disponivelEm: atividade.disponivelEm,
-    ...(usuario.papel === 'ALUNO' ? { estado: estadoParaAluno(atividade, usuario.id) } : {}),
+    ...(usuario.papel === 'ALUNO'
+      ? { estado: estadoParaAluno(atividade, usuario.id), nota: notaDoAluno(atividade.id, usuario.id) }
+      : {}),
   };
 }
 

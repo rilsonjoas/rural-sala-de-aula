@@ -29,3 +29,11 @@ export function useEntrarNaTurma() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: TURMAS_KEY }),
   });
 }
+
+export function useTurma(turmaId: string) {
+  return useQuery({
+    queryKey: ['turma', turmaId],
+    queryFn: async () => (await api.GET('/turmas/{turmaId}', { params: { path: { turmaId } } })).data!,
+    retry: false,
+  });
+}

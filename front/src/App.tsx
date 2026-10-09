@@ -7,6 +7,7 @@ import { SessionWatcher } from './features/session/session-watcher';
 import { messages as copy } from './i18n/messages';
 import { AuthPage } from './features/auth/auth-page';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { TurmaPage } from './features/atividades/turma-page';
 import { TurmasPage } from './features/turmas/turmas-page';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
@@ -27,10 +28,7 @@ export default function App() {
         <Route element={<RequireAuth />}>
           <Route element={<AppShell />}>
             <Route path="/turmas" element={<TurmasPage />} />
-            <Route
-              path="/turmas/:turmaId"
-              element={<PlaceholderPage title={copy.classDetail} description={copy.classDetailDescription} />}
-            />
+            <Route path="/turmas/:turmaId" element={<TurmaPage />} />
 
             <Route element={<RequireRole papel="ALUNO" />}>
               <Route

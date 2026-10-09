@@ -1,4 +1,4 @@
-package com.narniano.studypath.api;
+package com.narniano.salaaula.api;
 
 import java.time.Instant;
 
@@ -12,7 +12,7 @@ public class HealthController {
 
     @GetMapping("/health")
     public HealthResponse health() {
-        return new HealthResponse("ok", "rota-de-estudo-api", "0.1.0", Instant.now());
+        return new HealthResponse("ok", "rural-sala-de-aula-api", "0.1.0", Instant.now());
     }
 
     public record HealthResponse(String status, String service, String version, Instant timestamp) {

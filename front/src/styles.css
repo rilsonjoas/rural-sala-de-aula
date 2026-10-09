@@ -1,30 +1,61 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme inline {
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-highlight: hsl(var(--highlight));
+  --color-highlight-foreground: hsl(var(--highlight-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-tint: hsl(var(--success-tint));
+  --color-danger-tint: hsl(var(--danger-tint));
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 0.25rem);
+  --radius-sm: calc(var(--radius) - 0.5rem);
+}
 
 @layer base {
   :root {
-    --background: 156 32% 9%;
-    --foreground: 130 25% 94%;
-    --card: 156 28% 12%;
-    --card-foreground: 130 25% 94%;
-    --popover: 156 28% 12%;
-    --popover-foreground: 130 25% 94%;
-    --primary: 141 32% 68%;
-    --primary-foreground: 156 40% 10%;
-    --secondary: 155 20% 20%;
-    --secondary-foreground: 130 25% 94%;
-    --muted: 155 18% 17%;
-    --muted-foreground: 140 12% 70%;
-    --accent: 42 75% 60%;
-    --accent-foreground: 40 30% 10%;
-    --destructive: 0 65% 55%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 155 20% 26%;
-    --input: 155 20% 26%;
-    --ring: 141 32% 68%;
-    --shell-glow: 155 30% 17%;
-    --shell-online: 141 45% 60%;
+    --background: 225 25% 97%;
+    --foreground: 219 49% 21%;
+    --card: 0 0% 100%;
+    --card-foreground: 219 49% 21%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 219 49% 21%;
+    --primary: 219 49% 21%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 48% 94%;
+    --secondary-foreground: 219 49% 21%;
+    --muted: 220 48% 94%;
+    --muted-foreground: 219 12% 41%;
+    --accent: 220 48% 94%;
+    --accent-foreground: 219 49% 21%;
+    --destructive: 356 77% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 18% 90%;
+    --input: 220 18% 90%;
+    --ring: 219 49% 21%;
+    --highlight: 38 94% 59%;
+    --highlight-foreground: 219 49% 21%;
+    --success: 146 61% 30%;
+    --success-tint: 142 35% 94%;
+    --danger-tint: 353 81% 96%;
     --radius: 0.75rem;
   }
 
@@ -48,7 +79,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: radial-gradient(circle at top right, hsl(var(--shell-glow)) 0, hsl(var(--background)) 45%);
+  background: hsl(var(--background));
 }
 
 button,
@@ -74,15 +105,6 @@ a {
   padding: 1rem 0 1.5rem;
 }
 
-.eyebrow {
-  margin: 0 0 0.5rem;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 h1,
 h2,
 p {
@@ -93,33 +115,6 @@ h1 {
   margin-bottom: 0;
   font-size: clamp(1.8rem, 5vw, 3rem);
   line-height: 1;
-}
-
-.connection {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-  padding: 0.5rem 0.7rem;
-  border: 1px solid hsl(var(--border));
-  border-radius: 999px;
-  color: hsl(var(--secondary-foreground));
-  font-size: 0.75rem;
-}
-
-.connection-dot {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: hsl(var(--accent));
-}
-
-.connection-online .connection-dot {
-  background: hsl(var(--shell-online));
-}
-
-.connection-offline .connection-dot {
-  background: hsl(var(--destructive));
 }
 
 .app-nav {
@@ -151,8 +146,7 @@ h1 {
   padding: clamp(1.25rem, 4vw, 3rem);
   border: 1px solid hsl(var(--border));
   border-radius: 1.25rem;
-  background: hsl(var(--card) / 0.82);
-  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.18);
+  background: hsl(var(--card));
 }
 
 .placeholder-page h2 {
@@ -160,20 +154,10 @@ h1 {
   font-size: clamp(1.6rem, 4vw, 2.4rem);
 }
 
-.placeholder-page p:not(.eyebrow) {
+.placeholder-page p {
   max-width: 34rem;
   color: hsl(var(--secondary-foreground));
   line-height: 1.6;
-}
-
-.placeholder-page button {
-  margin-top: 1.25rem;
-}
-
-.foundation-note {
-  margin: 1rem 0 0;
-  color: hsl(var(--muted-foreground));
-  font-size: 0.9rem;
 }
 
 @media (min-width: 48rem) {

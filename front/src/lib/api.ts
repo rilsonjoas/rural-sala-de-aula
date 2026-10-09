@@ -1,6 +1,6 @@
 import type { components } from './api.generated';
 
-export type HealthResponse = components['schemas']['HealthResponse'];
+export type HealthResponse = components['schemas']['Health'];
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '/api/v1';
 

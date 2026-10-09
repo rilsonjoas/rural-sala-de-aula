@@ -1,1316 +1,214 @@
 openapi: 3.0.3
 info:
-  title: Rota de Estudo API
+  title: Rural Sala de Aula API
   version: 0.1.0
-  description: Contrato de integração entre o frontend e a API do StudyPath.
+  description: Contrato entre o front-end e a API. Escopo atual = requisitos P1.
 servers:
   - url: http://localhost:8080/api/v1
-    description: Desenvolvimento local
   - url: /api/v1
-    description: Mesmo origin por meio do proxy
 security:
   - cookieAuth: []
-tags:
-  - name: System
-  - name: Auth
-  - name: Periodos
-  - name: Disciplinas
-  - name: Tarefas
-  - name: Provas
-  - name: Horarios
-  - name: Cancelamentos
+tags: [{name: System}, {name: Auth}, {name: Turmas}, {name: Atividades}, {name: Entregas}]
 paths:
   /health:
     get:
-      tags:
-        - System
+      tags: [System]
       operationId: getHealth
       security: []
-      summary: Verifica a disponibilidade da API
       responses:
-        '200':
-          description: API disponível
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Health'}}}}
   /auth/register:
     post:
-      tags:
-        - Auth
+      tags: [Auth]
       operationId: register
       security: []
-      summary: Cria uma conta individual
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterRequest'
+      summary: Cria a conta e já inicia a sessão (Set-Cookie), sem exigir login em seguida. O papel (ALUNO ou PROFESSOR) é escolhido livremente no P1; convite para professor é backlog.
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RegisterRequest'}}}}
       responses:
-        '201':
-          description: Conta criada
-          headers:
-            Set-Cookie:
-              description: Cookie de sessão httpOnly
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '409':
-          $ref: '#/components/responses/Conflict'
+        '201': {description: Criado, content: {application/json: {schema: {$ref: '#/components/schemas/Usuario'}}}}
+        '409': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
   /auth/login:
     post:
-      tags:
-        - Auth
+      tags: [Auth]
       operationId: login
       security: []
-      summary: Inicia uma sessão
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/LoginRequest'
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LoginRequest'}}}}
       responses:
-        '200':
-          description: Sessão iniciada
-          headers:
-            Set-Cookie:
-              description: Cookie de sessão httpOnly
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '429':
-          $ref: '#/components/responses/TooManyRequests'
-  /auth/refresh:
-    post:
-      tags:
-        - Auth
-      operationId: refreshSession
-      security: []
-      summary: Renova a sessão atual
-      responses:
-        '200':
-          description: Sessão renovada
-          headers:
-            Set-Cookie:
-              description: Cookie de sessão httpOnly rotacionado
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Usuario'}}}}
+        '401': {$ref: '#/components/responses/Problem'}
   /auth/logout:
     post:
-      tags:
-        - Auth
+      tags: [Auth]
       operationId: logout
-      summary: Revoga a sessão atual
       responses:
-        '204':
-          description: Sessão revogada
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-  /auth/me:
+        '204': {description: Sem conteúdo}
+  /me:
     get:
-      tags:
-        - Auth
-      operationId: getCurrentUser
-      summary: Retorna o usuário autenticado
+      tags: [Auth]
+      operationId: getMe
       responses:
-        '200':
-          description: Usuário autenticado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-  /periodos:
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Usuario'}}}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /turmas:
     get:
-      tags:
-        - Periodos
-      operationId: listPeriodos
-      summary: Lista períodos do usuário
+      tags: [Turmas]
+      operationId: listTurmas
+      summary: Aluno = turmas em que está inscrito; professor = turmas que administra. Sem paginação no P1.
       parameters:
-        - $ref: '#/components/parameters/IncludeArchived'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
+        - {name: semestre, in: query, required: false, schema: {type: string, pattern: '^[0-9]{4}\.[12]$'}, description: 'Filtra por semestre, ex. 2026.2'}
       responses:
-        '200':
-          description: Página de períodos
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PeriodoPage'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Turma'}}}}}
     post:
-      tags:
-        - Periodos
-      operationId: createPeriodo
-      summary: Cria um período
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PeriodoRequest'
+      tags: [Turmas]
+      operationId: createTurma
+      summary: 'Somente PROFESSOR. O código de inscrição é gerado pelo servidor (6 caracteres, sem 0, O, 1, I, L).'
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TurmaInput'}}}}
       responses:
-        '201':
-          description: Período criado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Periodo'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-  /periodos/{periodoId}:
-    parameters:
-      - $ref: '#/components/parameters/PeriodoId'
+        '201': {description: Criada, content: {application/json: {schema: {$ref: '#/components/schemas/Turma'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /turmas/{turmaId}:
     get:
-      tags:
-        - Periodos
-      operationId: getPeriodo
-      summary: Obtém um período
+      tags: [Turmas]
+      operationId: getTurma
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
       responses:
-        '200':
-          description: Período
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Periodo'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    patch:
-      tags:
-        - Periodos
-      operationId: updatePeriodo
-      summary: Atualiza um período
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PeriodoRequest'
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Turma'}}}}
+        '404': {$ref: '#/components/responses/Problem'}
+  /inscricoes:
+    post:
+      tags: [Turmas]
+      operationId: enrollTurma
+      summary: Somente ALUNO. Código comparado sem diferenciar maiúsculas e sem espaços nas pontas.
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [codigo], properties: {codigo: {type: string}}}}}}
       responses:
-        '200':
-          description: Período atualizado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Periodo'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags:
-        - Periodos
-      operationId: deletePeriodo
-      summary: Remove um período
-      responses:
-        '204':
-          description: Período removido
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /periodos/{periodoId}/disciplinas:
-    parameters:
-      - $ref: '#/components/parameters/PeriodoId'
+        '201': {description: Inscrito, content: {application/json: {schema: {$ref: '#/components/schemas/Turma'}}}}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /turmas/{turmaId}/atividades:
+    parameters: [{$ref: '#/components/parameters/TurmaId'}]
     get:
-      tags:
-        - Disciplinas
-      operationId: listDisciplinas
-      summary: Lista disciplinas de um período
+      tags: [Atividades]
+      operationId: listAtividades
+      summary: 'Atividades de uma turma, com os filtros e a ordenação do RF05. Aluno só vê atividades já disponíveis. O filtro estado só vale para ALUNO.'
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
+        - {$ref: '#/components/parameters/FiltroEstado'}
+        - {$ref: '#/components/parameters/FiltroTipo'}
+        - {$ref: '#/components/parameters/FiltroModalidade'}
+        - {$ref: '#/components/parameters/FiltroComplexidade'}
+        - {$ref: '#/components/parameters/Ordenar'}
+        - {$ref: '#/components/parameters/Direcao'}
       responses:
-        '200':
-          description: Página de disciplinas
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DisciplinaPage'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Atividade'}}}}}
     post:
-      tags:
-        - Disciplinas
-      operationId: createDisciplina
-      summary: Cria uma disciplina
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DisciplinaRequest'
+      tags: [Atividades]
+      operationId: createAtividade
+      summary: Somente PROFESSOR dono da turma.
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/AtividadeInput'}}}}
       responses:
-        '201':
-          description: Disciplina criada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Disciplina'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /disciplinas/{disciplinaId}:
-    parameters:
-      - $ref: '#/components/parameters/DisciplinaId'
+        '201': {description: Criada, content: {application/json: {schema: {$ref: '#/components/schemas/Atividade'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /atividades:
     get:
-      tags:
-        - Disciplinas
-      operationId: getDisciplina
-      summary: Obtém uma disciplina
-      responses:
-        '200':
-          description: Disciplina
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Disciplina'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    patch:
-      tags:
-        - Disciplinas
-      operationId: updateDisciplina
-      summary: Atualiza uma disciplina
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/DisciplinaRequest'
-      responses:
-        '200':
-          description: Disciplina atualizada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Disciplina'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags:
-        - Disciplinas
-      operationId: deleteDisciplina
-      summary: Remove uma disciplina
-      responses:
-        '204':
-          description: Disciplina removida
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /disciplinas/{disciplinaId}/tarefas:
-    parameters:
-      - $ref: '#/components/parameters/DisciplinaId'
-    get:
-      tags:
-        - Tarefas
-      operationId: listTarefas
-      summary: Lista tarefas de uma disciplina
+      tags: [Atividades]
+      operationId: listMinhasAtividades
+      summary: 'Somente ALUNO. Atividades de todas as turmas em que está inscrito, com os filtros e a ordenação do RF05 (estado, tipo, modalidade, complexidade, turma). Só atividades já disponíveis. ordenar=prazo ordena por prazoFinal. Sem paginação no P1.'
       parameters:
-        - $ref: '#/components/parameters/TaskStatus'
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
+        - {$ref: '#/components/parameters/FiltroEstado'}
+        - {$ref: '#/components/parameters/FiltroTipo'}
+        - {$ref: '#/components/parameters/FiltroModalidade'}
+        - {$ref: '#/components/parameters/FiltroComplexidade'}
+        - {name: turmaId, in: query, required: false, schema: {type: string, format: uuid}, description: Filtra por uma turma}
+        - {$ref: '#/components/parameters/Ordenar'}
+        - {$ref: '#/components/parameters/Direcao'}
       responses:
-        '200':
-          description: Página de tarefas
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TarefaPage'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Atividade'}}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+  /atividades/{atividadeId}:
+    get:
+      tags: [Atividades]
+      operationId: getAtividade
+      summary: Detalhe da atividade com estado e, para ALUNO, a própria entrega (minhaEntrega).
+      parameters: [{$ref: '#/components/parameters/AtividadeId'}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/AtividadeDetalhe'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /atividades/{atividadeId}/entregas:
+    parameters: [{$ref: '#/components/parameters/AtividadeId'}]
     post:
-      tags:
-        - Tarefas
-      operationId: createTarefa
-      summary: Cria uma tarefa
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TarefaRequest'
+      tags: [Entregas]
+      operationId: submitEntrega
+      summary: 'Somente ALUNO inscrito. Reenvio substitui a entrega anterior. Após o prazo_final é aceita e marcada como atrasada. Limites: até 25 MB; extensões pdf, ppt, pptx, doc, docx, txt. Depois que o professor avalia a entrega, o reenvio é bloqueado (409).'
+      requestBody: {required: true, content: {multipart/form-data: {schema: {type: object, required: [arquivo], properties: {arquivo: {type: string, format: binary}}}}}}
       responses:
-        '201':
-          description: Tarefa criada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tarefa'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /tarefas/{tarefaId}:
-    parameters:
-      - $ref: '#/components/parameters/TarefaId'
+        '201': {description: Registrada, content: {application/json: {schema: {$ref: '#/components/schemas/Entrega'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {description: Entrega já avaliada; não aceita reenvio, content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}}
+        '413': {description: Arquivo maior que 25 MB, content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}}
+        '415': {description: Tipo de arquivo não aceito, content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}}
+        '422': {$ref: '#/components/responses/Problem'}
     get:
-      tags:
-        - Tarefas
-      operationId: getTarefa
-      summary: Obtém uma tarefa
+      tags: [Entregas]
+      operationId: listEntregas
+      summary: Somente PROFESSOR dono da turma. Lista só quem entregou (quem não entregou é backlog).
       responses:
-        '200':
-          description: Tarefa
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tarefa'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    patch:
-      tags:
-        - Tarefas
-      operationId: updateTarefa
-      summary: Atualiza uma tarefa
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TarefaRequest'
-      responses:
-        '200':
-          description: Tarefa atualizada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tarefa'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags:
-        - Tarefas
-      operationId: deleteTarefa
-      summary: Remove uma tarefa
-      responses:
-        '204':
-          description: Tarefa removida
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /disciplinas/{disciplinaId}/provas:
-    parameters:
-      - $ref: '#/components/parameters/DisciplinaId'
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Entrega'}}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+  /entregas/{entregaId}/arquivo:
     get:
-      tags:
-        - Provas
-      operationId: listProvas
-      summary: Lista provas de uma disciplina
-      parameters:
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Size'
+      tags: [Entregas]
+      operationId: downloadEntrega
+      summary: Somente PROFESSOR dono da turma.
+      parameters: [{name: entregaId, in: path, required: true, schema: {type: string, format: uuid}}]
       responses:
-        '200':
-          description: Página de provas
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProvaPage'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    post:
-      tags:
-        - Provas
-      operationId: createProva
-      summary: Cria uma prova
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProvaRequest'
+        '200': {description: Arquivo, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /entregas/{entregaId}/avaliacao:
+    put:
+      tags: [Entregas]
+      operationId: evaluateEntrega
+      summary: Somente PROFESSOR dono da turma. Nota de 0 a 10.
+      parameters: [{name: entregaId, in: path, required: true, schema: {type: string, format: uuid}}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/AvaliacaoInput'}}}}
       responses:
-        '201':
-          description: Prova criada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Prova'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /provas/{provaId}:
-    parameters:
-      - $ref: '#/components/parameters/ProvaId'
-    get:
-      tags:
-        - Provas
-      operationId: getProva
-      summary: Obtém uma prova
-      responses:
-        '200':
-          description: Prova
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Prova'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    patch:
-      tags:
-        - Provas
-      operationId: updateProva
-      summary: Atualiza uma prova
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ProvaRequest'
-      responses:
-        '200':
-          description: Prova atualizada
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Prova'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags:
-        - Provas
-      operationId: deleteProva
-      summary: Remove uma prova
-      responses:
-        '204':
-          description: Prova removida
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /periodos/{periodoId}/horarios:
-    parameters:
-      - $ref: '#/components/parameters/PeriodoId'
-    get:
-      tags:
-        - Horarios
-      operationId: listHorarios
-      summary: Lista a grade-tipo de um período
-      responses:
-        '200':
-          description: Horários do período
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Horario'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    post:
-      tags:
-        - Horarios
-      operationId: createHorario
-      summary: Cria um horário semanal
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HorarioRequest'
-      responses:
-        '201':
-          description: Horário criado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Horario'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /horarios/{horarioId}:
-    parameters:
-      - $ref: '#/components/parameters/HorarioId'
-    get:
-      tags:
-        - Horarios
-      operationId: getHorario
-      summary: Obtém um horário
-      responses:
-        '200':
-          description: Horário
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Horario'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    patch:
-      tags:
-        - Horarios
-      operationId: updateHorario
-      summary: Atualiza um horário
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/HorarioRequest'
-      responses:
-        '200':
-          description: Horário atualizado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Horario'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    delete:
-      tags:
-        - Horarios
-      operationId: deleteHorario
-      summary: Remove um horário
-      responses:
-        '204':
-          description: Horário removido
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /horarios/{horarioId}/cancelamentos:
-    parameters:
-      - $ref: '#/components/parameters/HorarioId'
-    get:
-      tags:
-        - Cancelamentos
-      operationId: listCancelamentos
-      summary: Lista os cancelamentos de um horário
-      parameters:
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
-      responses:
-        '200':
-          description: Cancelamentos
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Cancelamento'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-    post:
-      tags:
-        - Cancelamentos
-      operationId: createCancelamento
-      summary: Cancela uma instância de aula
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelamentoRequest'
-      responses:
-        '201':
-          description: Cancelamento criado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Cancelamento'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-  /cancelamentos/{cancelamentoId}:
-    parameters:
-      - $ref: '#/components/parameters/CancelamentoId'
-    delete:
-      tags:
-        - Cancelamentos
-      operationId: deleteCancelamento
-      summary: Remove um cancelamento
-      responses:
-        '204':
-          description: Cancelamento removido
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Entrega'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
 components:
   securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: rota_session
+    cookieAuth: {type: apiKey, in: cookie, name: SESSION, description: 'Cookie httpOnly, SameSite=Lax, definido por login e register (ADR-0004). O front nunca lê o token; usa GET /me para saber quem está logado.'}
   parameters:
-    PeriodoId:
-      name: periodoId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    DisciplinaId:
-      name: disciplinaId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    TarefaId:
-      name: tarefaId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    ProvaId:
-      name: provaId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    HorarioId:
-      name: horarioId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    CancelamentoId:
-      name: cancelamentoId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    IncludeArchived:
-      name: includeArchived
-      in: query
-      required: false
-      schema:
-        type: boolean
-        default: false
-    Page:
-      name: page
-      in: query
-      required: false
-      schema:
-        type: integer
-        minimum: 0
-        default: 0
-    Size:
-      name: size
-      in: query
-      required: false
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-    TaskStatus:
-      name: status
-      in: query
-      required: false
-      schema:
-        $ref: '#/components/schemas/TarefaStatus'
-    From:
-      name: from
-      in: query
-      required: false
-      description: Limite inicial inclusivo em ISO-8601.
-      schema:
-        type: string
-        format: date-time
-    To:
-      name: to
-      in: query
-      required: false
-      description: Limite final exclusivo em ISO-8601.
-      schema:
-        type: string
-        format: date-time
+    TurmaId: {name: turmaId, in: path, required: true, schema: {type: string, format: uuid}}
+    AtividadeId: {name: atividadeId, in: path, required: true, schema: {type: string, format: uuid}}
+    FiltroEstado: {name: estado, in: query, required: false, schema: {$ref: '#/components/schemas/EstadoAtividade'}}
+    FiltroTipo: {name: tipo, in: query, required: false, schema: {$ref: '#/components/schemas/AtividadeTipo'}}
+    FiltroModalidade: {name: modalidade, in: query, required: false, schema: {$ref: '#/components/schemas/AtividadeModalidade'}}
+    FiltroComplexidade: {name: complexidade, in: query, required: false, schema: {$ref: '#/components/schemas/Complexidade'}}
+    Ordenar: {name: ordenar, in: query, required: false, schema: {type: string, enum: [prazo, complexidade], default: prazo}, description: 'prazo = prazoFinal; complexidade ordena BAIXA < MEDIA < ALTA'}
+    Direcao: {name: direcao, in: query, required: false, schema: {type: string, enum: [asc, desc], default: asc}}
   responses:
-    BadRequest:
-      description: Requisição inválida
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
-    Unauthorized:
-      description: Sessão ausente ou inválida
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
-    NotFound:
-      description: Recurso não encontrado ou não pertencente ao usuário
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
-    Conflict:
-      description: Conflito com um recurso existente
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
-    TooManyRequests:
-      description: Limite de requisições excedido
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ApiError'
+    Problem:
+      description: Erro
+      content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}
   schemas:
-    HealthResponse:
-      type: object
-      required:
-        - status
-        - service
-        - version
-        - timestamp
-      properties:
-        status:
-          type: string
-          enum:
-            - ok
-        service:
-          type: string
-          example: rota-de-estudo-api
-        version:
-          type: string
-          example: 0.1.0
-        timestamp:
-          type: string
-          format: date-time
-    RegisterRequest:
-      type: object
-      required:
-        - name
-        - email
-        - password
-      additionalProperties: false
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-          minLength: 8
-          maxLength: 128
-        locale:
-          type: string
-          default: pt-BR
-          enum:
-            - pt-BR
-            - en
-        timezone:
-          type: string
-          default: America/Recife
-    LoginRequest:
-      type: object
-      required:
-        - email
-        - password
-      additionalProperties: false
-      properties:
-        email:
-          type: string
-          format: email
-        password:
-          type: string
-          format: password
-    AuthResponse:
-      type: object
-      required:
-        - user
-        - expiresAt
-      properties:
-        user:
-          $ref: '#/components/schemas/User'
-        expiresAt:
-          type: string
-          format: date-time
-    User:
-      type: object
-      required:
-        - id
-        - name
-        - email
-        - locale
-        - timezone
-        - createdAt
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        locale:
-          type: string
-          enum:
-            - pt-BR
-            - en
-        timezone:
-          type: string
-          example: America/Recife
-        createdAt:
-          type: string
-          format: date-time
-    PeriodoRequest:
-      type: object
-      required:
-        - name
-      additionalProperties: false
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        startsOn:
-          type: string
-          format: date
-          nullable: true
-        endsOn:
-          type: string
-          format: date
-          nullable: true
-        status:
-          $ref: '#/components/schemas/PeriodoStatus'
-    Periodo:
-      allOf:
-        - $ref: '#/components/schemas/PeriodoRequest'
-        - type: object
-          required:
-            - id
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-    PeriodoStatus:
-      type: string
-      enum:
-        - ABERTO
-        - ARQUIVADO
-    DisciplinaRequest:
-      type: object
-      required:
-        - name
-      additionalProperties: false
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 120
-        color:
-          type: string
-          pattern: '^#[0-9A-Fa-f]{6}$'
-          nullable: true
-    Disciplina:
-      allOf:
-        - $ref: '#/components/schemas/DisciplinaRequest'
-        - type: object
-          required:
-            - id
-            - periodoId
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-            periodoId:
-              type: string
-              format: uuid
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-    TarefaRequest:
-      type: object
-      required:
-        - title
-      additionalProperties: false
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        description:
-          type: string
-          maxLength: 4000
-          nullable: true
-        type:
-          $ref: '#/components/schemas/TarefaTipo'
-          nullable: true
-        priority:
-          $ref: '#/components/schemas/Prioridade'
-          nullable: true
-        status:
-          $ref: '#/components/schemas/TarefaStatus'
-        dueAt:
-          type: string
-          format: date-time
-          nullable: true
-        completedAt:
-          type: string
-          format: date-time
-          nullable: true
-        tags:
-          type: array
-          maxItems: 20
-          items:
-            type: string
-            minLength: 1
-            maxLength: 40
-    Tarefa:
-      allOf:
-        - $ref: '#/components/schemas/TarefaRequest'
-        - type: object
-          required:
-            - id
-            - disciplinaId
-            - status
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-            disciplinaId:
-              type: string
-              format: uuid
-            status:
-              $ref: '#/components/schemas/TarefaStatus'
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-    TarefaTipo:
-      type: string
-      enum:
-        - TAREFA
-        - TRABALHO
-        - OUTRO
-    Prioridade:
-      type: string
-      enum:
-        - BAIXA
-        - MEDIA
-        - ALTA
-    TarefaStatus:
-      type: string
-      enum:
-        - PENDENTE
-        - CONCLUIDA
-    ProvaRequest:
-      type: object
-      required:
-        - title
-        - startsAt
-      additionalProperties: false
-      properties:
-        title:
-          type: string
-          minLength: 1
-          maxLength: 200
-        startsAt:
-          type: string
-          format: date-time
-        weight:
-          type: number
-          minimum: 0
-          maximum: 100
-        grade:
-          type: number
-          minimum: 0
-          maximum: 100
-          nullable: true
-        notes:
-          type: string
-          maxLength: 4000
-          nullable: true
-    Prova:
-      allOf:
-        - $ref: '#/components/schemas/ProvaRequest'
-        - type: object
-          required:
-            - id
-            - disciplinaId
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-            disciplinaId:
-              type: string
-              format: uuid
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-    HorarioRequest:
-      type: object
-      required:
-        - disciplinaId
-        - weekday
-        - startsAt
-        - endsAt
-      additionalProperties: false
-      properties:
-        disciplinaId:
-          type: string
-          format: uuid
-        weekday:
-          $ref: '#/components/schemas/Weekday'
-        startsAt:
-          type: string
-          format: time
-          example: '08:00'
-        endsAt:
-          type: string
-          format: time
-          example: '09:50'
-    Horario:
-      allOf:
-        - $ref: '#/components/schemas/HorarioRequest'
-        - type: object
-          required:
-            - id
-            - periodoId
-            - createdAt
-            - updatedAt
-          properties:
-            id:
-              type: string
-              format: uuid
-            periodoId:
-              type: string
-              format: uuid
-            createdAt:
-              type: string
-              format: date-time
-            updatedAt:
-              type: string
-              format: date-time
-    Weekday:
-      type: string
-      description: MONDAY=1, TUESDAY=2, WEDNESDAY=3, THURSDAY=4, FRIDAY=5, SATURDAY=6, SUNDAY=7.
-      enum:
-        - MONDAY
-        - TUESDAY
-        - WEDNESDAY
-        - THURSDAY
-        - FRIDAY
-        - SATURDAY
-        - SUNDAY
-    CancelamentoRequest:
-      type: object
-      required:
-        - date
-      additionalProperties: false
-      properties:
-        date:
-          type: string
-          format: date
-        reason:
-          type: string
-          maxLength: 500
-          nullable: true
-    Cancelamento:
-      allOf:
-        - $ref: '#/components/schemas/CancelamentoRequest'
-        - type: object
-          required:
-            - id
-            - horarioId
-            - createdAt
-          properties:
-            id:
-              type: string
-              format: uuid
-            horarioId:
-              type: string
-              format: uuid
-            createdAt:
-              type: string
-              format: date-time
-    PageMeta:
-      type: object
-      required:
-        - page
-        - size
-        - totalElements
-        - totalPages
-      properties:
-        page:
-          type: integer
-        size:
-          type: integer
-        totalElements:
-          type: integer
-          format: int64
-        totalPages:
-          type: integer
-    PeriodoPage:
-      type: object
-      required:
-        - content
-        - page
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/Periodo'
-        page:
-          $ref: '#/components/schemas/PageMeta'
-    DisciplinaPage:
-      type: object
-      required:
-        - content
-        - page
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/Disciplina'
-        page:
-          $ref: '#/components/schemas/PageMeta'
-    TarefaPage:
-      type: object
-      required:
-        - content
-        - page
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/Tarefa'
-        page:
-          $ref: '#/components/schemas/PageMeta'
-    ProvaPage:
-      type: object
-      required:
-        - content
-        - page
-      properties:
-        content:
-          type: array
-          items:
-            $ref: '#/components/schemas/Prova'
-        page:
-          $ref: '#/components/schemas/PageMeta'
-    ApiError:
-      type: object
-      required:
-        - code
-        - message
-        - requestId
-        - timestamp
-      properties:
-        code:
-          type: string
-          example: VALIDATION_ERROR
-        message:
-          type: string
-        requestId:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-        details:
-          type: object
-          additionalProperties: true
+    Health: {type: object, required: [status, service, version, timestamp], properties: {status: {type: string}, service: {type: string}, version: {type: string}, timestamp: {type: string, format: date-time}}}
+    Problem: {type: object, required: [status, message], properties: {status: {type: integer}, message: {type: string}, campos: {type: array, description: 'Erros por campo (422), para o front marcar o campo certo', items: {type: object, required: [campo, mensagem], properties: {campo: {type: string, example: prazoFinal}, mensagem: {type: string}}}}}}
+    Papel: {type: string, enum: [ALUNO, PROFESSOR]}
+    Usuario: {type: object, required: [id, nome, email, papel], properties: {id: {type: string, format: uuid}, nome: {type: string}, email: {type: string, format: email}, papel: {$ref: '#/components/schemas/Papel'}}}
+    RegisterRequest: {type: object, required: [nome, email, senha, papel], properties: {nome: {type: string}, email: {type: string, format: email}, senha: {type: string, minLength: 8}, papel: {$ref: '#/components/schemas/Papel'}}}
+    LoginRequest: {type: object, required: [email, senha], properties: {email: {type: string, format: email}, senha: {type: string}}}
+    TurmaInput: {type: object, required: [nome, disciplina, semestre, diasAula], properties: {nome: {type: string}, disciplina: {type: string}, semestre: {type: string, pattern: '^[0-9]{4}\.[12]$', example: '2026.2'}, diasAula: {type: array, items: {type: integer, minimum: 1, maximum: 7}}}}
+    Turma: {allOf: [{$ref: '#/components/schemas/TurmaInput'}, {type: object, required: [id, professorId, professorNome], properties: {id: {type: string, format: uuid}, professorId: {type: string, format: uuid}, professorNome: {type: string}, codigo: {type: string, description: Visível apenas ao professor dono}, atividadesPendentes: {type: integer, minimum: 0, description: 'Só para ALUNO: atividades disponíveis com estado PENDENTE'}, atividadesAtrasadas: {type: integer, minimum: 0, description: 'Só para ALUNO: atividades disponíveis com estado ATRASADA'}}}]}
+    AtividadeTipo: {type: string, enum: [ATIVIDADE, TRABALHO, PROVA]}
+    AtividadeModalidade: {type: string, enum: [INDIVIDUAL, GRUPO]}
+    Complexidade: {type: string, enum: [BAIXA, MEDIA, ALTA]}
+    EstadoAtividade: {description: 'Derivado do prazoFinal, o limite real definido pelo professor. A data de entrega é a do próprio aluno (Entrega.enviadaEm). PENDENTE = sem entrega e agora ≤ prazoFinal. ATRASADA = sem entrega e agora > prazoFinal. ENTREGUE_COM_ATRASO = enviadaEm > prazoFinal. CONCLUIDA = entrega avaliada.', type: string, enum: [PENDENTE, ENTREGUE, ENTREGUE_COM_ATRASO, CONCLUIDA, ATRASADA]}
+    AtividadeInput: {type: object, required: [nome, complexidade, tipo, prazoFinal], properties: {nome: {type: string}, descricao: {type: string}, complexidade: {$ref: '#/components/schemas/Complexidade'}, tipo: {$ref: '#/components/schemas/AtividadeTipo'}, modalidade: {$ref: '#/components/schemas/AtividadeModalidade'}, prazoFinal: {type: string, format: date-time, description: Limite real; depois dele a entrega conta como atrasada}, disponivelEm: {type: string, format: date-time}}}
+    Atividade: {allOf: [{$ref: '#/components/schemas/AtividadeInput'}, {type: object, required: [id, turmaId, turmaNome, modalidade, disponivelEm], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, turmaNome: {type: string}, estado: {allOf: [{$ref: '#/components/schemas/EstadoAtividade'}], description: Derivado; só para ALUNO}}}]}
+    AtividadeDetalhe: {allOf: [{$ref: '#/components/schemas/Atividade'}, {type: object, required: [professorNome], properties: {professorNome: {type: string}, minhaEntrega: {allOf: [{$ref: '#/components/schemas/Entrega'}], nullable: true, description: 'Entrega do próprio aluno, se houver (inclui nota e comentarioPrivado quando avaliada)'}}}]}
+    AvaliacaoInput: {type: object, required: [nota], properties: {nota: {type: number, minimum: 0, maximum: 10, multipleOf: 0.1, description: Até 1 casa decimal}, comentarioPrivado: {type: string}}}
+    Entrega: {type: object, required: [id, atividadeId, alunoId, alunoNome, nomeOriginal, tamanhoBytes, enviadaEm, atrasada], properties: {id: {type: string, format: uuid}, atividadeId: {type: string, format: uuid}, alunoId: {type: string, format: uuid}, alunoNome: {type: string}, nomeOriginal: {type: string}, tamanhoBytes: {type: integer, minimum: 0}, enviadaEm: {type: string, format: date-time}, atrasada: {type: boolean, description: enviadaEm > prazoFinal da atividade}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}, comentarioPrivado: {type: string, nullable: true}}}

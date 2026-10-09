@@ -1,4 +1,4 @@
-package com.narniano.studypath.api;
+package com.narniano.salaaula.api;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -20,7 +20,7 @@ class HealthControllerTest {
         mockMvc.perform(get("/api/v1/health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"))
-                .andExpect(jsonPath("$.service").value("rota-de-estudo-api"))
+                .andExpect(jsonPath("$.service").value("rural-sala-de-aula-api"))
                 .andExpect(jsonPath("$.version").value("0.1.0"));
     }
 }

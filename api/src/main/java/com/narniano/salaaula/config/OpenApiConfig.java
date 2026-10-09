@@ -1,4 +1,4 @@
-package com.narniano.studypath.config;
+package com.narniano.salaaula.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -9,10 +9,10 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     @Bean
-    OpenAPI studyPathOpenApi() {
+    OpenAPI salaAulaOpenApi() {
         return new OpenAPI().info(new Info()
-                .title("Rota de Estudo API")
-                .description("API REST do StudyPath")
+                .title("Rural Sala de Aula API")
+                .description("API REST do Rural Sala de Aula")
                 .version("0.1.0"));
     }
 }

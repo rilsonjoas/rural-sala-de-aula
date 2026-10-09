@@ -32,7 +32,6 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - **Convite ou aprovação para o papel Professor** (hoje qualquer pessoa escolhe "Professor" ao criar a conta).
 - Recuperação de senha, edição de perfil e tema escuro.
 - Filtros do aluno salvos no servidor (hoje ficam no navegador).
-- Versão desktop das telas no Stitch: Turmas com menu lateral, Minhas atividades (tabela) e Entregas (tabela); o resto segue o DESIGN.md §5.
 - **Aviso de privacidade (LGPD)** no cadastro: o app coleta nome e e-mail e não informa a finalidade na coleta.
 - **Marcar como entregue** (o professor registra uma entrega feita fora do sistema), para a atividade não ficar "Atrasada" por engano.
 - **Botão Voltar do celular** fecha as folhas (hoje elas não são rotas; o Voltar sai da tela).

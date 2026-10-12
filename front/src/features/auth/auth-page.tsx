@@ -32,7 +32,7 @@ export function AuthPage() {
       <h2 className="sr-only">{aba === 'entrar' ? 'Entrar' : 'Criar conta'}</h2>
 
       <Tabs value={aba} onValueChange={setAba}>
-        <TabsList className="grid h-auto w-full grid-cols-2 bg-secondary p-1">
+        <TabsList className="grid h-auto w-full grid-cols-2 bg-secondary p-1 group-data-[orientation=horizontal]/tabs:h-auto">
           <TabsTrigger value="entrar" className={GATILHO}>
             Entrar
           </TabsTrigger>

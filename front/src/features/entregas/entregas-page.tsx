@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
+import { PrazoBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { useAtividade } from '@/features/atividades/api';
 import { ApiError } from '@/lib/api-error';
-import { plural } from '@/lib/format';
+import { formatDataHora, plural } from '@/lib/format';
+import { urgenciaDoPrazo } from '@/lib/urgencia';
 import { usePageTitle } from '@/lib/use-page-title';
 import { useMediaQuery } from '@/lib/use-media-query';
 import { useEntregas, type Entrega } from './api';
@@ -64,6 +66,12 @@ export function EntregasPage() {
           {atividade.data?.nome ?? 'Entregas da atividade'}
         </h2>
         {atividade.data ? <p className="text-muted-foreground">{atividade.data.turmaNome}</p> : null}
+        {atividade.data ? (
+          <p className="flex flex-wrap items-center gap-2 text-sm text-foreground">
+            {`Prazo final: ${formatDataHora(atividade.data.prazoFinal)}`}
+            <PrazoBadge urgencia={urgenciaDoPrazo(atividade.data.prazoFinal)} />
+          </p>
+        ) : null}
         {entregas.isSuccess ? (
           <p className="text-sm font-semibold text-primary">{`${plural(lista.length, 'entrega')} · ${comAtraso} com atraso · ${plural(avaliadas, 'avaliada')}`}</p>
         ) : null}

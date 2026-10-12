@@ -77,7 +77,7 @@ export function TurmasPage() {
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SemestreSelect semestres={semestres} valor={semestre} onChange={setEscolhido} />
-            <span className="inline-flex min-h-8 w-fit items-center rounded-full bg-highlight px-3 text-sm font-semibold text-highlight-foreground">
+            <span className="inline-flex min-h-8 w-fit items-center rounded-full bg-secondary px-3 text-sm font-semibold text-primary">
               {contador}
             </span>
           </div>

@@ -4,6 +4,7 @@ import { ComplexidadeIndicator } from '@/components/complexidade-indicator';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { StatusBadge } from '@/components/status-badge';
+import { alunoComPressa } from '@/lib/urgencia';
 import { Button } from '@/components/ui/button';
 import { useAtividade } from '@/features/atividades/api';
 import { ROTULO_MODALIDADE, ROTULO_TIPO } from '@/features/atividades/filtros';
@@ -61,7 +62,7 @@ export function DetalheAtividadePage() {
           <span className={chip}>{ROTULO_TIPO[a.tipo]}</span>
           {a.estado ? (
             <span className="ml-auto">
-              <StatusBadge estado={a.estado} nota={a.nota} />
+              <StatusBadge estado={a.estado} nota={a.nota} urgente={alunoComPressa(a)} />
             </span>
           ) : null}
         </div>

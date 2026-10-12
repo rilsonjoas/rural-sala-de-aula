@@ -41,7 +41,7 @@ describe('Atividades da turma (aluno)', () => {
 
     expect(await screen.findAllByRole('article')).toHaveLength(5);
     expect(screen.queryByRole('article', { name: /Projeto Final/ })).not.toBeInTheDocument();
-    expect(within(card(/Lista 1/)).getByText('Pendente')).toBeInTheDocument();
+    expect(within(card(/Lista 1/)).getByText('Vence em breve')).toBeInTheDocument();
     expect(within(card(/Trabalho 1/)).getByText('Entregue')).toBeInTheDocument();
     expect(within(card(/Lista 2/)).getByText('Entregue com atraso')).toBeInTheDocument();
     expect(within(card(/Prova Teórica 1/)).getByText('Concluída · nota 9,5')).toBeInTheDocument();

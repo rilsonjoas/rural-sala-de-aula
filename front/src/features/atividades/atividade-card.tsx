@@ -2,9 +2,10 @@ import { ArrowRight, ChevronRight } from 'lucide-react';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { ComplexidadeIndicator } from '@/components/complexidade-indicator';
-import { StatusBadge } from '@/components/status-badge';
+import { PrazoBadge, StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { formatData, formatDataHora } from '@/lib/format';
+import { alunoComPressa, urgenciaDoPrazo } from '@/lib/urgencia';
 import { apoioAoEstado } from './apoio';
 import { ROTULO_MODALIDADE, ROTULO_TIPO, type Atividade } from './filtros';
 
@@ -30,6 +31,8 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
   const Titulo = `h${nivelTitulo}` as 'h3' | 'h4';
   const idTitulo = useId();
   const apoio = apoioAoEstado(atividade);
+  const comPressa = alunoComPressa(atividade);
+  const atrasada = atividade.estado === 'ATRASADA';
   const aindaIndisponivel = new Date(atividade.disponivelEm).getTime() > Date.now();
   const urlDetalhe = `/atividades/${atividade.id}`;
 
@@ -43,7 +46,10 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
     );
 
   return (
-    <article aria-labelledby={idTitulo} className="relative space-y-3 rounded-xl border border-border bg-card p-4">
+    <article
+      aria-labelledby={idTitulo}
+      className={`relative space-y-3 rounded-xl border border-border bg-card p-4 ${comPressa ? 'border-l-4 border-l-highlight' : atrasada ? 'border-l-4 border-l-destructive' : ''}`}
+    >
       <div className="flex flex-wrap items-center gap-2">
         {variante === 'minhas' ? <span className={chipNeutro}>{atividade.turmaNome}</span> : null}
         <span className={chipNeutro}>{ROTULO_TIPO[atividade.tipo]}</span>
@@ -55,7 +61,11 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
         ) : null}
         {atividade.estado ? (
           <span className="ml-auto">
-            <StatusBadge estado={atividade.estado} nota={atividade.nota} />
+            <StatusBadge estado={atividade.estado} nota={atividade.nota} urgente={comPressa} />
+          </span>
+        ) : variante === 'turma-professor' ? (
+          <span className="ml-auto">
+            <PrazoBadge urgencia={urgenciaDoPrazo(atividade.prazoFinal)} />
           </span>
         ) : null}
       </div>
@@ -68,7 +78,7 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
         <ComplexidadeIndicator nivel={atividade.complexidade} />
         <p className="text-sm text-foreground">{`Prazo final: ${formatDataHora(atividade.prazoFinal)}`}</p>
       </div>
-      {apoio ? <p className="text-sm text-muted-foreground">{apoio}</p> : null}
+      {apoio ? <p className={comPressa || atrasada ? 'text-sm font-semibold text-primary' : 'text-sm text-muted-foreground'}>{apoio}</p> : null}
 
       {variante === 'turma-aluno' ? (
         <ChevronRight aria-hidden="true" className="absolute right-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />

@@ -39,7 +39,8 @@ describe('Minhas atividades (aluno)', () => {
     expect(lista1.getByText('Turma A — Algoritmos')).toBeInTheDocument();
     expect(lista1.getByText('Atividade')).toBeInTheDocument();
     expect(lista1.getByText('Individual')).toBeInTheDocument();
-    expect(lista1.getByText('Pendente')).toBeInTheDocument();
+    // Lista 1 vence em 2 dias (48 h): o selo de pendente vira "Vence em breve" (só apresentação).
+    expect(lista1.getByText('Vence em breve')).toBeInTheDocument();
     expect(lista1.getByRole('link', { name: 'Enviar entrega' })).toHaveAttribute('href', `/atividades/${A_LISTA_1}`);
 
     expect(within(card(/Lista 0/)).getByRole('link', { name: 'Enviar entrega' })).toHaveAttribute('href', `/atividades/${A_LISTA_0}`);

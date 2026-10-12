@@ -49,7 +49,7 @@ export function TurmaCardAluno({ turma }: { turma: Turma }) {
       <Linha icone={Clock}>{formatDias(turma.diasAula)}</Linha>
       <div className="flex flex-wrap items-center gap-2">
         {pendentes > 0 ? (
-          <span className="inline-flex min-h-6 items-center rounded-full bg-highlight px-2.5 text-xs font-semibold text-highlight-foreground">
+          <span className="inline-flex min-h-6 items-center rounded-full border border-primary bg-card px-2.5 text-xs font-semibold text-primary">
             {plural(pendentes, 'pendente')}
           </span>
         ) : null}

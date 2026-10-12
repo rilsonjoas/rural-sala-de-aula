@@ -4,6 +4,7 @@ import { ComplexidadeIndicator } from '@/components/complexidade-indicator';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { formatDataHora } from '@/lib/format';
+import { alunoComPressa } from '@/lib/urgencia';
 import { ROTULO_TIPO, type Atividade, type Ordenacao } from './filtros';
 
 type Props = { atividades: Atividade[]; ordenar: Ordenacao; onOrdenar: (ordenar: Ordenacao) => void };
@@ -88,7 +89,7 @@ export function AtividadesTabela({ atividades, ordenar, onOrdenar }: Props) {
                 <ComplexidadeIndicator nivel={a.complexidade} />
               </td>
               <td className="px-3 py-3 whitespace-nowrap">{formatDataHora(a.prazoFinal)}</td>
-              <td className="px-3 py-3">{a.estado ? <StatusBadge estado={a.estado} nota={a.nota} /> : null}</td>
+              <td className="px-3 py-3">{a.estado ? <StatusBadge estado={a.estado} nota={a.nota} urgente={alunoComPressa(a)} /> : null}</td>
               <td className="px-3 py-3 text-right">
                 {a.estado ? (
                   <Button asChild size="sm" variant={a.estado === 'PENDENTE' || a.estado === 'ATRASADA' ? 'default' : 'secondary'}>

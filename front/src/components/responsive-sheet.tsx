@@ -24,7 +24,7 @@ export function ResponsiveSheet({ open, onOpenChange, titulo, descricao, childre
   if (desktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent data-variante="modal">
+        <DialogContent data-variante="modal" className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{titulo}</DialogTitle>
             {descricao ? <DialogDescription>{descricao}</DialogDescription> : null}

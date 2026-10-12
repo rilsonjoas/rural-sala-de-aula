@@ -179,3 +179,16 @@ Feita com os checklists do cofre (`qualidade-de-interface` e `revisao-de-interfa
 - Dados pessoais (nome, e-mail): o cadastro não tem aviso de privacidade. É requisito da LGPD informar a finalidade na coleta (backlog).
 
 **Desvios assumidos:** nenhum botão do P1 desvia da regra; o "Baixar" do professor é só verbo, com o objeto no nome acessível ("Baixar arquivo de Maria…").
+
+## 13. Urgência de prazo (12/10/2026)
+
+Só apresentação, calculada no front a partir de `prazoFinal` (`front/src/lib/urgencia.ts`). Não entra no estado da atividade (ADR-0005) nem no contrato.
+
+| Quem | Quando | Selo | Cor |
+|---|---|---|---|
+| Aluno | PENDENTE e faltam 48 h ou menos | "Vence em breve" (no lugar de "Pendente"), faixa lateral no card | âmbar (`--highlight`), texto azul-escuro (7,3:1) |
+| Aluno | ATRASADA | "Atrasada", faixa lateral no card | vermelho sólido |
+| Professor | prazo da atividade em 48 h ou menos | "Vence em breve" | âmbar |
+| Professor | prazo já passou | "Prazo encerrado" | cinza, sem alarme (para ele não é problema) |
+
+O âmbar é reservado para o prazo: "N pendentes" e o contador de turmas passaram para o azul neutro. Sempre ícone e texto, nunca só cor.

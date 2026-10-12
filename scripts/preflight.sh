@@ -16,7 +16,6 @@ required_files=(
   .env.example
   docker-compose.yml
   docs/openapi.yaml
-  docs/api.md
   api/pom.xml
   api/.env.example
   api/src/main/resources/db/migration/V1__create_core_schema.sql
@@ -43,9 +42,12 @@ with Path('docs/openapi.yaml').open(encoding='utf-8') as stream:
 assert document['openapi'] == '3.0.3'
 assert '/health' in document['paths']
 schemas = document['components']['schemas']
-assert 'status' in schemas['TarefaRequest']['properties']
-assert 'startsOn' in schemas['PeriodoRequest']['properties']
-assert 'createdAt' in schemas['Horario']['allOf'][1]['properties']
+for name in ('Usuario', 'Turma', 'Atividade', 'Entrega', 'AvaliacaoInput'):
+    assert name in schemas, name
+assert 'papel' in schemas['Usuario']['properties']
+assert 'prazoFinal' in schemas['AtividadeInput']['properties']
+assert '/inscricoes' in document['paths']
+assert 'get' in document['paths']['/atividades']
 PY
 else
   printf 'AVISO: PyYAML ausente; a validação do OpenAPI foi pulada.\n'

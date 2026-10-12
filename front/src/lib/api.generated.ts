@@ -11,7 +11,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Verifica a disponibilidade da API */
         get: operations["getHealth"];
         put?: never;
         post?: never;
@@ -30,7 +29,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Cria uma conta individual */
+        /** Cria a conta e já inicia a sessão (Set-Cookie), sem exigir login em seguida. O papel (ALUNO ou PROFESSOR) é escolhido livremente no P1; convite para professor é backlog. */
         post: operations["register"];
         delete?: never;
         options?: never;
@@ -47,25 +46,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Inicia uma sessão */
         post: operations["login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Renova a sessão atual */
-        post: operations["refreshSession"];
         delete?: never;
         options?: never;
         head?: never;
@@ -81,7 +62,6 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Revoga a sessão atual */
         post: operations["logout"];
         delete?: never;
         options?: never;
@@ -89,15 +69,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/me": {
+    "/me": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Retorna o usuário autenticado */
-        get: operations["getCurrentUser"];
+        get: operations["getMe"];
         put?: never;
         post?: never;
         delete?: never;
@@ -106,243 +85,160 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/periodos": {
+    "/turmas": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Lista períodos do usuário */
-        get: operations["listPeriodos"];
+        /** Aluno = turmas em que está inscrito; professor = turmas que administra. Sem paginação no P1. */
+        get: operations["listTurmas"];
         put?: never;
-        /** Cria um período */
-        post: operations["createPeriodo"];
+        /** Somente PROFESSOR. O código de inscrição é gerado pelo servidor (6 caracteres, sem 0, O, 1, I, L). */
+        post: operations["createTurma"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/periodos/{periodoId}": {
+    "/turmas/{turmaId}": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                periodoId: components["parameters"]["PeriodoId"];
-            };
+            path?: never;
             cookie?: never;
         };
-        /** Obtém um período */
-        get: operations["getPeriodo"];
+        get: operations["getTurma"];
         put?: never;
         post?: never;
-        /** Remove um período */
-        delete: operations["deletePeriodo"];
-        options?: never;
-        head?: never;
-        /** Atualiza um período */
-        patch: operations["updatePeriodo"];
-        trace?: never;
-    };
-    "/periodos/{periodoId}/disciplinas": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                periodoId: components["parameters"]["PeriodoId"];
-            };
-            cookie?: never;
-        };
-        /** Lista disciplinas de um período */
-        get: operations["listDisciplinas"];
-        put?: never;
-        /** Cria uma disciplina */
-        post: operations["createDisciplina"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/disciplinas/{disciplinaId}": {
+    "/inscricoes": {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        /** Obtém uma disciplina */
-        get: operations["getDisciplina"];
-        put?: never;
-        post?: never;
-        /** Remove uma disciplina */
-        delete: operations["deleteDisciplina"];
-        options?: never;
-        head?: never;
-        /** Atualiza uma disciplina */
-        patch: operations["updateDisciplina"];
-        trace?: never;
-    };
-    "/disciplinas/{disciplinaId}/tarefas": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        /** Lista tarefas de uma disciplina */
-        get: operations["listTarefas"];
-        put?: never;
-        /** Cria uma tarefa */
-        post: operations["createTarefa"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tarefas/{tarefaId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tarefaId: components["parameters"]["TarefaId"];
-            };
-            cookie?: never;
-        };
-        /** Obtém uma tarefa */
-        get: operations["getTarefa"];
-        put?: never;
-        post?: never;
-        /** Remove uma tarefa */
-        delete: operations["deleteTarefa"];
-        options?: never;
-        head?: never;
-        /** Atualiza uma tarefa */
-        patch: operations["updateTarefa"];
-        trace?: never;
-    };
-    "/disciplinas/{disciplinaId}/provas": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        /** Lista provas de uma disciplina */
-        get: operations["listProvas"];
-        put?: never;
-        /** Cria uma prova */
-        post: operations["createProva"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/provas/{provaId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                provaId: components["parameters"]["ProvaId"];
-            };
-            cookie?: never;
-        };
-        /** Obtém uma prova */
-        get: operations["getProva"];
-        put?: never;
-        post?: never;
-        /** Remove uma prova */
-        delete: operations["deleteProva"];
-        options?: never;
-        head?: never;
-        /** Atualiza uma prova */
-        patch: operations["updateProva"];
-        trace?: never;
-    };
-    "/periodos/{periodoId}/horarios": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                periodoId: components["parameters"]["PeriodoId"];
-            };
-            cookie?: never;
-        };
-        /** Lista a grade-tipo de um período */
-        get: operations["listHorarios"];
-        put?: never;
-        /** Cria um horário semanal */
-        post: operations["createHorario"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/horarios/{horarioId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                horarioId: components["parameters"]["HorarioId"];
-            };
-            cookie?: never;
-        };
-        /** Obtém um horário */
-        get: operations["getHorario"];
-        put?: never;
-        post?: never;
-        /** Remove um horário */
-        delete: operations["deleteHorario"];
-        options?: never;
-        head?: never;
-        /** Atualiza um horário */
-        patch: operations["updateHorario"];
-        trace?: never;
-    };
-    "/horarios/{horarioId}/cancelamentos": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                horarioId: components["parameters"]["HorarioId"];
-            };
-            cookie?: never;
-        };
-        /** Lista os cancelamentos de um horário */
-        get: operations["listCancelamentos"];
-        put?: never;
-        /** Cancela uma instância de aula */
-        post: operations["createCancelamento"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/cancelamentos/{cancelamentoId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cancelamentoId: components["parameters"]["CancelamentoId"];
-            };
+            path?: never;
             cookie?: never;
         };
         get?: never;
         put?: never;
+        /** Somente ALUNO. Código comparado sem diferenciar maiúsculas e sem espaços nas pontas. */
+        post: operations["enrollTurma"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/turmas/{turmaId}/atividades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        /** Atividades de uma turma, com os filtros e a ordenação do RF05. Aluno só vê atividades já disponíveis. O filtro estado só vale para ALUNO. */
+        get: operations["listAtividades"];
+        put?: never;
+        /** Somente PROFESSOR dono da turma. */
+        post: operations["createAtividade"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/atividades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Somente ALUNO. Atividades de todas as turmas em que está inscrito, com os filtros e a ordenação do RF05 (estado, tipo, modalidade, complexidade, turma). Só atividades já disponíveis. ordenar=prazo ordena por prazoFinal. Sem paginação no P1. */
+        get: operations["listMinhasAtividades"];
+        put?: never;
         post?: never;
-        /** Remove um cancelamento */
-        delete: operations["deleteCancelamento"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/atividades/{atividadeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe da atividade com estado e, para ALUNO, a própria entrega (minhaEntrega). */
+        get: operations["getAtividade"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/atividades/{atividadeId}/entregas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        /** Somente PROFESSOR dono da turma. Lista só quem entregou (quem não entregou é backlog). */
+        get: operations["listEntregas"];
+        put?: never;
+        /** Somente ALUNO inscrito. Reenvio substitui a entrega anterior. Após o prazo_final é aceita e marcada como atrasada. Limites: até 25 MB; extensões pdf, ppt, pptx, doc, docx, txt. Depois que o professor avalia a entrega, o reenvio é bloqueado (409). */
+        post: operations["submitEntrega"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/entregas/{entregaId}/arquivo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Somente PROFESSOR dono da turma. */
+        get: operations["downloadEntrega"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/entregas/{entregaId}/avaliacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Somente PROFESSOR dono da turma. Nota de 0 a 10. */
+        put: operations["evaluateEntrega"];
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -352,274 +248,153 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        HealthResponse: {
-            /** @enum {string} */
-            status: "ok";
-            /** @example rota-de-estudo-api */
+        Health: {
+            status: string;
             service: string;
-            /** @example 0.1.0 */
             version: string;
             /** Format: date-time */
             timestamp: string;
         };
-        RegisterRequest: {
-            name: string;
+        Problem: {
+            status: number;
+            message: string;
+            /** @description Erros por campo (422), para o front marcar o campo certo */
+            campos?: {
+                /** @example prazoFinal */
+                campo: string;
+                mensagem: string;
+            }[];
+        };
+        /** @enum {string} */
+        Papel: "ALUNO" | "PROFESSOR";
+        Usuario: {
+            /** Format: uuid */
+            id: string;
+            nome: string;
             /** Format: email */
             email: string;
-            /** Format: password */
-            password: string;
-            /**
-             * @default pt-BR
-             * @enum {string}
-             */
-            locale: "pt-BR" | "en";
-            /** @default America/Recife */
-            timezone: string;
+            papel: components["schemas"]["Papel"];
+        };
+        RegisterRequest: {
+            nome: string;
+            /** Format: email */
+            email: string;
+            senha: string;
+            papel: components["schemas"]["Papel"];
         };
         LoginRequest: {
             /** Format: email */
             email: string;
-            /** Format: password */
-            password: string;
+            senha: string;
         };
-        AuthResponse: {
-            user: components["schemas"]["User"];
-            /** Format: date-time */
-            expiresAt: string;
+        TurmaInput: {
+            nome: string;
+            disciplina: string;
+            /** @example 2026.2 */
+            semestre: string;
+            diasAula: number[];
         };
-        User: {
+        Turma: components["schemas"]["TurmaInput"] & {
             /** Format: uuid */
             id: string;
-            name: string;
-            /** Format: email */
-            email: string;
-            /** @enum {string} */
-            locale: "pt-BR" | "en";
-            /** @example America/Recife */
-            timezone: string;
-            /** Format: date-time */
-            createdAt: string;
-        };
-        PeriodoRequest: {
-            name: string;
-            /** Format: date */
-            startsOn?: string | null;
-            /** Format: date */
-            endsOn?: string | null;
-            status?: components["schemas"]["PeriodoStatus"];
-        };
-        Periodo: components["schemas"]["PeriodoRequest"] & {
             /** Format: uuid */
-            id: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
+            professorId: string;
+            professorNome: string;
+            /** @description Visível apenas ao professor dono */
+            codigo?: string;
+            /** @description Só para ALUNO: atividades disponíveis com estado PENDENTE */
+            atividadesPendentes?: number;
+            /** @description Só para ALUNO: atividades disponíveis com estado ATRASADA */
+            atividadesAtrasadas?: number;
         };
         /** @enum {string} */
-        PeriodoStatus: "ABERTO" | "ARQUIVADO";
-        DisciplinaRequest: {
-            name: string;
-            color?: string | null;
-        };
-        Disciplina: components["schemas"]["DisciplinaRequest"] & {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            periodoId: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        TarefaRequest: {
-            title: string;
-            description?: string | null;
-            type: components["schemas"]["TarefaTipo"];
-            priority: components["schemas"]["Prioridade"];
-            status?: components["schemas"]["TarefaStatus"];
-            /** Format: date-time */
-            dueAt?: string | null;
-            /** Format: date-time */
-            completedAt?: string | null;
-            tags?: string[];
-        };
-        Tarefa: components["schemas"]["TarefaRequest"] & {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            disciplinaId: string;
-            status: components["schemas"]["TarefaStatus"];
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
+        AtividadeTipo: "ATIVIDADE" | "TRABALHO" | "PROVA";
         /** @enum {string} */
-        TarefaTipo: "TAREFA" | "TRABALHO" | "OUTRO";
+        AtividadeModalidade: "INDIVIDUAL" | "GRUPO";
         /** @enum {string} */
-        Prioridade: "BAIXA" | "MEDIA" | "ALTA";
-        /** @enum {string} */
-        TarefaStatus: "PENDENTE" | "CONCLUIDA";
-        ProvaRequest: {
-            title: string;
-            /** Format: date-time */
-            startsAt: string;
-            weight: number;
-            grade?: number | null;
-            notes?: string | null;
-        };
-        Prova: components["schemas"]["ProvaRequest"] & {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            disciplinaId: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
-        HorarioRequest: {
-            /** Format: uuid */
-            disciplinaId: string;
-            weekday: components["schemas"]["Weekday"];
-            /**
-             * Format: time
-             * @example 08:00
-             */
-            startsAt: string;
-            /**
-             * Format: time
-             * @example 09:50
-             */
-            endsAt: string;
-        };
-        Horario: components["schemas"]["HorarioRequest"] & {
-            /** Format: uuid */
-            id: string;
-            /** Format: uuid */
-            periodoId: string;
-            /** Format: date-time */
-            createdAt: string;
-            /** Format: date-time */
-            updatedAt: string;
-        };
+        Complexidade: "BAIXA" | "MEDIA" | "ALTA";
         /**
-         * @description MONDAY=1, TUESDAY=2, WEDNESDAY=3, THURSDAY=4, FRIDAY=5, SATURDAY=6, SUNDAY=7.
+         * @description Derivado do prazoFinal, o limite real definido pelo professor. A data de entrega é a do próprio aluno (Entrega.enviadaEm). PENDENTE = sem entrega e agora ≤ prazoFinal. ATRASADA = sem entrega e agora > prazoFinal. ENTREGUE_COM_ATRASO = enviadaEm > prazoFinal. CONCLUIDA = entrega avaliada.
          * @enum {string}
          */
-        Weekday: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY" | "SATURDAY" | "SUNDAY";
-        CancelamentoRequest: {
-            /** Format: date */
-            date: string;
-            reason?: string | null;
+        EstadoAtividade: "PENDENTE" | "ENTREGUE" | "ENTREGUE_COM_ATRASO" | "CONCLUIDA" | "ATRASADA";
+        AtividadeInput: {
+            nome: string;
+            descricao?: string;
+            complexidade: components["schemas"]["Complexidade"];
+            tipo: components["schemas"]["AtividadeTipo"];
+            modalidade?: components["schemas"]["AtividadeModalidade"];
+            /**
+             * Format: date-time
+             * @description Limite real; depois dele a entrega conta como atrasada
+             */
+            prazoFinal: string;
+            /** Format: date-time */
+            disponivelEm?: string;
         };
-        Cancelamento: components["schemas"]["CancelamentoRequest"] & {
+        Atividade: components["schemas"]["AtividadeInput"] & {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
-            horarioId: string;
+            turmaId: string;
+            turmaNome: string;
+            modalidade: components["schemas"]["AtividadeModalidade"];
             /** Format: date-time */
-            createdAt: string;
+            disponivelEm: string;
+            /** @description Derivado; só para ALUNO */
+            estado?: components["schemas"]["EstadoAtividade"];
+            /** @description Só para ALUNO: nota da entrega, quando já avaliada (para o selo Concluída · nota 9,5) */
+            nota?: number | null;
         };
-        PageMeta: {
-            page: number;
-            size: number;
-            /** Format: int64 */
-            totalElements: number;
-            totalPages: number;
+        AtividadeDetalhe: components["schemas"]["Atividade"] & {
+            professorNome: string;
+            /** @description Entrega do próprio aluno, se houver (inclui nota e comentarioPrivado quando avaliada) */
+            minhaEntrega?: components["schemas"]["Entrega"] | null;
         };
-        PeriodoPage: {
-            content: components["schemas"]["Periodo"][];
-            page: components["schemas"]["PageMeta"];
+        AvaliacaoInput: {
+            /** @description Até 1 casa decimal */
+            nota: number;
+            comentarioPrivado?: string;
         };
-        DisciplinaPage: {
-            content: components["schemas"]["Disciplina"][];
-            page: components["schemas"]["PageMeta"];
-        };
-        TarefaPage: {
-            content: components["schemas"]["Tarefa"][];
-            page: components["schemas"]["PageMeta"];
-        };
-        ProvaPage: {
-            content: components["schemas"]["Prova"][];
-            page: components["schemas"]["PageMeta"];
-        };
-        ApiError: {
-            /** @example VALIDATION_ERROR */
-            code: string;
-            message: string;
+        Entrega: {
             /** Format: uuid */
-            requestId: string;
+            id: string;
+            /** Format: uuid */
+            atividadeId: string;
+            /** Format: uuid */
+            alunoId: string;
+            alunoNome: string;
+            nomeOriginal: string;
+            tamanhoBytes: number;
             /** Format: date-time */
-            timestamp: string;
-            details?: {
-                [key: string]: unknown;
-            };
+            enviadaEm: string;
+            /** @description enviadaEm > prazoFinal da atividade */
+            atrasada: boolean;
+            nota?: number | null;
+            comentarioPrivado?: string | null;
         };
     };
     responses: {
-        /** @description Requisição inválida */
-        BadRequest: {
+        /** @description Erro */
+        Problem: {
             headers: {
                 [name: string]: unknown;
             };
             content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-        /** @description Sessão ausente ou inválida */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-        /** @description Recurso não encontrado ou não pertencente ao usuário */
-        NotFound: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-        /** @description Conflito com um recurso existente */
-        Conflict: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
-            };
-        };
-        /** @description Limite de requisições excedido */
-        TooManyRequests: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["ApiError"];
+                "application/json": components["schemas"]["Problem"];
             };
         };
     };
     parameters: {
-        PeriodoId: string;
-        DisciplinaId: string;
-        TarefaId: string;
-        ProvaId: string;
-        HorarioId: string;
-        CancelamentoId: string;
-        IncludeArchived: boolean;
-        Page: number;
-        Size: number;
-        TaskStatus: components["schemas"]["TarefaStatus"];
-        /** @description Limite inicial inclusivo em ISO-8601. */
-        From: string;
-        /** @description Limite final exclusivo em ISO-8601. */
-        To: string;
+        TurmaId: string;
+        AtividadeId: string;
+        FiltroEstado: components["schemas"]["EstadoAtividade"];
+        FiltroTipo: components["schemas"]["AtividadeTipo"];
+        FiltroModalidade: components["schemas"]["AtividadeModalidade"];
+        FiltroComplexidade: components["schemas"]["Complexidade"];
+        /** @description prazo = prazoFinal; complexidade ordena BAIXA < MEDIA < ALTA */
+        Ordenar: "prazo" | "complexidade";
+        Direcao: "asc" | "desc";
     };
     requestBodies: never;
     headers: never;
@@ -636,13 +411,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description API disponível */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HealthResponse"];
+                    "application/json": components["schemas"]["Health"];
                 };
             };
         };
@@ -660,18 +435,17 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Conta criada */
+            /** @description Criado */
             201: {
                 headers: {
-                    /** @description Cookie de sessão httpOnly */
-                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthResponse"];
+                    "application/json": components["schemas"]["Usuario"];
                 };
             };
-            409: components["responses"]["Conflict"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     login: {
@@ -687,42 +461,16 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Sessão iniciada */
+            /** @description OK */
             200: {
                 headers: {
-                    /** @description Cookie de sessão httpOnly */
-                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuthResponse"];
+                    "application/json": components["schemas"]["Usuario"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            429: components["responses"]["TooManyRequests"];
-        };
-    };
-    refreshSession: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Sessão renovada */
-            200: {
-                headers: {
-                    /** @description Cookie de sessão httpOnly rotacionado */
-                    "Set-Cookie"?: string;
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthResponse"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
+            401: components["responses"]["Problem"];
         };
     };
     logout: {
@@ -734,17 +482,16 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Sessão revogada */
+            /** @description Sem conteúdo */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            401: components["responses"]["Unauthorized"];
         };
     };
-    getCurrentUser: {
+    getMe: {
         parameters: {
             query?: never;
             header?: never;
@@ -753,24 +500,23 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Usuário autenticado */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["User"];
+                    "application/json": components["schemas"]["Usuario"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
+            401: components["responses"]["Problem"];
         };
     };
-    listPeriodos: {
+    listTurmas: {
         parameters: {
             query?: {
-                includeArchived?: components["parameters"]["IncludeArchived"];
-                page?: components["parameters"]["Page"];
-                size?: components["parameters"]["Size"];
+                /** @description Filtra por semestre, ex. 2026.2 */
+                semestre?: string;
             };
             header?: never;
             path?: never;
@@ -778,19 +524,18 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Página de períodos */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PeriodoPage"];
+                    "application/json": components["schemas"]["Turma"][];
                 };
             };
-            401: components["responses"]["Unauthorized"];
         };
     };
-    createPeriodo: {
+    createTurma: {
         parameters: {
             query?: never;
             header?: never;
@@ -799,706 +544,318 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PeriodoRequest"];
+                "application/json": components["schemas"]["TurmaInput"];
             };
         };
         responses: {
-            /** @description Período criado */
+            /** @description Criada */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Periodo"];
+                    "application/json": components["schemas"]["Turma"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
-    getPeriodo: {
+    getTurma: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                periodoId: components["parameters"]["PeriodoId"];
+                turmaId: components["parameters"]["TurmaId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Período */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Periodo"];
+                    "application/json": components["schemas"]["Turma"];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+            404: components["responses"]["Problem"];
         };
     };
-    deletePeriodo: {
+    enrollTurma: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                periodoId: components["parameters"]["PeriodoId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Período removido */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    updatePeriodo: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                periodoId: components["parameters"]["PeriodoId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PeriodoRequest"];
+                "application/json": {
+                    codigo: string;
+                };
             };
         };
         responses: {
-            /** @description Período atualizado */
-            200: {
+            /** @description Inscrito */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Periodo"];
+                    "application/json": components["schemas"]["Turma"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
         };
     };
-    listDisciplinas: {
+    listAtividades: {
         parameters: {
             query?: {
-                page?: components["parameters"]["Page"];
-                size?: components["parameters"]["Size"];
+                estado?: components["parameters"]["FiltroEstado"];
+                tipo?: components["parameters"]["FiltroTipo"];
+                modalidade?: components["parameters"]["FiltroModalidade"];
+                complexidade?: components["parameters"]["FiltroComplexidade"];
+                /** @description prazo = prazoFinal; complexidade ordena BAIXA < MEDIA < ALTA */
+                ordenar?: components["parameters"]["Ordenar"];
+                direcao?: components["parameters"]["Direcao"];
             };
             header?: never;
             path: {
-                periodoId: components["parameters"]["PeriodoId"];
+                turmaId: components["parameters"]["TurmaId"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Página de disciplinas */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DisciplinaPage"];
+                    "application/json": components["schemas"]["Atividade"][];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
         };
     };
-    createDisciplina: {
+    createAtividade: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                periodoId: components["parameters"]["PeriodoId"];
+                turmaId: components["parameters"]["TurmaId"];
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DisciplinaRequest"];
+                "application/json": components["schemas"]["AtividadeInput"];
             };
         };
         responses: {
-            /** @description Disciplina criada */
+            /** @description Criada */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Disciplina"];
+                    "application/json": components["schemas"]["Atividade"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
-    getDisciplina: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Disciplina */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Disciplina"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    deleteDisciplina: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Disciplina removida */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    updateDisciplina: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DisciplinaRequest"];
-            };
-        };
-        responses: {
-            /** @description Disciplina atualizada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Disciplina"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    listTarefas: {
+    listMinhasAtividades: {
         parameters: {
             query?: {
-                status?: components["parameters"]["TaskStatus"];
-                /** @description Limite inicial inclusivo em ISO-8601. */
-                from?: components["parameters"]["From"];
-                /** @description Limite final exclusivo em ISO-8601. */
-                to?: components["parameters"]["To"];
-                page?: components["parameters"]["Page"];
-                size?: components["parameters"]["Size"];
+                estado?: components["parameters"]["FiltroEstado"];
+                tipo?: components["parameters"]["FiltroTipo"];
+                modalidade?: components["parameters"]["FiltroModalidade"];
+                complexidade?: components["parameters"]["FiltroComplexidade"];
+                /** @description Filtra por uma turma */
+                turmaId?: string;
+                /** @description prazo = prazoFinal; complexidade ordena BAIXA < MEDIA < ALTA */
+                ordenar?: components["parameters"]["Ordenar"];
+                direcao?: components["parameters"]["Direcao"];
             };
             header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Página de tarefas */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["TarefaPage"];
+                    "application/json": components["schemas"]["Atividade"][];
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+            403: components["responses"]["Problem"];
         };
     };
-    createTarefa: {
+    getAtividade: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtividadeDetalhe"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listEntregas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Entrega"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    submitEntrega: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TarefaRequest"];
+                "multipart/form-data": {
+                    /** Format: binary */
+                    arquivo: string;
+                };
             };
         };
         responses: {
-            /** @description Tarefa criada */
+            /** @description Registrada */
             201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Tarefa"];
+                    "application/json": components["schemas"]["Entrega"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+            403: components["responses"]["Problem"];
+            /** @description Entrega já avaliada; não aceita reenvio */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Arquivo maior que 25 MB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description Tipo de arquivo não aceito */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
+            422: components["responses"]["Problem"];
         };
     };
-    getTarefa: {
+    downloadEntrega: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                tarefaId: components["parameters"]["TarefaId"];
+                entregaId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Tarefa */
+            /** @description Arquivo */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Tarefa"];
+                    "application/octet-stream": string;
                 };
             };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
-    deleteTarefa: {
+    evaluateEntrega: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                tarefaId: components["parameters"]["TarefaId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Tarefa removida */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    updateTarefa: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                tarefaId: components["parameters"]["TarefaId"];
+                entregaId: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["TarefaRequest"];
+                "application/json": components["schemas"]["AvaliacaoInput"];
             };
         };
         responses: {
-            /** @description Tarefa atualizada */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Tarefa"];
+                    "application/json": components["schemas"]["Entrega"];
                 };
             };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    listProvas: {
-        parameters: {
-            query?: {
-                /** @description Limite inicial inclusivo em ISO-8601. */
-                from?: components["parameters"]["From"];
-                /** @description Limite final exclusivo em ISO-8601. */
-                to?: components["parameters"]["To"];
-                page?: components["parameters"]["Page"];
-                size?: components["parameters"]["Size"];
-            };
-            header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Página de provas */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProvaPage"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    createProva: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                disciplinaId: components["parameters"]["DisciplinaId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProvaRequest"];
-            };
-        };
-        responses: {
-            /** @description Prova criada */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Prova"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    getProva: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                provaId: components["parameters"]["ProvaId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Prova */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Prova"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    deleteProva: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                provaId: components["parameters"]["ProvaId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Prova removida */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    updateProva: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                provaId: components["parameters"]["ProvaId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ProvaRequest"];
-            };
-        };
-        responses: {
-            /** @description Prova atualizada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Prova"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    listHorarios: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                periodoId: components["parameters"]["PeriodoId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Horários do período */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Horario"][];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    createHorario: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                periodoId: components["parameters"]["PeriodoId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["HorarioRequest"];
-            };
-        };
-        responses: {
-            /** @description Horário criado */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Horario"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    getHorario: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                horarioId: components["parameters"]["HorarioId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Horário */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Horario"];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    deleteHorario: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                horarioId: components["parameters"]["HorarioId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Horário removido */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    updateHorario: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                horarioId: components["parameters"]["HorarioId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["HorarioRequest"];
-            };
-        };
-        responses: {
-            /** @description Horário atualizado */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Horario"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    listCancelamentos: {
-        parameters: {
-            query?: {
-                /** @description Limite inicial inclusivo em ISO-8601. */
-                from?: components["parameters"]["From"];
-                /** @description Limite final exclusivo em ISO-8601. */
-                to?: components["parameters"]["To"];
-            };
-            header?: never;
-            path: {
-                horarioId: components["parameters"]["HorarioId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Cancelamentos */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Cancelamento"][];
-                };
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    createCancelamento: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                horarioId: components["parameters"]["HorarioId"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CancelamentoRequest"];
-            };
-        };
-        responses: {
-            /** @description Cancelamento criado */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Cancelamento"];
-                };
-            };
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    deleteCancelamento: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                cancelamentoId: components["parameters"]["CancelamentoId"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Cancelamento removido */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthorized"];
-            404: components["responses"]["NotFound"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
 }

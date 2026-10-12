@@ -1,91 +1,49 @@
-import { useEffect, useState } from 'react';
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
-import { getHealth } from './lib/api';
-import { messages, resolveLocale } from './i18n/messages';
-import { PlaceholderPage } from './pages/PlaceholderPage';
-
-type ConnectionState = 'checking' | 'online' | 'offline';
+import { Navigate, Route, Routes } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { AppShell } from './components/shell/app-shell';
+import { PublicLayout } from './components/shell/public-layout';
+import { PublicOnly, RequireAuth, RequireRole } from './features/session/guards';
+import { SessionWatcher } from './features/session/session-watcher';
+import { AuthPage } from './features/auth/auth-page';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { DetalheAtividadePage } from './features/entregas/detalhe-page';
+import { EntregasPage } from './features/entregas/entregas-page';
+import { MinhasAtividadesPage } from './features/atividades/minhas-page';
+import { TurmaPage } from './features/atividades/turma-page';
+import { TurmasPage } from './features/turmas/turmas-page';
 
 export default function App() {
-  const copy = messages[resolveLocale(import.meta.env.VITE_LOCALE ?? 'pt-BR')];
-  const [connection, setConnection] = useState<ConnectionState>('checking');
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    getHealth(controller.signal)
-      .then(() => setConnection('online'))
-      .catch(() => {
-        if (!controller.signal.aborted) {
-          setConnection('offline');
-        }
-      });
-
-    return () => controller.abort();
-  }, []);
-
-  const connectionLabel = {
-    checking: copy.connectionChecking,
-    online: copy.connectionOnline,
-    offline: copy.connectionOffline,
-  }[connection];
-
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div>
-          <p className="eyebrow">{copy.phase}</p>
-          <h1>{copy.appName}</h1>
-        </div>
-        <span className={`connection connection-${connection}`} role="status">
-          <span className="connection-dot" aria-hidden="true" />
-          {connectionLabel}
-        </span>
-      </header>
+    <>
+      <SessionWatcher />
+      <Toaster position="top-center" />
+      <Routes>
+        <Route path="/" element={<Navigate to="/turmas" replace />} />
 
-      <nav className="app-nav" aria-label={copy.navigationLabel}>
-        <NavLink to="/hoje">{copy.today}</NavLink>
-        <NavLink to="/semana">{copy.week}</NavLink>
-        <NavLink to="/mes">{copy.month}</NavLink>
-      </nav>
+        <Route element={<PublicOnly />}>
+          <Route element={<PublicLayout />}>
+            <Route path="/entrar" element={<AuthPage />} />
+          </Route>
+        </Route>
 
-      <main>
-        <Routes>
-          <Route path="/" element={<Navigate to="/hoje" replace />} />
-          <Route
-            path="/hoje"
-            element={
-              <PlaceholderPage
-                title={copy.today}
-                description={copy.todayDescription}
-                actionLabel={copy.comingSoon}
-              />
-            }
-          />
-          <Route
-            path="/semana"
-            element={
-              <PlaceholderPage
-                title={copy.week}
-                description={copy.weekDescription}
-                actionLabel={copy.comingSoon}
-              />
-            }
-          />
-          <Route
-            path="/mes"
-            element={
-              <PlaceholderPage
-                title={copy.month}
-                description={copy.monthDescription}
-                actionLabel={copy.comingSoon}
-              />
-            }
-          />
-          <Route path="*" element={<Navigate to="/hoje" replace />} />
-        </Routes>
-        <p className="foundation-note">{copy.connectionHelp}</p>
-      </main>
-    </div>
+        <Route element={<RequireAuth />}>
+          <Route element={<AppShell />}>
+            <Route path="/turmas" element={<TurmasPage />} />
+            <Route path="/turmas/:turmaId" element={<TurmaPage />} />
+
+            <Route element={<RequireRole papel="ALUNO" />}>
+              <Route path="/atividades" element={<MinhasAtividadesPage />} />
+              <Route path="/atividades/:atividadeId" element={<DetalheAtividadePage />} />
+            </Route>
+
+            <Route element={<RequireRole papel="PROFESSOR" />}>
+              <Route path="/atividades/:atividadeId/entregas" element={<EntregasPage />} />
+            </Route>
+
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </>
   );
 }

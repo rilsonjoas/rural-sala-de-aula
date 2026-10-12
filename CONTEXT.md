@@ -1,27 +1,29 @@
-# CONTEXT.md — Rota de Estudo (StudyPath)
+# CONTEXT.md — Rural Sala de Aula
 
-Glossário acordado do domínio. Use esses termos com precisão no código, nos tickets e nas ADRs.
+Glossário do domínio (requisitos de origem em `docs/requisitos.md`). Use estes termos com precisão no código, nos tickets e nos ADRs.
 
 ## Termos
 
-| Termo | Definição | Regras/notas |
+| Termo | Definição | Regras |
 |---|---|---|
-| `usuario` | Pessoa com conta no app. **Dono dos próprios dados** — contas são 100% individuais, sem compartilhamento multi-usuário. | Autorização por dono em toda rota (padrão Assídua). |
-| `periodo` | O "semestre" do aluno: contêiner de topo que agrupa disciplinas, horários e provas. Tem nome + data início/fim **opcionais**. **Aberto e arquivado manualmente pelo aluno** (faculdades não seguem calendário único; nada de auto-detectar datas). | 1 período ativo; vários arquivados. Somente o ativo recebe novos itens. Proibido RRULE. |
-| `disciplina` | Eixo central do estudo — toda `tarefa` e toda `prova` pertencem a exatamente uma disciplina. | |
-| `tarefa` | Entrega com prazo. Tem `tipo` (TAREFA | TRABALHO | OUTRO), prioridade, prazo e tags livres. "Trabalho" é tarefa com peso maior (XP dobrado), não entidade separada. | |
-| `prova` | Avaliação com data e peso. Tem **nota opcional** que o usuário registra — a gamificação reage a "bom resultado" (≥ 7 configurável). | |
-| `horario` | Aula semanal fixa (dia da semana + hora): a **grade-tipo**. Não é um motor de recorrência genérico; é uma lista fixa de slots que se repete toda semana dentro do período. | |
-| `cancelamento` | Exceção por instância: "aula de X cancelada em DD/MM". Some daquele dia no calendário **e silencia o lembrete daquele dia**. Sem "troca de horário" nem "aula extra" no V1. | |
-| `config_notificacao` | Padrões de notificação por evento. | `antecedencias_minutos` é uma lista, para suportar tarefa 24h antes e prova em cascata 7-3-1. |
-| `gamificacao` | Módulo isolado no Spring que consome **eventos de domínio** e produz XP/nível/streak/conquistas. V1: só recompensa. **Punição é ponto de extensão** no mesmo módulo. | Nunca acoplar ao CRUD. |
-| `rota-de-estudo` / `study-path` | Nome do produto: Rota de Estudo (pt) / StudyPath (en). | Decisão de i18n — ver ADR-0003. |
+| `usuario` | Pessoa com conta. Tem `papel`: ALUNO ou PROFESSOR. | E-mail único sem diferenciar maiúsculas. |
+| `turma` | Oferta de uma disciplina (código gerado pelo servidor: 6 caracteres sem 0, O, 1, I, L), administrada por um professor. Tem nome, disciplina, semestre (`2026.2`), dias de aula (1–7, ISO) e `codigo` de inscrição. | Só PROFESSOR cria. Código único (6–8 caracteres alfanuméricos, sem diferenciar maiúsculas). |
+| `inscricao` | Vínculo aluno–turma, feito pelo código. | Só ALUNO. Uma por par aluno–turma. |
+| `atividade` | Trabalho de uma turma (o professor define o `prazo_final`, o limite que define atraso; a data de entrega é a do aluno, `entrega.enviada_em`): nome, descrição, `complexidade` (BAIXA/MEDIA/ALTA), `tipo` (ATIVIDADE/TRABALHO/PROVA), `modalidade` (INDIVIDUAL/GRUPO), `prazo_final`, `disponivel_em`. | `disponivel_em ≤ prazo_final`. O envio nunca é bloqueado; depois do `prazo_final` conta como atraso. O aluno só vê a atividade depois de `disponivel_em`. Modalidade GRUPO existe no dado, mas grupos são backlog. |
+| `entrega` | Arquivo enviado por um aluno a uma atividade, com data e hora. | Uma por aluno por atividade; reenvio substitui, exceto depois de avaliada (bloqueado, 409). Depois do `prazo_final` é aceita e marcada como atrasada. |
+| `avaliacao` | Nota (0–10) e comentário privado do professor sobre uma entrega. | Uma por entrega. |
+| `estado da atividade` | Visão do aluno: PENDENTE, ENTREGUE, ENTREGUE_COM_ATRASO, CONCLUIDA (avaliada) ou ATRASADA (sem entrega e agora > `prazo_final`); ENTREGUE_COM_ATRASO = `enviada_em` > `prazo_final`. | **Derivado** de `entrega`, `avaliacao` e `prazo_final`; nunca gravado (ADR-0005). |
 
-## Persistência inicial
+## Invariantes no banco (V1)
 
-A migration `V1__create_core_schema.sql` cria `usuario`, `periodo`, `disciplina`, `tarefa`, `prova`, `horario`, `cancelamento` e `config_notificacao`. O banco de produção é `rota_de_estudo_db`, com role isolada `rota_app`; a definição do schema é sempre versionada pelo Flyway.
+| Invariante | Mecanismo | SQLSTATE |
+|---|---|---|
+| Só PROFESSOR é dono de turma | trigger `turma_professor_papel` | `23514` |
+| Só ALUNO se inscreve | trigger `inscricao_aluno_papel` | `23514` |
+| Só ALUNO entrega | trigger `entrega_aluno_papel` | `23514` |
+| E-mail e código de turma únicos | índices `usuario_email_unique`, `turma_codigo_unique` | `23505` |
+| Inscrição e entrega únicas por par | PK de `inscricao`, `entrega_unica_por_aluno` | `23505` |
+| Nota entre 0 e 10 | CHECK em `avaliacao` | `23514` |
+| `disponivel_em` não passa do `prazo_final` | `atividade_datas_validas` | `23514` |
 
-## Indefinições a resolver (não bloquear)
-
-- Papel do **Luiz** na dupla (nível em React/Java, divisão de trabalho, review) — aguardando reunião da dupla. O **contrato de API** é a fronteira natural entre os dois (ver Fase 0).
-- Regras exatas de XP/conquistas (tabela v0 registrada no vault; números ajustáveis).
+`bash scripts/check-schema.sh` prova cada uma contra um Postgres descartável.

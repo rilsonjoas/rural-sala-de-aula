@@ -1,11 +1,11 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: rota-estudo-db
+    container_name: rural-sala-de-aula-db
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-rota}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rota}
-      POSTGRES_DB: ${POSTGRES_DB:-rota_estudo}
+      POSTGRES_USER: ${POSTGRES_USER:-sala}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sala}
+      POSTGRES_DB: ${POSTGRES_DB:-rural_sala_de_aula}
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
@@ -16,14 +16,14 @@ services:
       timeout: 5s
       retries: 5
 
-  rota-estudo-api:
+  rural-sala-de-aula-api:
     build:
       context: ./api
-    container_name: rota-estudo-api
+    container_name: rural-sala-de-aula-api
     environment:
-      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rota_estudo}
-      DATABASE_USERNAME: ${POSTGRES_USER:-rota}
-      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-rota}
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rural_sala_de_aula}
+      DATABASE_USERNAME: ${POSTGRES_USER:-sala}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-sala}
       FRONT_ORIGINS: ${FRONT_ORIGINS:-http://localhost:5173,http://localhost:8081}
       OPENAPI_ENABLED: ${OPENAPI_ENABLED:-true}
     depends_on:
@@ -37,12 +37,12 @@ services:
       timeout: 5s
       retries: 10
 
-  rota-estudo-front:
+  rural-sala-de-aula-front:
     build:
       context: ./front
-    container_name: rota-estudo-front
+    container_name: rural-sala-de-aula-front
     depends_on:
-      rota-estudo-api:
+      rural-sala-de-aula-api:
         condition: service_healthy
     ports:
       - "${FRONT_PORT:-8081}:80"

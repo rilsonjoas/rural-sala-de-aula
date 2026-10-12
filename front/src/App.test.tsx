@@ -1,50 +1,23 @@
-import { cleanup, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import App from './App';
+import { cleanup, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import { renderApp } from '@/test/render';
 
-const healthResponse = {
-  status: 'ok',
-  service: 'rota-de-estudo-api',
-  version: '0.1.0',
-  timestamp: '2026-09-25T14:00:00Z',
-};
-
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-});
+afterEach(() => cleanup());
 
 describe('App', () => {
-  it('renders the application shell and the connected state', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve(healthResponse),
-      }),
-    );
+  it('a tela de entrada não tem cabeçalho nem navegação do app', async () => {
+    renderApp('/entrar');
 
-    render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByRole('heading', { name: 'Rota de Estudo' })).toBeInTheDocument();
-    expect(await screen.findByText('API conectada')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Hoje' })).toHaveAttribute('href', '/hoje');
+    await screen.findByRole('heading', { name: 'Entrar', level: 2 });
+    expect(screen.queryByRole('navigation', { name: 'Navegação principal' })).not.toBeInTheDocument();
   });
 
-  it('shows the offline state when the API cannot be reached', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+  it('não mostra andaime de desenvolvimento ao usuário', async () => {
+    renderApp('/entrar');
 
-    render(
-      <MemoryRouter>
-        <App />
-      </MemoryRouter>,
-    );
-
-    expect(await screen.findByText('API indisponível')).toBeInTheDocument();
+    await screen.findByRole('heading', { name: 'Entrar', level: 2 });
+    expect(screen.queryByText(/API/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Em construção/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/19\/10/)).not.toBeInTheDocument();
   });
 });

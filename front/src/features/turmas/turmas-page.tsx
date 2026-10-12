@@ -13,7 +13,7 @@ import { TurmaCardAluno, TurmaCardProfessor } from './turma-cards';
 
 function Esqueleto() {
   return (
-    <div role="status" aria-label="Carregando" aria-busy="true" className="grid animate-pulse gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div role="status" aria-label="Carregando" aria-busy="true" className="grid animate-pulse gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
       {[1, 2].map((n) => (
         <div key={n} className="h-48 rounded-xl border border-border bg-secondary" />
       ))}
@@ -81,7 +81,7 @@ export function TurmasPage() {
               {contador}
             </span>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
             {visiveis.map((turma: Turma) =>
               professor ? <TurmaCardProfessor key={turma.id} turma={turma} /> : <TurmaCardAluno key={turma.id} turma={turma} />,
             )}

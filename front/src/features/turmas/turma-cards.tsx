@@ -1,8 +1,11 @@
-import { ArrowRight, CheckCircle2, Clock, Users } from 'lucide-react';
+import { AlarmClock, ArrowRight, CheckCircle2, Clock, Users } from 'lucide-react';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useMinhasAtividades } from '@/features/atividades/api';
+import { FILTROS_VAZIOS } from '@/features/atividades/filtros';
 import { formatDias, plural } from '@/lib/format';
+import { alunoComPressa } from '@/lib/urgencia';
 import { cn } from '@/lib/utils';
 import { CopiarCodigo } from './copiar-codigo';
 import type { Turma } from './api';
@@ -42,20 +45,30 @@ const Linha = ({ icone: Icone, children }: { icone: typeof Clock; children: Reac
 export function TurmaCardAluno({ turma }: { turma: Turma }) {
   const pendentes = turma.atividadesPendentes ?? 0;
   const atrasadas = turma.atividadesAtrasadas ?? 0;
+  // Os prazos vêm de GET /atividades, que Minhas atividades já usa (mesma consulta, uma só requisição para todos os cards).
+  const minhas = useMinhasAtividades(FILTROS_VAZIOS);
+  const comPressa = minhas.data?.filter((a) => a.turmaId === turma.id && alunoComPressa(a)).length ?? 0;
+  const pendentesSemPressa = Math.max(0, pendentes - comPressa);
 
   return (
     <CardBase turma={turma}>
       <Linha icone={Users}>Prof. {turma.professorNome}</Linha>
       <Linha icone={Clock}>{formatDias(turma.diasAula)}</Linha>
       <div className="flex flex-wrap items-center gap-2">
-        {pendentes > 0 ? (
-          <span className="inline-flex min-h-6 items-center rounded-full border border-primary bg-card px-2.5 text-xs font-semibold text-primary">
-            {plural(pendentes, 'pendente')}
-          </span>
-        ) : null}
         {atrasadas > 0 ? (
           <span className="inline-flex min-h-6 items-center rounded-full bg-destructive px-2.5 text-xs font-semibold text-destructive-foreground">
             {plural(atrasadas, 'atrasada')}
+          </span>
+        ) : null}
+        {comPressa > 0 ? (
+          <span className="inline-flex min-h-6 items-center gap-1.5 rounded-full bg-highlight px-2.5 text-xs font-semibold text-highlight-foreground">
+            <AlarmClock aria-hidden="true" className="size-3.5" />
+            {comPressa === 1 ? '1 vence em breve' : `${comPressa} vencem em breve`}
+          </span>
+        ) : null}
+        {pendentesSemPressa > 0 ? (
+          <span className="inline-flex min-h-6 items-center rounded-full border border-primary bg-card px-2.5 text-xs font-semibold text-primary">
+            {plural(pendentesSemPressa, 'pendente')}
           </span>
         ) : null}
         {pendentes === 0 && atrasadas === 0 ? (

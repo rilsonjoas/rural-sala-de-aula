@@ -132,6 +132,16 @@ describe('Atividades da turma (aluno)', () => {
 });
 
 describe('Atividades da turma (professor)', () => {
+  it('cada card mostra quantas entregas esperam avaliação e o prazo (Lista 2: duas sem nota, prazo encerrado)', async () => {
+    await abrirTurma(PROFESSOR);
+
+    const lista2 = within(await screen.findByRole('article', { name: /Lista 2/ }));
+    expect(await lista2.findByText('2 a avaliar')).toBeInTheDocument();
+    expect(lista2.getByText('Prazo encerrado')).toBeInTheDocument();
+    expect(within(screen.getByRole('article', { name: /Lista 1 —/ })).getByText('Vence em breve')).toBeInTheDocument();
+    expect(within(screen.getByRole('article', { name: /Lista 1 —/ })).queryByText(/a avaliar/)).not.toBeInTheDocument();
+  });
+
   it('mostra o código de inscrição, Nova atividade e todas as atividades, até as ainda não disponíveis', async () => {
     await abrirTurma(PROFESSOR);
 

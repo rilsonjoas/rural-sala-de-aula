@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,9 +17,35 @@ type Props = {
   children: ReactNode;
 };
 
+/**
+ * O botão Voltar do navegador (e do celular) fecha a folha em vez de sair da tela: ao abrir, empurra uma
+ * entrada no histórico com a mesma URL; Voltar a consome e fecha. Se a folha fecha por outro caminho
+ * (X, Esc, enviar), a entrada é desfeita, a não ser que a pessoa já tenha navegado para outro lugar.
+ */
+function useVoltarFechaFolha(open: boolean, onOpenChange: (aberto: boolean) => void) {
+  const fechar = useRef(onOpenChange);
+  fechar.current = onOpenChange;
+
+  useEffect(() => {
+    if (!open) return;
+    window.history.pushState({ ...window.history.state, folha: true }, '');
+    let consumida = false;
+    const aoVoltar = () => {
+      consumida = true;
+      fechar.current(false);
+    };
+    window.addEventListener('popstate', aoVoltar);
+    return () => {
+      window.removeEventListener('popstate', aoVoltar);
+      if (!consumida && window.history.state?.folha) window.history.back();
+    };
+  }, [open]);
+}
+
 /** Folha vinda de baixo no mobile (< 1024 px) e modal centrado no desktop. */
 export function ResponsiveSheet({ open, onOpenChange, titulo, descricao, children }: Props) {
   const desktop = useMediaQuery('(min-width: 1024px)');
+  useVoltarFechaFolha(open, onOpenChange);
 
   if (desktop) {
     return (

@@ -1,6 +1,6 @@
 # DESIGN.md — Rural Sala de Aula (entrega P1)
 
-Fonte de verdade do design. Especificação das telas em [`design/telas.md`](design/telas.md); decisões e correções do material do Stitch em [`design/plano-de-design.md`](design/plano-de-design.md). Cobre **só os requisitos P1** (texto de origem em [`requisitos.md`](requisitos.md)); o que não está aqui é backlog (§9). Prompts prontos para o Stitch em [`stitch-prompts.md`](stitch-prompts.md).
+Fonte de verdade do design. Especificação das telas em [`design/telas.md`](design/telas.md); decisões e correções do material do Stitch em [`design/plano-de-design.md`](design/plano-de-design.md). Cobre **só os requisitos P1** (texto de origem em [`requisitos.md`](requisitos.md)); o que não está aqui é backlog (§9).
 
 ## 1. Princípios
 

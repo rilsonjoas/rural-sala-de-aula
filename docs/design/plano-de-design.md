@@ -24,7 +24,7 @@ Reconcilia o que o Stitch gerou com o que o P1 exige. Sistema de design: [`../DE
 | D4 | **Tipo** (Atividade/Trabalho/Prova) = chip neutro `--navy-tint`, igual para os três. |
 | D5 | Telas de topo (Turmas, Atividades, Entrar) **não têm seta de voltar**; só telas de detalhe. |
 | D6 | O **avatar abre um menu** (nome, papel, Sair). O Stitch não desenhou. |
-| D7 | Desktop: gerar só 3 telas no Stitch (§6); o resto segue a regra responsiva do DESIGN.md §5. |
+| D7 | ~~Desktop: gerar só 3 telas no Stitch (§6).~~ Não foi preciso: o desktop foi construído direto no código, pela regra responsiva do DESIGN.md §5. |
 | D8 | Mantemos o "Em grupo" cadastrável, sem fluxo de grupo (aviso já desenhado na Nova atividade). |
 | D9 | **A atividade tem um só prazo: o `prazoFinal`**, definido pelo professor. Depois dele, entrega ou falta de entrega conta como atraso; o envio nunca é bloqueado. **Data de entrega = a do aluno** (`Entrega.enviadaEm`). O campo "data de entrega" saiu do cadastro de atividade (confirmar com o Luiz, pois o RF10 do documento o lista). Ordenar por prazo usa `prazoFinal`. |
 | D10 | **Sem edição de atividade no P1** (RF11 é backlog): a folha Nova atividade mostra um resumo das datas e pede confirmação antes de salvar. |
@@ -58,7 +58,7 @@ Legenda: **remover** = conteúdo fora do P1 ou inventado; **trocar** = existe ma
 | Nova atividade (`06-nova-atividade.png`) | bloco "Diretriz Pedagógica UFRRJ… SIGAA"; "UFRRJ" no cabeçalho; "Estimativa de carga"; campo **"Data de entrega"** (D9); pontos verde/amarelo/vermelho na Complexidade | Complexidade com 1–3 pontos navy (D3); cabeçalho "Nova atividade · Turma A" (a barra de cima não repete o nome da tela); aviso de grupos mantido; erro de datas com o texto novo; resumo de confirmação antes de salvar (D10) |
 | Minhas atividades (`07-minhas-atividades.png`) | barra "Lista/Sem resultados/Skeleton"; "Em trio"; botão "Comprovante"; "Enviado com tolerância"; a linha "Entrega: 14/10"; barras de complexidade amarelas/verdes/vermelhas | "Ver parecer" vira **Ver nota e comentário**; "Enviar tarefa" vira **Enviar entrega** (também em Atrasada, pois o envio não é bloqueado); "Prazo estourado ontem!" vira "Prazo final passou há 1 dia"; modalidade só "Individual"/"Em grupo"; chips de Estado com os 5 estados; abre sem chip ativo (D17) |
 | Entregas do professor (`08-entregas-professor.png`) | barra "Modo de Demonstração"; "Matrícula: …"; "WCAG 2.2 AA"; "Semestre 2024.2" | "Editar nota" e "Avaliar" mantidos; resumo "12 entregas · 2 com atraso · 5 avaliadas" mantido (calculado da lista); nomes sem reticências; **a folha Avaliar não foi desenhada**, vale a descrição de `telas.md` (T7); título do cabeçalho "Lista 1 — Recursão" |
-| Detalhe da atividade, aluno (`09-detalhe-atividade-aluno.png`) | "Simular estados", "Alternar Erro/Em Progresso"; "Peso na média bimestral"; bloco "Código da Disciplina / Rubrica / Fórum"; "Procurar no celular"; "Data limite regular" e "Tolerância final" (D9); "pelo sistema acadêmico" | Uma só data, **Prazo final**; "Prazo expirado" e o aviso vermelho só aparecem depois do prazo final; "Instruções" vira **Descrição**; os 3 estados da entrega (Pendente/Enviado/Avaliado) viram o estado real vindo da API; complexidade sem verde; **os frames Enviado e Avaliado não foram desenhados**, valem os do `stitch-prompts.md` (Tela 8); "Enviar outro arquivo" some quando a entrega está Concluída (D14) |
+| Detalhe da atividade, aluno (`09-detalhe-atividade-aluno.png`) | "Simular estados", "Alternar Erro/Em Progresso"; "Peso na média bimestral"; bloco "Código da Disciplina / Rubrica / Fórum"; "Procurar no celular"; "Data limite regular" e "Tolerância final" (D9); "pelo sistema acadêmico" | Uma só data, **Prazo final**; "Prazo expirado" e o aviso vermelho só aparecem depois do prazo final; "Instruções" vira **Descrição**; os 3 estados da entrega (Pendente/Enviado/Avaliado) viram o estado real vindo da API; complexidade sem verde; **os frames Enviado e Avaliado não foram desenhados**, valem os de `telas.md`; "Enviar outro arquivo" some quando a entrega está Concluída (D14) |
 
 ## 4. Lacunas do contrato (OpenAPI) que as telas expõem
 
@@ -94,12 +94,12 @@ Folhas/modais sem rota própria: Nova turma, Entrar em turma, Nova atividade, Av
 |---|---|
 | Menu do avatar (D6) | desenhar no código com `DropdownMenu`; não precisa de Stitch |
 | 404 e sessão expirada | texto e botão simples; sem Stitch |
-| **Desktop: Minhas atividades** (tabela + chips + ordenação) | gerar no Stitch |
-| **Desktop: Entregas e avaliação** (tabela + modal Avaliar) | gerar no Stitch |
-| **Desktop: Turmas** com menu lateral (define o shell) | gerar no Stitch |
+| **Desktop: Minhas atividades** (tabela + chips + ordenação) | feito no código (12/10/2026), sem Stitch |
+| **Desktop: Entregas e avaliação** (tabela + modal Avaliar) | feito no código, sem Stitch |
+| **Desktop: Turmas** (define o shell; links no cabeçalho, sem menu lateral) | feito no código, sem Stitch |
 | Estados de carregando e erro | esqueleto no formato do card e bloco de erro com "Tentar de novo"; implementar direto |
 
-As outras telas no desktop seguem o DESIGN.md §5 (grade de 2–3 colunas, modais centrados) sem precisar do Stitch.
+As outras telas no desktop seguem o DESIGN.md §5 (colunas por largura mínima, modais centrados).
 
 ## 7. Componentes (design → front)
 
@@ -151,5 +151,5 @@ Ordem de integração com o Luiz: auth → turmas → inscrições → atividade
 ## 10. Pendências que dependem de você
 
 1. Levar ao Luiz os pedidos C1 a C7 (já refletidos no `openapi.yaml`; guia em `docs/INTEGRACAO.md`) e confirmar o C6. Ainda sem resposta dele.
-2. Gerar as 3 telas desktop no Stitch (§6) e mandar de novo o zip.
+2. ~~Gerar as 3 telas desktop no Stitch~~ Dispensado: o desktop foi feito no código.
 3. Logo própria: no roadmap, fora do P1; por ora, só o texto.

@@ -38,12 +38,15 @@ describe('Turmas do aluno', () => {
     expect(a.getByText('Prof. Marcos Silva')).toBeInTheDocument();
     expect(a.getByText('Seg · Qua')).toBeInTheDocument();
     expect(a.getByText('2026.2')).toBeInTheDocument();
-    expect(a.getByText('1 pendente')).toBeInTheDocument();
+    expect(await a.findByText('1 vence em breve')).toBeInTheDocument();
+    expect(a.queryByText('1 pendente')).not.toBeInTheDocument();
     expect(a.getByText('1 atrasada')).toBeInTheDocument();
     expect(a.getByRole('link', { name: /Ver atividades/ })).toHaveAttribute('href', `/turmas/${TURMA_A}`);
 
     const b = within(card('Turma B — Programação Web'));
-    expect(b.getByText('2 pendentes')).toBeInTheDocument();
+    // Prática 2 vence em 1 dia e Seminário em 15: um selo âmbar e um de pendente, sem contar a mesma atividade duas vezes.
+    expect(await b.findByText('1 vence em breve')).toBeInTheDocument();
+    expect(b.getByText('1 pendente')).toBeInTheDocument();
     expect(b.queryByText(/atrasada/)).not.toBeInTheDocument();
     expect(a.queryByText('Código de inscrição')).not.toBeInTheDocument();
   });

@@ -28,13 +28,12 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 
 - **Logo própria**, inspirada nos conceitos da UFRPE e não no desenho (o manual veda alterar o símbolo). Troca o capelo provisório do cabeçalho.
 - **Lista de inscritos que ainda não entregaram**, na tela de entregas do professor (hoje só aparece quem entregou).
-- **Contador de entregas a avaliar** no card de turma do professor.
+- **Contador de entregas a avaliar no card de turma** do professor (hoje só aparece em cada atividade; somar por turma pede um campo na API ou várias requisições).
 - **Convite ou aprovação para o papel Professor** (hoje qualquer pessoa escolhe "Professor" ao criar a conta).
 - Recuperação de senha, edição de perfil e tema escuro.
 - Filtros do aluno salvos no servidor (hoje ficam no navegador).
 - **Aviso de privacidade (LGPD)** no cadastro: o app coleta nome e e-mail e não informa a finalidade na coleta.
 - **Marcar como entregue** (o professor registra uma entrega feita fora do sistema), para a atividade não ficar "Atrasada" por engano.
-- **Botão Voltar do celular** fecha as folhas (hoje elas não são rotas; o Voltar sai da tela).
 - **Progresso real do upload** (hoje a barra é indeterminada; `fetch` não informa progresso; pede `XMLHttpRequest`).
 - Dividir o código por rota (o pacote principal tem ~700 KB, 215 KB comprimido).
 - Tabela também nas atividades de uma turma no desktop (hoje cards em 2 colunas).

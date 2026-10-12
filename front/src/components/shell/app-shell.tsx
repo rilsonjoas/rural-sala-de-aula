@@ -3,7 +3,6 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { useSession } from '@/features/session/use-session';
 import { messages as copy } from '@/i18n/messages';
 import { Header } from './header';
-import { MainNav } from './main-nav';
 
 export function AppShell() {
   const { usuario, logout } = useSession();
@@ -32,7 +31,6 @@ export function AppShell() {
       </a>
       <Header usuario={usuario} onSair={() => void logout()} />
       <div className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-7xl">
-        <MainNav papel={usuario.papel} />
         <main
           ref={principal}
           id="conteudo"

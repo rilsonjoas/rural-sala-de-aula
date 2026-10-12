@@ -31,6 +31,7 @@ for (const largura of [360, 1280]) {
       await ir(page, '', '/entrar', largura);
       await auditar(page, 'entrar');
       await page.getByRole('tab', { name: 'Criar conta' }).click();
+      await page.waitForTimeout(500); // a aba anima a cor; o axe mediria o contraste no meio da transição
       await auditar(page, 'criar conta');
       await page.getByRole('button', { name: 'Criar conta', exact: true }).click();
       await auditar(page, 'criar conta com erros');

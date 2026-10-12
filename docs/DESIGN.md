@@ -58,7 +58,7 @@ Raio 12 px em cards e folhas, 8 px em campos e chips, 999 px em selos. Cards tê
 |---|---|---|
 | Cai em | **Turmas** | **Turmas** |
 | Mobile (barra inferior) | Turmas · Atividades | só Turmas (sem barra; só o cabeçalho) |
-| Desktop (menu lateral) | Turmas · Atividades | Turmas |
+| Desktop (links no cabeçalho) | Turmas · Atividades | Turmas |
 | Ação primária | Entrar em turma | Cadastrar turma |
 | Menu do avatar | nome, papel, **Sair** | nome, papel, **Sair** |
 
@@ -80,8 +80,8 @@ A tela "Atividades" geral existe só para o aluno (RF05). O professor chega às 
 | Ponto de quebra | Layout |
 |---|---|
 | < 640 px (mobile) | coluna única; cabeçalho fixo; barra inferior (aluno); folhas sobem de baixo; chips rolam na horizontal |
-| 640–1023 px (tablet) | cards em 2 colunas; mesma barra inferior do mobile (uma só navegação, que só vira menu lateral a partir de 1024 px) |
-| ≥ 1024 px (desktop) | menu lateral fixo (240 px); cards em 2–3 colunas; "Minhas atividades" e as entregas viram **tabela** (as atividades de uma turma ficam em cards de 2 colunas); folhas viram modais centrados |
+| 640–1023 px (tablet) | cards em 2 colunas; mesma barra inferior do mobile (uma só navegação, que vira links no cabeçalho a partir de 1024 px) |
+| ≥ 1024 px (desktop) | links no cabeçalho, sem coluna lateral; cards de turma em colunas por largura mínima (20 rem); "Minhas atividades" e as entregas viram **tabela** (as atividades de uma turma ficam em cards de 2 colunas); folhas viram modais centrados |
 
 A tela do professor "Entregas da atividade" é tabela no desktop (aluno, enviada em, atraso, nota, ações) e lista de cards no mobile.
 
@@ -192,3 +192,10 @@ Só apresentação, calculada no front a partir de `prazoFinal` (`front/src/lib/
 | Professor | prazo já passou | "Prazo encerrado" | cinza, sem alarme (para ele não é problema) |
 
 O âmbar é reservado para o prazo: "N pendentes" e o contador de turmas passaram para o azul neutro. Sempre ícone e texto, nunca só cor.
+
+**Ajustes de 12/10/2026 (mesma rodada)**
+- Navegação: a coluna lateral saiu. No desktop os links (Turmas, Atividades) ficam no cabeçalho, alinhados ao corpo (`max-w-7xl`); no celular continua a barra inferior só para o aluno. É o mesmo elemento `nav`, que no celular fica `fixed` na borda de baixo.
+- Cards de turma do aluno: selo âmbar "N vence(m) em breve" ao lado de "N atrasada" e "N pendente". Os prazos vêm de `GET /atividades` (a consulta de Minhas atividades, uma requisição para todos os cards); "pendente" conta só as que não vencem em breve, para não somar a mesma atividade duas vezes.
+- Atividade do professor: selo "N a avaliar" (entregas sem nota) ao lado do selo de prazo; usa `GET /atividades/{id}/entregas`, a mesma consulta da tela de entregas. São N requisições por tela de turma (uma por atividade). Se pesar, o certo é um campo de contagem na API.
+- Botão Voltar (celular e navegador): a folha empurra uma entrada no histórico ao abrir; Voltar fecha a folha em vez de sair da tela. Fechar por X, Esc ou envio desfaz a entrada, a menos que a pessoa já tenha navegado.
+- Verificado com simulação de daltonismo (acromatopsia e deuteranopia): "Atrasada" e "Vence em breve" se separam pela luminosidade, pelo ícone e pelo texto.

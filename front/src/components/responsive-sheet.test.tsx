@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ResponsiveSheet } from './responsive-sheet';
 
 function simularLargura(desktop: boolean) {
@@ -80,5 +80,57 @@ describe('ResponsiveSheet', () => {
     );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  describe('botão Voltar', () => {
+    // Testes anteriores desmontam folhas abertas, o que dispara history.back() assíncrono no jsdom; espera acabar.
+    beforeEach(() => new Promise((resolve) => setTimeout(resolve, 50)));
+
+    const esperarPopstate = () => new Promise<void>((resolve) => window.addEventListener('popstate', () => resolve(), { once: true }));
+    const folha = (aberta: boolean, aoMudar: (aberto: boolean) => void = () => {}) => (
+      <ResponsiveSheet open={aberta} onOpenChange={aoMudar} titulo="Nova turma">
+        <p>conteúdo</p>
+      </ResponsiveSheet>
+    );
+
+    it('abrir empurra uma entrada no histórico e Voltar fecha a folha', async () => {
+      simularLargura(false);
+      const aoMudar = vi.fn();
+      render(folha(true, aoMudar));
+      expect(window.history.state?.folha).toBe(true);
+
+      const voltou = esperarPopstate();
+      window.history.back();
+      await voltou;
+
+      expect(aoMudar).toHaveBeenCalledWith(false);
+    });
+
+    it('fechar por outro caminho desfaz a entrada, sem chamar onOpenChange de novo', async () => {
+      simularLargura(false);
+      const aoMudar = vi.fn();
+      const voltar = vi.spyOn(window.history, 'back');
+      const { rerender } = render(folha(false, aoMudar));
+      rerender(folha(true, aoMudar));
+      expect(voltar).not.toHaveBeenCalled();
+
+      const voltou = esperarPopstate();
+      rerender(folha(false, aoMudar));
+      await voltou;
+
+      expect(voltar).toHaveBeenCalledTimes(1);
+      expect(aoMudar).not.toHaveBeenCalled();
+    });
+
+    it('se a pessoa já navegou para outra tela, não desfaz a navegação', () => {
+      simularLargura(false);
+      const voltar = vi.spyOn(window.history, 'back');
+      const { rerender } = render(folha(true));
+      window.history.pushState({ outraTela: true }, '', '/outra');
+
+      rerender(folha(false));
+
+      expect(voltar).not.toHaveBeenCalled();
+    });
   });
 });

@@ -72,7 +72,7 @@ test('professor: cria turma, cadastra atividade e avalia uma entrega', async ({ 
   await expect(page.getByText('4 entregas · 3 com atraso · 3 avaliadas')).toBeVisible();
 });
 
-test('no celular a navegação é a barra inferior; no desktop é o menu lateral', async ({ page }) => {
+test('no celular a navegação é a barra inferior; no desktop são links no cabeçalho', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
   await entrar(page, 'maria@ufrpe.br');
   const nav = page.getByRole('navigation', { name: 'Navegação principal' });
@@ -82,8 +82,9 @@ test('no celular a navegação é a barra inferior; no desktop é o menu lateral
 
   await page.setViewportSize({ width: 1280, height: 800 });
   const caixaDesktop = await nav.boundingBox();
-  expect(caixaDesktop!.x).toBeLessThan(10); // encostado à esquerda
-  expect(caixaDesktop!.width).toBeLessThan(300);
+  expect(caixaDesktop!.y).toBeLessThan(64); // dentro do cabeçalho (64 px de altura), não embaixo
+  expect(caixaDesktop!.height).toBeLessThan(64);
+  expect(caixaDesktop!.width).toBeLessThan(400);
 });
 
 test('o professor não tem a barra inferior no celular', async ({ page }) => {

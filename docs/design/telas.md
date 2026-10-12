@@ -38,7 +38,7 @@ Rota `/turmas`, papel ALUNO. Barra inferior: Turmas · Atividades.
 
 Vazio: "Você ainda não está em nenhuma turma. Peça o código ao professor e entre." + "Entrar em turma". Erro: "Não conseguimos carregar suas turmas. Verifique a conexão e tente de novo." + "Tentar de novo". Carregando: esqueleto.
 
-Desktop: menu lateral (Turmas, Atividades), cards em 2–3 colunas, folha vira modal.
+Desktop: links no cabeçalho (Turmas, Atividades), cards em colunas por largura mínima (20 rem), folha vira modal.
 
 ## T3 — Turmas do professor (RF09) · `referencia/03-turmas-professor.png`
 

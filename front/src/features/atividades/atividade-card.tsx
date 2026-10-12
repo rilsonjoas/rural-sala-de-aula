@@ -1,9 +1,10 @@
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronRight, ClipboardCheck } from 'lucide-react';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { ComplexidadeIndicator } from '@/components/complexidade-indicator';
 import { PrazoBadge, StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
+import { useEntregas } from '@/features/entregas/api';
 import { formatData, formatDataHora } from '@/lib/format';
 import { alunoComPressa, urgenciaDoPrazo } from '@/lib/urgencia';
 import { apoioAoEstado } from './apoio';
@@ -18,6 +19,22 @@ const ACAO_DO_ALUNO: Record<NonNullable<Atividade['estado']>, { rotulo: string; 
 };
 
 const chipNeutro = 'inline-flex min-h-6 items-center rounded-full bg-secondary px-2.5 text-xs font-semibold text-primary';
+
+/**
+ * Professor: quantas entregas ainda esperam nota. Usa a mesma consulta da tela de entregas
+ * (GET /atividades/{id}/entregas), então abrir a tela depois não faz outra requisição.
+ */
+function ContadorAAvaliar({ atividadeId }: { atividadeId: string }) {
+  const entregas = useEntregas(atividadeId);
+  const aAvaliar = entregas.data?.filter((e) => e.nota == null).length ?? 0;
+  if (aAvaliar === 0) return null;
+  return (
+    <span className="inline-flex min-h-6 items-center gap-1.5 rounded-full border border-primary bg-card px-2.5 text-xs font-semibold text-primary">
+      <ClipboardCheck aria-hidden="true" className="size-3.5" />
+      {`${aAvaliar} a avaliar`}
+    </span>
+  );
+}
 
 type Props = {
   atividade: Atividade;
@@ -64,7 +81,8 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
             <StatusBadge estado={atividade.estado} nota={atividade.nota} urgente={comPressa} />
           </span>
         ) : variante === 'turma-professor' ? (
-          <span className="ml-auto">
+          <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <ContadorAAvaliar atividadeId={atividade.id} />
             <PrazoBadge urgencia={urgenciaDoPrazo(atividade.prazoFinal)} />
           </span>
         ) : null}

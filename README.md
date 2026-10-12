@@ -29,7 +29,7 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 
 RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
 
-**Estado (09/10/2026):** o front dos nove P1 está pronto e testado contra uma API simulada (`front/src/mocks/`, ligada com `VITE_API_MOCK=true`); o contrato (`docs/openapi.yaml`) e o schema estão fechados. Falta o back-end implementar os endpoints e integrarmos tela por tela. Ver `docs/design/plano-de-design.md` §8.
+**Estado (09/10/2026):** o front dos nove P1 está pronto e testado contra uma API simulada (`front/src/mocks/`, ligada com `VITE_API_MOCK=true`); o contrato (`docs/openapi.yaml`) e o schema estão fechados. Falta o back-end implementar os endpoints e integrarmos tela por tela. Ver `docs/design/plano-de-design.md` §8. Guia para o back-end: [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).
 
 ## Backlog (sem data)
 
@@ -55,5 +55,6 @@ bash scripts/verify.sh   # preflight, schema, front (typecheck/lint/test/build/e
 - `docs/adr/` — decisões de arquitetura
 - `docs/DESIGN.md`, `docs/design/telas.md` — design e especificação das telas do front
 - `docs/requisitos.md` — texto de origem dos requisitos e onde o projeto decidiu diferente
+- `docs/INTEGRACAO.md` — guia de integração front–back (onde está a especificação, ordem, contrato que mudou)
 - `docs/BACKLOG.md` — o que fica para depois do P1
 - `CONTEXT.md` — glossário e invariantes do domínio

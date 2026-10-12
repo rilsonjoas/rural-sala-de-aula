@@ -150,6 +150,6 @@ Ordem de integração com o Luiz: auth → turmas → inscrições → atividade
 
 ## 10. Pendências que dependem de você
 
-1. Aprovar os pedidos ao Luiz (C1 a C6) e me autorizar a refletir o que ele aceitar no `openapi.yaml`.
+1. Levar ao Luiz os pedidos C1 a C7 (já refletidos no `openapi.yaml`; guia em `docs/INTEGRACAO.md`) e confirmar o C6. Ainda sem resposta dele.
 2. Gerar as 3 telas desktop no Stitch (§6) e mandar de novo o zip.
 3. Logo própria: no roadmap, fora do P1; por ora, só o texto.

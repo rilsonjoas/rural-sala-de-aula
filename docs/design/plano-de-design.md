@@ -69,7 +69,7 @@ O front não consegue montar estas telas só com o `docs/openapi.yaml` atual. **
 | C1 ✅ | Card de turma do aluno mostra o professor, mas `Turma` só tem `professorId` | acrescentar `professorNome` | Turmas (aluno) |
 | C2 ✅ | Selos "N pendentes" e "N atrasadas" | acrescentar `atividadesPendentes` e `atividadesAtrasadas` (inteiros, só aluno) em `Turma` | Turmas (aluno) |
 | C3 ✅ | Não existe "detalhe da atividade" nem "minha entrega" | `GET /atividades/{id}` retornando `Atividade` com `estado` e `minhaEntrega` (opcional) | Detalhe (aluno) |
-| C4 ✅ | Lista de entregas precisa do nome do aluno e do tamanho do arquivo | acrescentar `alunoNome` e `tamanhoBytes` em `Entrega` | Entregas (professor) |
+| C4 ✅ | Lista de entregas precisa do nome do aluno e do tamanho do arquivo | acrescentar `alunoNome` e `tamanhoBytes` em `EntregaIndividual` | Entregas (professor) |
 | C5 ✅ | Tamanho máximo e tipos de arquivo | 25 MB; pdf, ppt, pptx, doc, docx, txt; `submitEntrega` responde 413 (tamanho), 415 (tipo), 409 (já avaliada) | Detalhe (aluno) |
 | C7 ✅ | Selo "Concluída · nota 9,5" na lista de atividades | `Atividade.nota` (só aluno, quando avaliada); `modalidade` e `disponivelEm` sempre presentes na resposta; `TurmaInput.diasAula` com `minItems: 1`; `GET /atividades` (Minhas atividades) com filtro por complexidade e turma; `POST /inscricoes` | Atividades, Turmas |
 | C6 | Aluno entrega atividade "Em grupo" | decidido: entrega individualmente até grupos entrarem (**o Luiz ainda precisa confirmar**) | Detalhe (aluno) |

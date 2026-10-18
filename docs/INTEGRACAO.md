@@ -48,7 +48,7 @@ Refletido no `openapi.yaml`, **ainda não implementado nem confirmado** (detalhe
 
 - `Turma`: `professorNome`, `atividadesPendentes`, `atividadesAtrasadas` (só aluno).
 - `Atividade`: `nota` (só aluno, quando avaliada), `estado` e `minhaEntrega` no detalhe; `modalidade` e `disponivelEm` sempre presentes.
-- `Entrega`: `alunoNome` e `tamanhoBytes`.
+- `EntregaIndividual`: `alunoNome` e `tamanhoBytes`.
 - `TurmaInput.diasAula` com ao menos um dia.
 - `GET /atividades` com filtros de complexidade e turma.
 - `submitEntrega` responde 413 (tamanho), 415 (tipo) e 409 (já avaliada).

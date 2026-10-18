@@ -6,7 +6,7 @@ Glossário do domínio (requisitos de origem em `docs/requisitos.md`). Use estes
 
 | Termo | Definição | Regras |
 |---|---|---|
-| `usuario` | Pessoa com conta. Tem `papel`: ALUNO ou PROFESSOR. | E-mail único sem diferenciar maiúsculas. |
+| `Usuario` | Pessoa com conta. Tem `papel`: ALUNO ou PROFESSOR. | E-mail único sem diferenciar maiúsculas. |
 | `turma` | Oferta de uma disciplina (código gerado pelo servidor: 6 caracteres sem 0, O, 1, I, L), administrada por um professor. Tem nome, disciplina, semestre (`2026.2`), dias de aula (1–7, ISO) e `codigo` de inscrição. | Só PROFESSOR cria. Código único (6–8 caracteres alfanuméricos, sem diferenciar maiúsculas). |
 | `inscricao` | Vínculo aluno–turma, feito pelo código. | Só ALUNO. Uma por par aluno–turma. |
 | `atividade` | Trabalho de uma turma (o professor define o `prazo_final`, o limite que define atraso; a data de entrega é a do aluno, `entrega.enviada_em`): nome, descrição, `complexidade` (BAIXA/MEDIA/ALTA), `tipo` (ATIVIDADE/TRABALHO/PROVA), `modalidade` (INDIVIDUAL/GRUPO), `prazo_final`, `disponivel_em`. | `disponivel_em ≤ prazo_final`. O envio nunca é bloqueado; depois do `prazo_final` conta como atraso. O aluno só vê a atividade depois de `disponivel_em`. Modalidade GRUPO existe no dado, mas grupos são backlog. |

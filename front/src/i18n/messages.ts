@@ -7,8 +7,6 @@ export const messages = {
   tryAgain: 'Tentar de novo',
   loadError: 'Não conseguimos carregar. Verifique a conexão e tente de novo.',
   accountMenu: 'Menu da conta',
-  roleStudent: 'Aluno',
-  roleTeacher: 'Professor',
   signOut: 'Sair',
   skipToContent: 'Pular para o conteúdo',
   notFound: 'Página não encontrada',

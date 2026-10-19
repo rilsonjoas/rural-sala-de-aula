@@ -29,7 +29,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Cria a conta e já inicia a sessão (Set-Cookie), sem exigir login em seguida. O papel (ALUNO ou PROFESSOR) é escolhido livremente no P1; convite para professor é backlog. */
+        /** Cria a conta e já inicia a sessão (Set-Cookie). O papel de professor ou aluno é contextual por turma. */
         post: operations["register"];
         delete?: never;
         options?: never;
@@ -92,10 +92,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Aluno = turmas em que está inscrito; professor = turmas que administra. Sem paginação no P1. */
+        /** Retorna turmas em que o usuário leciona ou está inscrito. */
         get: operations["listTurmas"];
         put?: never;
-        /** Somente PROFESSOR. O código de inscrição é gerado pelo servidor (6 caracteres, sem 0, O, 1, I, L). */
+        /** Cria uma nova turma. O usuário criador passa a ser o professor. */
         post: operations["createTurma"];
         delete?: never;
         options?: never;
@@ -119,6 +119,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/turmas/{turmaId}/avisos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        /** Lista avisos postados no mural da turma. */
+        get: operations["listAvisos"];
+        put?: never;
+        /** Posta um aviso no mural da turma. */
+        post: operations["createAviso"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/avisos/{avisoId}/comentarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista os comentários de um aviso da turma. */
+        get: operations["listComentarios"];
+        put?: never;
+        /** Comenta em um aviso da turma. */
+        post: operations["createComentario"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/inscricoes": {
         parameters: {
             query?: never;
@@ -128,7 +166,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Somente ALUNO. Código comparado sem diferenciar maiúsculas e sem espaços nas pontas. */
+        /** Inscreve o usuário em uma turma pelo código. */
         post: operations["enrollTurma"];
         delete?: never;
         options?: never;
@@ -145,7 +183,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Atividades de uma turma, com os filtros e a ordenação do RF05. Aluno só vê atividades já disponíveis. O filtro estado só vale para ALUNO. */
+        /** Atividades de uma turma com filtros. */
         get: operations["listAtividades"];
         put?: never;
         /** Somente PROFESSOR dono da turma. */
@@ -163,7 +201,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Somente ALUNO. Atividades de todas as turmas em que está inscrito, com os filtros e a ordenação do RF05 (estado, tipo, modalidade, complexidade, turma). Só atividades já disponíveis. ordenar=prazo ordena por prazoFinal. Sem paginação no P1. */
+        /** Atividades de todas as turmas em que o usuário está inscrito como aluno. */
         get: operations["listMinhasAtividades"];
         put?: never;
         post?: never;
@@ -180,7 +218,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Detalhe da atividade com estado e, para ALUNO, a própria entrega (minhaEntrega). */
+        /** Detalhe da atividade com estado e, para aluno, a própria entrega. */
         get: operations["getAtividade"];
         put?: never;
         post?: never;
@@ -199,10 +237,10 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Somente PROFESSOR dono da turma. Lista só quem entregou (quem não entregou é backlog). */
+        /** Somente PROFESSOR dono da turma. Lista entregas enviadas. */
         get: operations["listEntregas"];
         put?: never;
-        /** Somente ALUNO inscrito. Reenvio substitui a entrega anterior. Após o prazo_final é aceita e marcada como atrasada. Limites: até 25 MB; extensões pdf, ppt, pptx, doc, docx, txt. Depois que o professor avalia a entrega, o reenvio é bloqueado (409). */
+        /** Envio de entrega pelo aluno. Se aceitaAtraso=false e prazo final expirado, rejeita (403). */
         post: operations["submitEntrega"];
         delete?: never;
         options?: never;
@@ -235,7 +273,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Somente PROFESSOR dono da turma. Nota de 0 a 10. */
+        /** Somente PROFESSOR dono da turma. Nota de 0 a 10 e comentário. */
         put: operations["evaluateEntrega"];
         post?: never;
         delete?: never;
@@ -258,9 +296,7 @@ export interface components {
         Problem: {
             status: number;
             message: string;
-            /** @description Erros por campo (422), para o front marcar o campo certo */
             campos?: {
-                /** @example prazoFinal */
                 campo: string;
                 mensagem: string;
             }[];
@@ -284,19 +320,13 @@ export interface components {
             senha: string;
             /** Format: date */
             dataNascimento?: string;
-            papel?: components["schemas"]["Papel"];
-        };
-        LoginRequest: {
-            /** Format: email */
-            email: string;
-            senha: string;
         };
         TurmaInput: {
             nome: string;
-            disciplina: string;
+            disciplina?: string;
             /** @example 2026.2 */
             semestre: string;
-            diasAula: number[];
+            diasAula?: number[];
             descricao?: string;
         };
         Turma: components["schemas"]["TurmaInput"] & {
@@ -305,39 +335,29 @@ export interface components {
             /** Format: uuid */
             professorId: string;
             professorNome: string;
-            /** @description Visível apenas ao professor dono */
+            /** @description Visível ao professor */
             codigo?: string;
             descricao?: string;
-            /** @description Só para ALUNO: atividades disponíveis com estado PENDENTE */
             atividadesPendentes?: number;
-            /** @description Só para ALUNO: atividades disponíveis com estado ATRASADA */
             atividadesAtrasadas?: number;
         };
         /** @enum {string} */
         AtividadeTipo: "PROVA" | "LISTA_DE_EXERCICIO" | "PROJETO_INDIVIDUAL" | "PROJETO_EM_GRUPO";
-        /** @enum {string} */
-        AtividadeModalidade?: "INDIVIDUAL" | "GRUPO";
-        /** @enum {string} */
-        Complexidade?: "BAIXA" | "MEDIA" | "ALTA";
         /**
-         * @description Derivado do prazoFinal, o limite real definido pelo professor. A data de entrega é a do próprio aluno (Entrega.enviadaEm). PENDENTE = sem entrega e agora ≤ prazoFinal. ATRASADA = sem entrega e agora > prazoFinal. ENTREGUE_COM_ATRASO = enviadaEm > prazoFinal. CONCLUIDA = entrega avaliada.
+         * @description Derivado do prazoFinal. PENDENTE, ENTREGUE, ENTREGUE_COM_ATRASO, CONCLUIDA, ATRASADA.
          * @enum {string}
          */
         EstadoAtividade: "PENDENTE" | "ENTREGUE" | "ENTREGUE_COM_ATRASO" | "CONCLUIDA" | "ATRASADA";
         AtividadeInput: {
             nome: string;
             descricao?: string;
-            complexidade?: components["schemas"]["Complexidade"];
             tipo: components["schemas"]["AtividadeTipo"];
-            modalidade?: components["schemas"]["AtividadeModalidade"];
-            /**
-             * Format: date-time
-             * @description Limite real; depois dele a entrega conta como atrasada
-             */
+            /** Format: date-time */
             prazoFinal: string;
             /** Format: date-time */
             disponivelEm?: string;
-            aceitaAtraso?: boolean;
+            /** @default true */
+            aceitaAtraso: boolean;
         };
         Atividade: components["schemas"]["AtividadeInput"] & {
             /** Format: uuid */
@@ -345,39 +365,17 @@ export interface components {
             /** Format: uuid */
             turmaId: string;
             turmaNome: string;
-            modalidade?: components["schemas"]["AtividadeModalidade"];
             /** Format: date-time */
             disponivelEm: string;
             aceitaAtraso?: boolean;
-            /** @description Derivado; só para ALUNO */
             estado?: components["schemas"]["EstadoAtividade"];
-            /** @description Só para ALUNO: nota da entrega, quando já avaliada (para o selo Concluída · nota 9,5) */
             nota?: number | null;
         };
         AtividadeDetalhe: components["schemas"]["Atividade"] & {
             professorNome: string;
-            /** @description Entrega do próprio aluno, se houver (inclui nota e comentarioPrivado quando avaliada) */
             minhaEntrega?: components["schemas"]["Entrega"] | null;
         };
-        Aviso: {
-            id: string;
-            turmaId: string;
-            autorId: string;
-            autorNome: string;
-            texto: string;
-            horario: string;
-            comentarios?: components["schemas"]["Comentario"][];
-        };
-        Comentario: {
-            id: string;
-            avisoId: string;
-            autorId: string;
-            autorNome: string;
-            texto: string;
-            horario: string;
-        };
         AvaliacaoInput: {
-            /** @description Até 1 casa decimal */
             nota: number;
             comentarioPrivado?: string;
         };
@@ -393,10 +391,39 @@ export interface components {
             tamanhoBytes: number;
             /** Format: date-time */
             enviadaEm: string;
-            /** @description enviadaEm > prazoFinal da atividade */
             atrasada: boolean;
             nota?: number | null;
             comentarioPrivado?: string | null;
+        };
+        LoginRequest: {
+            /** Format: email */
+            email: string;
+            senha: string;
+        };
+        Aviso: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            turmaId: string;
+            /** Format: uuid */
+            autorId: string;
+            autorNome: string;
+            texto: string;
+            /** Format: date-time */
+            horario: string;
+            comentarios?: components["schemas"]["Comentario"][];
+        };
+        Comentario: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            avisoId: string;
+            /** Format: uuid */
+            autorId: string;
+            autorNome: string;
+            texto: string;
+            /** Format: date-time */
+            horario: string;
         };
     };
     responses: {
@@ -415,10 +442,7 @@ export interface components {
         AtividadeId: string;
         FiltroEstado: components["schemas"]["EstadoAtividade"];
         FiltroTipo: components["schemas"]["AtividadeTipo"];
-        FiltroModalidade: components["schemas"]["AtividadeModalidade"];
-        FiltroComplexidade: components["schemas"]["Complexidade"];
-        /** @description prazo = prazoFinal; complexidade ordena BAIXA < MEDIA < ALTA */
-        Ordenar: "prazo" | "complexidade";
+        Ordenar: "prazo";
         Direcao: "asc" | "desc";
     };
     requestBodies: never;
@@ -582,7 +606,6 @@ export interface operations {
                     "application/json": components["schemas"]["Turma"];
                 };
             };
-            403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
@@ -607,6 +630,109 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    listAvisos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Aviso"][];
+                };
+            };
+        };
+    };
+    createAviso: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    texto: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Aviso"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    listComentarios: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avisoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comentario"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    createComentario: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                avisoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    texto: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comentario"];
+                };
+            };
         };
     };
     enrollTurma: {
@@ -642,9 +768,6 @@ export interface operations {
             query?: {
                 estado?: components["parameters"]["FiltroEstado"];
                 tipo?: components["parameters"]["FiltroTipo"];
-                modalidade?: components["parameters"]["FiltroModalidade"];
-                complexidade?: components["parameters"]["FiltroComplexidade"];
-                /** @description prazo = prazoFinal; complexidade ordena BAIXA < MEDIA < ALTA */
                 ordenar?: components["parameters"]["Ordenar"];
                 direcao?: components["parameters"]["Direcao"];
             };
@@ -700,11 +823,8 @@ export interface operations {
             query?: {
                 estado?: components["parameters"]["FiltroEstado"];
                 tipo?: components["parameters"]["FiltroTipo"];
-                modalidade?: components["parameters"]["FiltroModalidade"];
-                complexidade?: components["parameters"]["FiltroComplexidade"];
                 /** @description Filtra por uma turma */
                 turmaId?: string;
-                /** @description prazo = prazoFinal; complexidade ordena BAIXA < MEDIA < ALTA */
                 ordenar?: components["parameters"]["Ordenar"];
                 direcao?: components["parameters"]["Direcao"];
             };
@@ -723,7 +843,6 @@ export interface operations {
                     "application/json": components["schemas"]["Atividade"][];
                 };
             };
-            403: components["responses"]["Problem"];
         };
     };
     getAtividade: {
@@ -801,7 +920,7 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
-            /** @description Entrega já avaliada; não aceita reenvio */
+            /** @description Entrega já avaliada */
             409: {
                 headers: {
                     [name: string]: unknown;

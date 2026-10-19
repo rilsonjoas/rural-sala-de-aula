@@ -11,7 +11,7 @@ describe('API simulada: autenticação', () => {
   it('login com credencial válida devolve o usuário e abre a sessão', async () => {
     const { data } = await api.POST('/auth/login', { body: { email: ALUNA.email, senha: ALUNA.senha } });
 
-    expect(data).toMatchObject({ nome: ALUNA.nome, papel: 'ALUNO' });
+    expect(data).toMatchObject({ nome: ALUNA.nome });
     expect(data).not.toHaveProperty('senha');
 
     const me = await api.GET('/me');
@@ -42,17 +42,17 @@ describe('API simulada: autenticação', () => {
 
   it('cadastro cria a conta e já inicia a sessão', async () => {
     const { data } = await api.POST('/auth/register', {
-      body: { nome: 'Ana Souza', email: 'ana@ufrpe.br', senha: 'senha1234', papel: 'PROFESSOR' },
+      body: { nome: 'Ana Souza', email: 'ana@ufrpe.br', senha: 'senha1234' },
     });
 
-    expect(data).toMatchObject({ nome: 'Ana Souza', papel: 'PROFESSOR' });
+    expect(data).toMatchObject({ nome: 'Ana Souza' });
     expect((await api.GET('/me')).data?.email).toBe('ana@ufrpe.br');
   });
 
   it('cadastro com e-mail repetido (qualquer caixa) devolve 409 com a mensagem do desenho', async () => {
     await expect(
       api.POST('/auth/register', {
-        body: { nome: 'Outra', email: ALUNA.email.toUpperCase(), senha: 'senha1234', papel: 'ALUNO' },
+        body: { nome: 'Outra', email: ALUNA.email.toUpperCase(), senha: 'senha1234' },
       }),
     ).rejects.toMatchObject({
       status: 409,
@@ -62,7 +62,7 @@ describe('API simulada: autenticação', () => {
 
   it('cadastro inválido devolve 422 com os erros por campo', async () => {
     await expect(
-      api.POST('/auth/register', { body: { nome: ' ', email: 'sem-arroba', senha: 'curta', papel: 'ALUNO' } }),
+      api.POST('/auth/register', { body: { nome: ' ', email: 'sem-arroba', senha: 'curta' } }),
     ).rejects.toMatchObject({
       status: 422,
       campos: expect.arrayContaining([

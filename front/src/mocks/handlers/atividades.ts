@@ -4,9 +4,7 @@ import { db, usuarioDaSessao } from '../db';
 import {
   filtrarEOrdenarAtividades,
   type AtividadeDb,
-  type AtividadeModalidade,
   type AtividadeTipo,
-  type Complexidade,
   type EstadoAtividade,
 } from '../domain';
 import type { UsuarioComSenha } from '../fixtures';
@@ -31,9 +29,7 @@ function lerFiltros(url: string) {
   return {
     estado: (q.get('estado') ?? undefined) as EstadoAtividade | undefined,
     tipo: (q.get('tipo') ?? undefined) as AtividadeTipo | undefined,
-    modalidade: (q.get('modalidade') ?? undefined) as AtividadeModalidade | undefined,
-    complexidade: (q.get('complexidade') ?? undefined) as Complexidade | undefined,
-    ordenar: (q.get('ordenar') ?? undefined) as 'prazo' | 'complexidade' | undefined,
+    ordenar: (q.get('ordenar') ?? undefined) as 'prazo' | undefined,
     direcao: (q.get('direcao') ?? undefined) as 'asc' | 'desc' | undefined,
     turmaId: q.get('turmaId') ?? undefined,
   };

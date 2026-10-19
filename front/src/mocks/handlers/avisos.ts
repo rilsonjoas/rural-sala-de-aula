@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { db, usuarioDaSessao } from '../db';
 import { naoAutenticado, naoEncontrado, problem } from './problem';
-import { estaInscrito, nomeDoUsuario } from './projecoes';
+import { estaInscrito } from './projecoes';
 import type { AvisoDb, ComentarioDb } from '../domain';
 
 const API = '*/api/v1';

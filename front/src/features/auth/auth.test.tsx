@@ -127,7 +127,7 @@ describe('Criar conta', () => {
     expect(screen.getByLabelText('Nome')).toBeInTheDocument();
     expect(screen.getByLabelText('E-mail')).toBeInTheDocument();
     expect(screen.getByLabelText('Senha')).toBeInTheDocument();
-    expect(screen.getByLabelText('Data de nascimento')).toBeInTheDocument();
+    expect(screen.getByLabelText('Data de nascimento (opcional)')).toBeInTheDocument();
     expect(screen.getByText('Mínimo de 8 caracteres')).toBeInTheDocument();
     expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
   });

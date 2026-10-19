@@ -1,5 +1,4 @@
 import { HttpResponse, http } from 'msw';
-import type { components } from '@/lib/api.generated';
 import { db, usuarioDaSessao } from '../db';
 import { dadosInvalidos, naoAutenticado, naoEncontrado, problem, proibido } from './problem';
 import { atividadeVisivel } from './atividades';
@@ -68,7 +67,9 @@ export const entregasHandlers = [
       return proibido('Só o professor da turma vê as entregas.');
     }
 
-    const entregas = db.entregas.filter((e) => e.atividadeId === atividade!.id);
+    const entregas = db.entregas
+      .filter((e) => e.atividadeId === atividade!.id)
+      .sort((a, b) => a.enviadaEm.localeCompare(b.enviadaEm));
     return HttpResponse.json(entregas.map(paraEntregaApi));
   }),
 
@@ -95,7 +96,7 @@ export const entregasHandlers = [
     const corpo = (await request.json()) as { nota?: number; comentarioPrivado?: string };
     const nota = corpo.nota;
     if (typeof nota !== 'number' || Number.isNaN(nota) || nota < 0 || nota > 10) {
-      return dadosInvalidos([{ campo: 'nota', mensagem: 'A nota deve ser entre 0 e 10.' }]);
+      return dadosInvalidos([{ campo: 'nota', mensagem: 'A nota deve estar entre 0 e 10.' }]);
     }
     const arredondada = Math.round(nota * 10) / 10;
     const comentario = corpo.comentarioPrivado?.trim();

@@ -2,7 +2,6 @@ import { ClipboardList, Users, type LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { messages as copy } from '@/i18n/messages';
 import { cn } from '@/lib/utils';
-import type { Usuario } from '@/features/session/use-session';
 
 type Item = { para: string; rotulo: string; Icone: LucideIcon };
 
@@ -14,8 +13,7 @@ const ITENS: Item[] = [TURMAS, ATIVIDADES];
 /**
  * Navegação única que se adapta: barra inferior no mobile e links no cabeçalho a partir de 1024 px.
  */
-export function MainNav({ papel }: { papel?: Usuario['papel'] }) {
-  void papel;
+export function MainNav() {
   return (
     <nav
       aria-label={copy.navigationLabel}

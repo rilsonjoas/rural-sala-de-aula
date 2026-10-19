@@ -18,7 +18,7 @@ const schema = z.object({
   nome: z.string().trim().min(1, 'Informe o nome da turma.'),
   descricao: z.string().trim().optional(),
   semestre: z.string().regex(/^[0-9]{4}\.[12]$/, 'Use o formato 2026.1 ou 2026.2.'),
-  diasAula: z.array(z.string()).default([]),
+  diasAula: z.array(z.string()),
 });
 type Valores = z.infer<typeof schema>;
 

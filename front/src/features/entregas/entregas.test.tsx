@@ -29,7 +29,7 @@ describe('Entregas da atividade (professor)', () => {
     expect(await screen.findByRole('heading', { name: 'Lista 2 — Balanceamento AVL', level: 2 })).toBeInTheDocument();
     expect(screen.getByText('Turma A — Algoritmos')).toBeInTheDocument();
     expect(await screen.findByText('4 entregas · 3 com atraso · 2 avaliadas')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Atividades/ })).toHaveAttribute('href', expect.stringMatching(/^\/turmas\//));
+    expect(screen.getByRole('link', { name: 'Atividades', current: false })).toHaveAttribute('href', expect.stringMatching(/^\/turmas\//));
   });
 
   it('lista só quem entregou, da entrega mais antiga para a mais recente', async () => {

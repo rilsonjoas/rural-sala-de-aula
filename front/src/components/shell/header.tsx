@@ -19,7 +19,7 @@ export function Header({ usuario, onSair }: { usuario: Usuario; onSair: () => vo
               {copy.appName}
             </Link>
           </h1>
-          <MainNav papel={usuario.papel} />
+          <MainNav />
         </div>
         <AvatarMenu usuario={usuario} onSair={onSair} />
       </div>

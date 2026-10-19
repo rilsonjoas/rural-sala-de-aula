@@ -22,7 +22,7 @@ describe('Turmas do aluno', () => {
   it('mostra o título, o botão Entrar em turma e as turmas do semestre mais recente', async () => {
     await abrirTurmas(ALUNA);
 
-    expect(await screen.findByText('2 turmas inscritas')).toBeInTheDocument();
+    expect(await screen.findByText('2 turmas')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Entrar em turma' })[0]).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Semestre' })).toHaveTextContent('Semestre 2026.2');
     expect(screen.getAllByRole('article')).toHaveLength(2);
@@ -31,7 +31,7 @@ describe('Turmas do aluno', () => {
 
   it('cada card mostra disciplina, professor, dias e os selos de pendentes e atrasadas', async () => {
     await abrirTurmas(ALUNA);
-    await screen.findByText('2 turmas inscritas');
+    await screen.findByText('2 turmas');
 
     const a = within(card('Turma A — Algoritmos'));
     expect(a.getByText('Algoritmos e Estruturas de Dados II')).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('Turmas do aluno', () => {
     expect(await a.findByText('1 vence em breve')).toBeInTheDocument();
     expect(a.queryByText('1 pendente')).not.toBeInTheDocument();
     expect(a.getByText('1 atrasada')).toBeInTheDocument();
-    expect(a.getByRole('link', { name: /Ver atividades/ })).toHaveAttribute('href', `/turmas/${TURMA_A}`);
+    expect(a.getByRole('link', { name: /Ver turma/ })).toHaveAttribute('href', `/turmas/${TURMA_A}`);
 
     const b = within(card('Turma B — Programação Web'));
     // Prática 2 vence em 1 dia e Seminário em 15: um selo âmbar e um de pendente, sem contar a mesma atividade duas vezes.
@@ -53,18 +53,18 @@ describe('Turmas do aluno', () => {
 
   it('"Todos os semestres" mostra também a turma do semestre anterior, que está em dia', async () => {
     const user = await abrirTurmas(ALUNA);
-    await screen.findByText('2 turmas inscritas');
+    await screen.findByText('2 turmas');
 
     await user.click(screen.getByRole('combobox', { name: 'Semestre' }));
     await user.click(await screen.findByRole('option', { name: 'Todos os semestres' }));
 
-    expect(await screen.findByText('3 turmas inscritas')).toBeInTheDocument();
+    expect(await screen.findByText('3 turmas')).toBeInTheDocument();
     expect(within(card('Turma C — Banco de Dados')).getByText('Em dia')).toBeInTheDocument();
   });
 
   it('entra em uma turma pelo código (maiúsculas e espaços ignorados) e ela aparece na lista', async () => {
     const user = await abrirTurmas(ALUNO);
-    await screen.findByText('1 turma inscrita');
+    await screen.findByText('2 turmas');
 
     await user.click(screen.getAllByRole('button', { name: 'Entrar em turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Entrar em turma' });
@@ -72,14 +72,14 @@ describe('Turmas do aluno', () => {
     await user.type(within(folha).getByLabelText('Código da turma'), ' web 404 ');
     await user.click(within(folha).getByRole('button', { name: 'Entrar na turma' }));
 
-    expect(await screen.findByText('2 turmas inscritas')).toBeInTheDocument();
+    expect(await screen.findByText('3 turmas')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(screen.getByRole('article', { name: /Turma B — Programação Web/ })).toBeInTheDocument();
   });
 
   it('código inexistente e turma repetida aparecem no campo, sem fechar a folha', async () => {
     const user = await abrirTurmas(ALUNO);
-    await screen.findByText('1 turma inscrita');
+    await screen.findByText('2 turmas');
     await user.click(screen.getAllByRole('button', { name: 'Entrar em turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Entrar em turma' });
 
@@ -96,7 +96,7 @@ describe('Turmas do aluno', () => {
 
   it('exige o código antes de enviar', async () => {
     const user = await abrirTurmas(ALUNO);
-    await screen.findByText('1 turma inscrita');
+    await screen.findByText('2 turmas');
     await user.click(screen.getAllByRole('button', { name: 'Entrar em turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Entrar em turma' });
 
@@ -126,7 +126,7 @@ describe('Turmas do aluno', () => {
     server.resetHandlers();
     await user.click(screen.getByRole('button', { name: 'Tentar de novo' }));
 
-    expect(await screen.findByText('2 turmas inscritas')).toBeInTheDocument();
+    expect(await screen.findByText('2 turmas')).toBeInTheDocument();
   });
 
   it('enquanto carrega, mostra o esqueleto', async () => {
@@ -134,7 +134,7 @@ describe('Turmas do aluno', () => {
     renderApp('/turmas');
 
     expect(await screen.findByRole('status', { name: 'Carregando' })).toBeInTheDocument();
-    await screen.findByText('2 turmas inscritas');
+    await screen.findByText('2 turmas');
     expect(screen.queryByRole('status', { name: 'Carregando' })).not.toBeInTheDocument();
   });
 });
@@ -151,7 +151,7 @@ describe('Turmas do professor', () => {
     expect(a.getByText('Seg · Qua')).toBeInTheDocument();
     expect(a.queryByText(/Prof\./)).not.toBeInTheDocument();
     expect(a.queryByText(/pendente/)).not.toBeInTheDocument();
-    expect(a.getByRole('link', { name: /Ver atividades/ })).toHaveAttribute('href', `/turmas/${TURMA_A}`);
+    expect(a.getByRole('link', { name: /Ver turma/ })).toHaveAttribute('href', `/turmas/${TURMA_A}`);
   });
 
   it('copia o código de inscrição', async () => {

@@ -1,4 +1,4 @@
-import type { AtividadeDb, AvaliacaoDb, EntregaDb, InscricaoDb, TurmaDb } from './domain';
+import type { AtividadeDb, AvaliacaoDb, AvisoDb, EntregaDb, InscricaoDb, TurmaDb } from './domain';
 import {
   ALUNA,
   ALUNO,

@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AppShell } from './components/shell/app-shell';
 import { PublicLayout } from './components/shell/public-layout';
-import { PublicOnly, RequireAuth, RequireRole } from './features/session/guards';
+import { PublicOnly, RequireAuth } from './features/session/guards';
 import { SessionWatcher } from './features/session/session-watcher';
 import { AuthPage } from './features/auth/auth-page';
 import { NotFoundPage } from './pages/NotFoundPage';

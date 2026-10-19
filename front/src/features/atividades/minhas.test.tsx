@@ -1,4 +1,4 @@
-import { cleanup, screen, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -31,14 +31,13 @@ describe('Minhas atividades (aluno)', () => {
     expect(ordem[ordem.length - 1]).toMatch(/Seminário/);
   });
 
-  it('cada card mostra turma, tipo, modalidade, prazo final, estado e a ação certa para o estado', async () => {
+  it('cada card mostra turma, tipo, prazo final, estado e a ação certa para o estado', async () => {
     await abrirMinhas();
     await screen.findByText('Todas as turmas · 8 atividades');
 
     const lista1 = within(card(/Lista 1 —/));
     expect(lista1.getByText('Turma A — Algoritmos')).toBeInTheDocument();
-    expect(lista1.getByText('Atividade')).toBeInTheDocument();
-    expect(lista1.getByText('Individual')).toBeInTheDocument();
+    expect(lista1.getByText('Lista de Exercício')).toBeInTheDocument();
     // Lista 1 vence em 2 dias (48 h): o selo de pendente vira "Vence em breve" (só apresentação).
     expect(lista1.getByText('Vence em breve')).toBeInTheDocument();
     expect(lista1.getByRole('link', { name: 'Enviar entrega' })).toHaveAttribute('href', `/atividades/${A_LISTA_1}`);
@@ -47,14 +46,14 @@ describe('Minhas atividades (aluno)', () => {
     expect(within(card(/Trabalho 1/)).getByRole('link', { name: 'Ver detalhes' })).toBeInTheDocument();
     expect(within(card(/Lista 2/)).getByRole('link', { name: 'Ver envio' })).toBeInTheDocument();
     expect(within(card(/Prova Teórica 1/)).getByRole('link', { name: 'Ver nota e comentário' })).toBeInTheDocument();
-    expect(within(card(/Seminário/)).getByText('Em grupo')).toBeInTheDocument();
+    expect(within(card(/Seminário/)).getByText('Projeto em Grupo')).toBeInTheDocument();
   });
 
-  it('tem os cinco grupos de filtro e nenhum chip ativo ao abrir', async () => {
+  it('tem os três grupos de filtro e nenhum chip ativo ao abrir', async () => {
     await abrirMinhas();
     await screen.findByText('Todas as turmas · 8 atividades');
 
-    for (const grupo of ['Estado', 'Tipo', 'Modalidade', 'Complexidade', 'Turma']) {
+    for (const grupo of ['Estado', 'Tipo', 'Turma']) {
       expect(screen.getByRole('group', { name: grupo })).toBeInTheDocument();
     }
     expect(within(screen.getByRole('group', { name: 'Estado' })).getAllByRole('button')).toHaveLength(5);
@@ -71,18 +70,18 @@ describe('Minhas atividades (aluno)', () => {
 
     expect(await screen.findByText('Todas as turmas · 3 atividades')).toBeInTheDocument();
     expect(titulos().sort()).toEqual(
-      ['Lista 1 — Recursão e Divisão e Conquista', 'Prática 2 — Layout Flexbox e CSS Grid', 'Seminário — APIs REST'].sort(),
+      ['Lista 1 — Recursão e Divisão e Conquista', 'Prática 2 — Layout Flexbox e CSS Grid', 'Seminário — APIs REST e GraphQL'].sort(),
     );
   });
 
-  it('combina filtros de grupos diferentes (estado e modalidade) e de turma', async () => {
+  it('combina filtros de grupos diferentes (estado e tipo) e de turma', async () => {
     const user = await abrirMinhas();
     await screen.findByText('Todas as turmas · 8 atividades');
 
     await user.click(within(screen.getByRole('group', { name: 'Estado' })).getByRole('button', { name: 'Pendente' }));
-    await user.click(within(screen.getByRole('group', { name: 'Modalidade' })).getByRole('button', { name: 'Em grupo' }));
+    await user.click(within(screen.getByRole('group', { name: 'Tipo' })).getByRole('button', { name: 'Projeto em Grupo' }));
     expect(await screen.findByText('Todas as turmas · 1 atividade')).toBeInTheDocument();
-    expect(titulos()).toEqual(['Seminário — APIs REST']);
+    expect(titulos()).toEqual(['Seminário — APIs REST e GraphQL']);
 
     await user.click(screen.getByRole('button', { name: 'Limpar filtros' }));
     await user.click(within(screen.getByRole('group', { name: 'Turma' })).getByRole('button', { name: 'Turma C — Banco de Dados' }));
@@ -93,7 +92,7 @@ describe('Minhas atividades (aluno)', () => {
   it('clicar de novo no chip ativo o desliga', async () => {
     const user = await abrirMinhas();
     await screen.findByText('Todas as turmas · 8 atividades');
-    const chip = () => within(screen.getByRole('group', { name: 'Complexidade' })).getByRole('button', { name: 'Alta' });
+    const chip = () => within(screen.getByRole('group', { name: 'Tipo' })).getByRole('button', { name: 'Prova' });
 
     await user.click(chip());
     expect(chip()).toHaveAttribute('aria-pressed', 'true');
@@ -103,16 +102,16 @@ describe('Minhas atividades (aluno)', () => {
     expect(await screen.findByText('Todas as turmas · 8 atividades')).toBeInTheDocument();
   });
 
-  it('ordena por complexidade, da maior para a menor', async () => {
+  it('ordena pelo prazo mais distante primeiro', async () => {
     const user = await abrirMinhas();
     await screen.findByText('Todas as turmas · 8 atividades');
 
     await user.click(screen.getByRole('combobox', { name: 'Ordenar por' }));
-    await user.click(await screen.findByRole('option', { name: 'Complexidade (maior primeiro)' }));
+    await user.click(await screen.findByRole('option', { name: 'Prazo (mais distante primeiro)' }));
 
     await screen.findByText('Todas as turmas · 8 atividades');
-    expect(titulos()[0]).toMatch(/Prova Teórica 1|Trabalho 1|Modelagem/);
-    expect(titulos()[titulos().length - 1]).toMatch(/Lista 0|Prática 2/);
+    await waitFor(() => expect(titulos()[0]).toMatch(/Seminário/));
+    expect(titulos()[titulos().length - 1]).toMatch(/Prova Teórica 1/);
   });
 
   it('um filtro sem resultado ensina a limpar', async () => {
@@ -120,7 +119,7 @@ describe('Minhas atividades (aluno)', () => {
     await screen.findByText('Todas as turmas · 8 atividades');
 
     await user.click(within(screen.getByRole('group', { name: 'Estado' })).getByRole('button', { name: 'Atrasada' }));
-    await user.click(within(screen.getByRole('group', { name: 'Modalidade' })).getByRole('button', { name: 'Em grupo' }));
+    await user.click(within(screen.getByRole('group', { name: 'Tipo' })).getByRole('button', { name: 'Projeto em Grupo' }));
 
     expect(await screen.findByText('Nenhuma atividade com esses filtros.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Limpar filtros' })).toHaveLength(2);
@@ -165,11 +164,12 @@ describe('Minhas atividades (aluno)', () => {
     expect(await screen.findByText('Todas as turmas · 8 atividades')).toBeInTheDocument();
   });
 
-  it('o professor não acessa Minhas atividades', async () => {
-    await entrarComo(PROFESSOR);
-    renderApp('/atividades');
+  it('o professor vê só as atividades das turmas em que é aluno, não as das que leciona', async () => {
+    await abrirMinhas(PROFESSOR);
+    await screen.findByText(/^Todas as turmas · \d+ atividades?$/);
 
-    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
+    expect(screen.queryByRole('article', { name: /Lista 1 —/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('article', { name: /Prática 2/ })).toBeInTheDocument();
   });
 
   it('a aluna sem atividades vê o estado vazio', async () => {
@@ -206,7 +206,7 @@ describe('Minhas atividades no desktop (tabela)', () => {
     await screen.findByText('Todas as turmas · 8 atividades');
 
     const tabela = screen.getByRole('table');
-    for (const coluna of ['Atividade', 'Turma', 'Tipo', 'Complexidade', 'Prazo final', 'Estado']) {
+    for (const coluna of ['Atividade', 'Turma', 'Tipo', 'Prazo final', 'Estado']) {
       expect(within(tabela).getByRole('columnheader', { name: new RegExp(coluna) })).toBeInTheDocument();
     }
     expect(within(tabela).getAllByRole('row')).toHaveLength(9);
@@ -231,9 +231,9 @@ describe('Minhas atividades no desktop (tabela)', () => {
 
 describe('lerFiltrosSalvos', () => {
   it('aceita filtros válidos', () => {
-    const lidos = lerFiltrosSalvos(JSON.stringify({ estado: 'ATRASADA', tipo: 'PROVA', ordenar: 'complexidade:desc' }));
+    const lidos = lerFiltrosSalvos(JSON.stringify({ estado: 'ATRASADA', tipo: 'PROVA', ordenar: 'prazo:desc' }));
 
-    expect(lidos).toEqual({ estado: 'ATRASADA', tipo: 'PROVA', ordenar: 'complexidade:desc' });
+    expect(lidos).toEqual({ estado: 'ATRASADA', tipo: 'PROVA', ordenar: 'prazo:desc' });
   });
 
   it('ignora texto quebrado, valores desconhecidos e campos de fora', () => {

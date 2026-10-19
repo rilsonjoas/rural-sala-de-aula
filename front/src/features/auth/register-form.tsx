@@ -28,7 +28,7 @@ export function RegisterForm() {
         ...valores,
         dataNascimento: valores.dataNascimento ? valores.dataNascimento : undefined,
       };
-      const { data } = await api.POST('/auth/register', { body: payload as any });
+      const { data } = await api.POST('/auth/register', { body: payload });
       queryClient.setQueryData(ME_QUERY_KEY, data);
     } catch (erro) {
       setErroGeral(aplicarErroDaApi(form, erro, { campoPorStatus: { 409: 'email' } }));

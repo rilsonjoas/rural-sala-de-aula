@@ -37,7 +37,6 @@ export const authHandlers = [
       id: crypto.randomUUID(),
       nome: corpo.nome.trim(),
       email: corpo.email,
-      papel: corpo.papel,
       senha: corpo.senha,
       dataNascimento: corpo.dataNascimento,
     };

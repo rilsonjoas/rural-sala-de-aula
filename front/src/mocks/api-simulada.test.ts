@@ -19,6 +19,8 @@ import {
   TURMA_A,
   TURMA_B,
   TURMA_C,
+  TURMA_D,
+  TURMA_E,
 } from './fixtures';
 
 const pdf = (nome = 'trabalho.pdf', tamanho = 10) => new File([new Uint8Array(tamanho)], nome, { type: 'application/pdf' });
@@ -40,17 +42,21 @@ describe('API simulada: turmas', () => {
   it('o aluno só vê as turmas em que está inscrito', async () => {
     await entrarComo(ALUNO);
 
-    expect((await api.GET('/turmas')).data?.map((t) => t.id)).toEqual([TURMA_A]);
+    expect((await api.GET('/turmas')).data?.map((t) => t.id).sort()).toEqual([TURMA_A, TURMA_D].sort());
   });
 
-  it('o professor vê só as próprias turmas, com código e sem contadores', async () => {
+  it('o professor vê as turmas que leciona (com código, sem contadores) e as em que é aluno (sem código, com contadores)', async () => {
     await entrarComo(PROFESSOR);
 
     const { data } = await api.GET('/turmas');
 
-    expect(data?.map((t) => t.id).sort()).toEqual([TURMA_A, TURMA_C].sort());
-    expect(data![0]).toHaveProperty('codigo');
-    expect(data![0]).not.toHaveProperty('atividadesPendentes');
+    expect(data?.map((t) => t.id).sort()).toEqual([TURMA_A, TURMA_B, TURMA_C, TURMA_D, TURMA_E].sort());
+    const propria = data!.find((t) => t.id === TURMA_A)!;
+    expect(propria).toHaveProperty('codigo');
+    expect(propria).not.toHaveProperty('atividadesPendentes');
+    const comoAluno = data!.find((t) => t.id === TURMA_B)!;
+    expect(comoAluno).not.toHaveProperty('codigo');
+    expect(comoAluno).toHaveProperty('atividadesPendentes');
   });
 
   it('filtra por semestre', async () => {
@@ -72,7 +78,7 @@ describe('API simulada: turmas', () => {
     expect(data?.codigo).toMatch(/^[A-Z2-9]{6}$/);
   });
 
-  it('cadastro de turma inválido devolve 422 por campo; aluno recebe 403', async () => {
+  it('cadastro de turma inválido devolve 422 por campo', async () => {
     await entrarComo(PROFESSOR);
     await expect(
       api.POST('/turmas', { body: { nome: ' ', disciplina: '', semestre: '2026', diasAula: [] } }),
@@ -83,12 +89,15 @@ describe('API simulada: turmas', () => {
         expect.objectContaining({ campo: 'semestre' }),
       ]),
     });
+  });
 
-    await api.POST('/auth/logout');
+  it('qualquer usuário cadastra turma e vira o professor dela', async () => {
     await entrarComo(ALUNA);
-    await expect(
-      api.POST('/turmas', { body: { nome: 'X', disciplina: 'Y', semestre: '2026.2', diasAula: [1] } }),
-    ).rejects.toMatchObject({ status: 403 });
+
+    const { data } = await api.POST('/turmas', { body: { nome: 'X', disciplina: 'Y', semestre: '2026.2', diasAula: [1] } });
+
+    expect(data).toMatchObject({ nome: 'X', professorNome: 'Maria Clara Albuquerque' });
+    expect(data?.codigo).toBeDefined();
   });
 
   it('inscrição pelo código ignora espaços e maiúsculas', async () => {
@@ -97,10 +106,10 @@ describe('API simulada: turmas', () => {
     const { data } = await api.POST('/inscricoes', { body: { codigo: ' web 404 ' } });
 
     expect(data?.id).toBe(TURMA_B);
-    expect((await api.GET('/turmas')).data).toHaveLength(2);
+    expect((await api.GET('/turmas')).data).toHaveLength(3);
   });
 
-  it('inscrição: código inexistente dá 404, repetida dá 409, professor dá 403', async () => {
+  it('inscrição: código inexistente dá 404, repetida dá 409, e o professor da turma não se inscreve nela (409)', async () => {
     await entrarComo(ALUNO);
     await expect(api.POST('/inscricoes', { body: { codigo: 'XXXXXX' } })).rejects.toMatchObject({
       status: 404,
@@ -113,7 +122,10 @@ describe('API simulada: turmas', () => {
 
     await api.POST('/auth/logout');
     await entrarComo(PROFESSOR);
-    await expect(api.POST('/inscricoes', { body: { codigo: 'WEB404' } })).rejects.toMatchObject({ status: 403 });
+    await expect(api.POST('/inscricoes', { body: { codigo: 'ALG202' } })).rejects.toMatchObject({
+      status: 409,
+      message: 'Você é o professor desta turma.',
+    });
   });
 
   it('turma em que o aluno não está inscrito não é encontrada', async () => {
@@ -157,7 +169,7 @@ describe('API simulada: atividades', () => {
     expect(data?.map((a) => a.nome)).toEqual([
       'Prática 2 — Layout Flexbox e CSS Grid',
       'Lista 1 — Recursão e Divisão e Conquista',
-      'Seminário — APIs REST',
+      'Seminário — APIs REST e GraphQL',
     ]);
     expect(data?.map((a) => a.turmaNome)).toEqual(['Turma B — Programação Web', 'Turma A — Algoritmos', 'Turma B — Programação Web']);
   });
@@ -172,13 +184,16 @@ describe('API simulada: atividades', () => {
     expect(provas.data?.every((a) => a.tipo === 'PROVA')).toBe(true);
 
     const projetos = await api.GET('/atividades', { params: { query: { tipo: 'PROJETO_EM_GRUPO' } } });
-    expect(projetos.data?.map((a) => a.nome)).toEqual(['Seminário — APIs REST']);
+    expect(projetos.data?.map((a) => a.nome)).toEqual(['Seminário — APIs REST e GraphQL']);
   });
 
-  it('Minhas atividades é só do aluno', async () => {
+  it('Minhas atividades traz só as turmas em que o usuário é aluno, mesmo sendo professor em outras', async () => {
     await entrarComo(PROFESSOR);
 
-    await expect(api.GET('/atividades')).rejects.toMatchObject({ status: 403 });
+    const { data } = await api.GET('/atividades');
+
+    const turmas = new Set(data?.map((a) => a.turmaId));
+    expect(turmas).toEqual(new Set([TURMA_B, TURMA_D, TURMA_E]));
   });
 
   it('o detalhe traz o professor e a própria entrega (ou null)', async () => {
@@ -208,6 +223,7 @@ describe('API simulada: atividades', () => {
     const corpo = {
       nome: 'Lista 3',
       tipo: 'LISTA_DE_EXERCICIO' as const,
+      aceitaAtraso: true,
       prazoFinal: new Date(Date.now() + 5 * 86400000).toISOString(),
     };
     const { data } = await api.POST('/turmas/{turmaId}/atividades', { params: { path: { turmaId: TURMA_A } }, body: corpo });
@@ -235,6 +251,7 @@ describe('API simulada: atividades', () => {
         body: {
           nome: 'X',
           tipo: 'PROVA',
+          aceitaAtraso: false,
           disponivelEm: '2026-11-10T10:00:00.000Z',
           prazoFinal: '2026-11-01T10:00:00.000Z',
         },
@@ -270,12 +287,27 @@ describe('API simulada: entregas e avaliação', () => {
   });
 
   it('entrega já avaliada não aceita reenvio (409)', async () => {
-    await entrarComo(ALUNA);
+    await entrarComo(ALUNO);
 
-    await expect(enviarEntrega(A_PROVA_1, pdf())).rejects.toMatchObject({
+    await expect(enviarEntrega(A_LISTA_2, pdf())).rejects.toMatchObject({
       status: 409,
       message: 'Esta entrega já foi avaliada e não aceita novo envio.',
     });
+  });
+
+  it('atividade que não aceita atraso recusa a entrega depois do prazo (403)', async () => {
+    await entrarComo(ALUNA);
+
+    await expect(enviarEntrega(A_PROVA_1, pdf())).rejects.toMatchObject({
+      status: 403,
+      message: 'O prazo encerrou e esta atividade não aceita entregas com atraso.',
+    });
+  });
+
+  it('o professor da turma não envia entrega na própria turma (403)', async () => {
+    await entrarComo(PROFESSOR);
+
+    await expect(enviarEntrega(A_LISTA_1, pdf())).rejects.toMatchObject({ status: 403 });
   });
 
   it('rejeita tipo de arquivo (415), arquivo grande (413) e envio sem arquivo (422)', async () => {
@@ -322,7 +354,7 @@ describe('API simulada: entregas e avaliação', () => {
     await expect(api.GET('/atividades/{atividadeId}/entregas', { params: { path: { atividadeId: A_LISTA_2 } } })).rejects.toMatchObject({ status: 403 });
     await expect(
       api.PUT('/entregas/{entregaId}/avaliacao', { params: { path: { entregaId: E_LISTA2_MARIA } }, body: { nota: 9 } }),
-    ).rejects.toMatchObject({ status: 404 });
+    ).rejects.toMatchObject({ status: 403 });
   });
 
   it('o professor baixa o arquivo com o nome original', async () => {

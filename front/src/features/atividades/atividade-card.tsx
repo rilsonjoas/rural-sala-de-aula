@@ -7,7 +7,7 @@ import { useEntregas } from '@/features/entregas/api';
 import { formatData, formatDataHora } from '@/lib/format';
 import { alunoComPressa, urgenciaDoPrazo } from '@/lib/urgencia';
 import { apoioAoEstado } from './apoio';
-import { ROTULO_MODALIDADE, ROTULO_TIPO, type Atividade } from './filtros';
+import { ROTULO_TIPO, type Atividade } from './filtros';
 
 const ACAO_DO_ALUNO: Record<NonNullable<Atividade['estado']>, { rotulo: string; primaria: boolean }> = {
   PENDENTE: { rotulo: 'Enviar entrega', primaria: true },
@@ -70,9 +70,6 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
         <div className="flex flex-wrap items-center gap-1.5">
           {variante === 'minhas' ? <span className={chipNeutro}>{atividade.turmaNome}</span> : null}
           <span className={chipNeutro}>{ROTULO_TIPO[atividade.tipo]}</span>
-          {atividade.modalidade && atividade.modalidade === 'GRUPO' ? (
-            <span className={chipNeutro}>{ROTULO_MODALIDADE[atividade.modalidade]}</span>
-          ) : null}
           {aindaIndisponivel ? (
             <span className={chipNeutro}>A partir de {formatData(atividade.disponivelEm)}</span>
           ) : null}

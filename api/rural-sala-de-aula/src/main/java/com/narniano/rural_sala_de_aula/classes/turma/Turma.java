@@ -20,7 +20,7 @@ public class Turma {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "usuarios", nullable = false)
+    @JoinColumn(name = "id_usuario", nullable = false)
     private Usuario professor;
 
     @Column(nullable = false)

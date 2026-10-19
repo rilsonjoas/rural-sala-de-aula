@@ -18,8 +18,9 @@ public class Grupo {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(table = "turmas", nullable = false)
+    @JoinColumn(name = "id_turma", nullable = false)
     private Turma turma;
 
+    @Column(name = "nome", nullable = false)
     private String name;
 }

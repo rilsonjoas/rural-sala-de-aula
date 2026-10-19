@@ -1,6 +1,6 @@
 # ADR-0007 — Papel escolhido livremente no cadastro
 
-Status: aceito para o P1; risco registrado (2026-10-09)
+Status: substituído pela ADR-0008 (2026-10-19)
 
 ## Contexto
 

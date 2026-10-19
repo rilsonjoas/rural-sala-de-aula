@@ -54,23 +54,24 @@ Raio 12 px em cards e folhas, 8 px em campos e chips, 999 px em selos. Cards tê
 
 ## 3. Papéis e navegação
 
-| | Aluno | Professor |
-|---|---|---|
-| Cai em | **Turmas** | **Turmas** |
-| Mobile (barra inferior) | Turmas · Atividades | só Turmas (sem barra; só o cabeçalho) |
-| Desktop (links no cabeçalho) | Turmas · Atividades | Turmas |
-| Ação primária | Entrar em turma | Cadastrar turma |
-| Menu do avatar | nome, papel, **Sair** | nome, papel, **Sair** |
+O papel é contextual por turma (ADR-0008): a mesma conta leciona umas turmas e cursa outras, então a navegação é uma só.
 
-A tela "Atividades" geral existe só para o aluno (RF05). O professor chega às atividades pela turma.
+| | Todos |
+|---|---|
+| Cai em | **Turmas** |
+| Mobile (barra inferior) e desktop (links no cabeçalho) | Turmas · Atividades |
+| Ações em Turmas | Entrar em turma · Cadastrar turma |
+| Menu do avatar | nome, e-mail, **Sair** |
+
+O card de cada turma mostra o papel naquela turma (selo "Professor" ou "Aluno"). "Atividades" traz só as das turmas em que a pessoa é aluna; as atividades de uma turma que ela leciona ficam dentro da turma.
 
 ## 4. Componentes
 
-- **Cabeçalho:** marca "Rural Sala de Aula" à esquerda, avatar com iniciais à direita (abre menu com nome, papel e Sair). Sem seletor de semestre global: semestre é atributo da turma (filtro opcional na lista de turmas, ver `design/telas.md` T2 e T3).
-- **Card de turma** (aluno): faixa navy; nome da turma; disciplina; professor; dias de aula ("Seg · Qua"); selo amarelo "N pendentes" (texto navy) e, se houver, selo vermelho "N atrasadas"; "Em dia" quando os dois são 0; botão secundário "Ver atividades".
-- **Card de turma** (professor): faixa navy; nome; disciplina; semestre; dias de aula; **código de inscrição** com botão "Copiar código"; botão secundário "Ver atividades".
-- **Card de atividade:** nome; turma (só na lista geral); tipo em chip neutro `--navy-tint`; complexidade (3 barras navy preenchidas + texto; sem verde/vermelho); **uma única data**: "Prazo final: 15/10 às 23:59"; selo de estado (§7); modalidade só se for "Em grupo" (aviso de que grupos ainda não funcionam, §9). Pendente mostra "Restam N dias"; atrasada mostra "Prazo final passou há N dias". No professor, atividade ainda não disponível mostra o chip "Disponível a partir de 20/10".
-- **Chips de filtro (RF05):** faixa horizontal rolável no topo, grupos nesta ordem: Estado · Tipo · Modalidade · Complexidade · Turma; ordenação por um seletor "Ordenar: Prazo ▲ / Complexidade ▼". Chip ativo = fundo navy, texto branco, ícone de "marcado"; inativo = `--navy-tint`. O estado do chip nunca é só cor.
+- **Cabeçalho:** marca "Rural Sala de Aula" à esquerda, avatar com iniciais à direita (abre menu com nome, e-mail e Sair). Sem seletor de semestre global: semestre é atributo da turma (filtro opcional na lista de turmas, ver `design/telas.md` T2 e T3).
+- **Card de turma** (aluno): faixa navy; nome da turma; disciplina; professor; dias de aula ("Seg · Qua"); selo "vence em breve" e "N pendentes" e, se houver, selo vermelho "N atrasadas"; "Em dia" quando não há nada; botão secundário "Ver turma". Selo "Aluno" no canto.
+- **Card de turma** (professor): faixa navy; nome; disciplina; semestre; dias de aula; **código de inscrição** com botão "Copiar código"; selo "Professor"; botão secundário "Ver turma".
+- **Card de atividade:** nome; turma (só na lista geral); tipo em chip neutro `--navy-tint`; **uma única data**: "Prazo final: 15/10 às 23:59"; selo de estado (§7); o tipo "Projeto em Grupo" avisa que grupos ainda não funcionam (§9). Pendente mostra "Restam N dias"; atrasada mostra "Prazo final passou há N dias". No professor, atividade ainda não disponível mostra o chip "A partir de 20/10".
+- **Chips de filtro (RF05):** faixa horizontal rolável no topo, grupos nesta ordem: Estado · Tipo · Turma (na turma do professor, sem Estado e sem Turma); ordenação por prazo, mais próximo ou mais distante primeiro. Chip ativo = fundo navy, texto branco, ícone de "marcado"; inativo = `--navy-tint`. O estado do chip nunca é só cor.
 - **Folha (bottom sheet no mobile, modal no desktop):** Entrar em turma, Nova turma, Nova atividade, Avaliar entrega.
 - **Campo:** rótulo sempre visível acima; erro abaixo, no blur, em `--red` com texto de ação.
 - **Botões:** primário (navy, texto branco), secundário (contorno navy), destrutivo/atraso (vermelho). Altura mínima 44 px.
@@ -89,14 +90,13 @@ A tela do professor "Entregas da atividade" é tabela no desktop (aluno, enviada
 
 | # | Tela | RF | Quem |
 |---|---|---|---|
-| 1 | Entrar / Criar conta (escolha de papel Aluno ou Professor) | RF01 | todos |
-| 2 | Turmas do professor + folha **Nova turma** (botão "Cadastrar turma") | RF09 | professor |
-| 3 | Turmas do aluno + folha **Entrar em turma** (código) | RF02, RF03 | aluno |
-| 4 | Atividades da turma (aluno vê; professor vê e cria) | RF10, RF05 | ambos |
-| 5 | Folha **Nova atividade** (botão "Cadastrar atividade") | RF10 | professor |
-| 6 | **Minhas atividades** (todas as turmas, com chips) | RF05 | aluno |
-| 7 | Entregas da atividade + folha **Avaliar** | RF15, RF16 | professor |
-| 8 | Detalhe da atividade + **Enviar arquivo** | RF04 | aluno |
+| 1 | Entrar / Criar conta (nome, e-mail, senha, data de nascimento opcional) | RF01 | todos |
+| 2 | **Minhas turmas** (que leciona e que cursa) + folhas **Nova turma** ("Cadastrar turma") e **Entrar em turma** (código) | RF09, RF02, RF03 | todos |
+| 3 | Turma: abas **Mural** (avisos e comentários, RF13, RF14) e **Atividades** (quem cursa vê e entrega; quem leciona vê e cria) | RF10, RF05 | todos |
+| 4 | Folha **Nova atividade** (botão "Cadastrar atividade") | RF10 | quem leciona |
+| 5 | **Minhas atividades** (turmas que cursa, com chips) | RF05 | todos |
+| 6 | Entregas da atividade + folha **Avaliar** | RF15, RF16 | quem leciona |
+| 7 | Detalhe da atividade + **Enviar arquivo** | RF04 | quem cursa |
 
 As telas 7 (parte de baixar) e 8 são as últimas a serem implementadas (reunião de 08/10).
 
@@ -131,7 +131,7 @@ Mensagens já definidas: entrega já avaliada → "Esta entrega já foi avaliada
 Lista completa em [`BACKLOG.md`](BACKLOG.md). Resumo:
 
 
-Sair da turma, grupos (solicitar, aprovar, sair), calendário de carga semanal, editar atividade, avisos, comentários, notificações, perfil/edição de conta, recuperação de senha, tema escuro. Atividade com modalidade "Em grupo" pode ser cadastrada, mas **sem fluxo de grupo**: mostra o selo "Em grupo" e o aluno entrega individualmente até o backlog entrar.
+Sair da turma, grupos (solicitar, aprovar, sair), calendário de carga semanal, editar atividade, notificações, perfil/edição de conta, recuperação de senha, tema escuro. Atividade com modalidade "Em grupo" pode ser cadastrada, mas **sem fluxo de grupo**: mostra o selo "Em grupo" e o aluno entrega individualmente até o backlog entrar.
 
 ## 10. Decisões em aberto
 
@@ -141,7 +141,7 @@ Sair da turma, grupos (solicitar, aprovar, sair), calendário de carga semanal, 
 4. **Fonte:** Inter está assumida; se a UFRPE exigir Akzidenz-Grotesk/Myriad Pro, trocar o token.
 5. **Armazenamento dos arquivos** (ADR-0003): decisão do Luiz.
 
-Decididas: "Concluída" = entrega avaliada pelo professor (o texto de origem não define); contador de pendentes/atrasadas e `professorNome` em `Turma`; limites de arquivo (25 MB; pdf, ppt, pptx, doc, docx, txt); cookie httpOnly; papel livre no cadastro; reenvio bloqueado após avaliação; entregas só de quem entregou; filtros lembrados no navegador. Detalhe no [plano](design/plano-de-design.md).
+Decididas: "Concluída" = entrega avaliada pelo professor (o texto de origem não define); contador de pendentes/atrasadas e `professorNome` em `Turma`; limites de arquivo (25 MB; pdf, ppt, pptx, doc, docx, txt); cookie httpOnly; papel contextual por turma (ADR-0008); reenvio bloqueado após avaliação; entregas só de quem entregou; filtros lembrados no navegador. Detalhe no [plano](design/plano-de-design.md).
 
 ## Convenções de exibição
 
@@ -175,7 +175,7 @@ Feita com os checklists do cofre (`qualidade-de-interface` e `revisao-de-interfa
 **Revisão ética (números e decisões que movem a pessoa)**
 - Todo número na tela é fato calculado agora: contadores de turmas, "N pendentes/atrasadas" (vêm da API), "Restam N dias" (do prazo real), resumo das entregas (da lista).
 - "Atrasada" é verdade por definição (sem entrega depois do prazo final), mas o sistema só sabe do que foi enviado por ele. O texto não acusa: diz o que fazer ("Você ainda pode enviar"). Se a escola aceitar entrega fora do sistema, isso precisa de uma forma de o professor marcar como entregue (backlog).
-- Não há anúncio, upsell, contador de sequência, notificação de cobrança nem prazo artificial. Nada vem pré-marcado no cadastro (papel). Os padrões da folha Nova atividade (Atividade, Média, Individual) são do próprio professor e passam por uma etapa de confirmação com o resumo.
+- Não há anúncio, upsell, contador de sequência, notificação de cobrança nem prazo artificial. Nada vem pré-marcado no cadastro. Os padrões da folha Nova atividade (Atividade, Média, Individual) são do próprio professor e passam por uma etapa de confirmação com o resumo.
 - Dados pessoais (nome, e-mail): o cadastro não tem aviso de privacidade. É requisito da LGPD informar a finalidade na coleta (backlog).
 
 **Desvios assumidos:** nenhum botão do P1 desvia da regra; o "Baixar" do professor é só verbo, com o objeto no nome acessível ("Baixar arquivo de Maria…").

@@ -12,8 +12,7 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 | RF08 | Calendário com carga semanal (pesada, média, livre) | |
 | RF11 | Atualizar atividades | o P1 não edita atividade, então a folha Nova atividade pede confirmação antes de salvar |
 | RF12 | Configurar e aprovar grupos | |
-| RF13 | Postar avisos | |
-| RF14 | Comentar e responder comentários | |
+| RF14b | Responder a comentários (comentar em aviso já existe) | RF13 e RF14 entraram no mural da turma |
 | RF17 | Receber notificações | |
 
 ## Requisitos não funcionais
@@ -29,7 +28,7 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - **Logo própria**, inspirada nos conceitos da UFRPE e não no desenho (o manual veda alterar o símbolo). Troca o capelo provisório do cabeçalho.
 - **Lista de inscritos que ainda não entregaram**, na tela de entregas do professor (hoje só aparece quem entregou).
 - **Contador de entregas a avaliar no card de turma** do professor (hoje só aparece em cada atividade; somar por turma pede um campo na API ou várias requisições).
-- **Convite ou aprovação para o papel Professor** (hoje qualquer pessoa escolhe "Professor" ao criar a conta).
+- **Limitar quem cria turma** (hoje qualquer conta cria; o papel é contextual, ADR-0008). Convite ou aprovação por e-mail institucional, se a universidade exigir.
 - Recuperação de senha, edição de perfil e tema escuro.
 - Filtros do aluno salvos no servidor (hoje ficam no navegador).
 - **Aviso de privacidade (LGPD)** no cadastro: o app coleta nome e e-mail e não informa a finalidade na coleta.
@@ -43,7 +42,7 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 
 ## Back-end e infraestrutura (com o Luiz)
 
-- **Contrato mudou durante o front (ver `plano-de-design.md` C7):** `Atividade.nota`, `modalidade`/`disponivelEm` obrigatórios, `diasAula` com ao menos um dia, `GET /atividades` com os filtros do RF05 (inclui complexidade e turma). A API simulada do front (`front/src/mocks/`, com testes) é uma especificação executável do comportamento esperado.
+- **Contrato mudou durante o front (ver `plano-de-design.md` C7):** `Atividade.nota`, `disponivelEm` obrigatório, `diasAula` com ao menos um dia, `GET /atividades` com os filtros do RF05 (estado, tipo e turma), papel contextual por turma (ADR-0008). A API simulada do front (`front/src/mocks/`, com testes) é uma especificação executável do comportamento esperado.
 
 - **P1, mas ainda não implementado:** Spring Security com sessão em cookie httpOnly (ADR-0004) e proteção contra CSRF; todos os endpoints do `docs/openapi.yaml`; armazenamento dos arquivos (ADR-0003).
 - Confirmar que o professor define só o **prazo final** (a data de entrega é a do aluno) e ajustar o texto do RF10 no documento de requisitos.

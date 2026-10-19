@@ -10,7 +10,7 @@ npm install
 VITE_API_MOCK=true VITE_API_MOCK_USER=aluna npm run dev   # ou professor
 ```
 
-Usuários de teste: `maria@ufrpe.br` (aluna) e `paulo@ufrpe.br` (professor), senha `senha1234`. Os dados ficam na memória da aba; recarregar volta ao início.
+Usuários de teste: `maria@ufrpe.br` (só aluna), `paulo@ufrpe.br` (professor da Turma A e da C, aluno nas turmas B, D e E) e `carla@ufrpe.br` (professora das demais), senha `senha1234`. Os dados ficam na memória da aba; recarregar volta ao início.
 
 ## Onde está a especificação
 
@@ -47,10 +47,13 @@ Cada etapa troca o mock pelo endpoint real: sem `VITE_API_MOCK=true`, o front fa
 Refletido no `openapi.yaml`, **ainda não implementado nem confirmado** (detalhe em `docs/design/plano-de-design.md` §4):
 
 - `Turma`: `professorNome`, `atividadesPendentes`, `atividadesAtrasadas` (só aluno).
-- `Atividade`: `nota` (só aluno, quando avaliada), `estado` e `minhaEntrega` no detalhe; `modalidade` e `disponivelEm` sempre presentes.
+- `Atividade`: `nota` (só aluno, quando avaliada), `estado` e `minhaEntrega` no detalhe; `disponivelEm` sempre presente. `modalidade` e `complexidade` saíram do contrato (o tipo já diz se é em grupo).
 - `EntregaIndividual`: `alunoNome` e `tamanhoBytes`.
 - `TurmaInput.diasAula` com ao menos um dia.
-- `GET /atividades` com filtros de complexidade e turma.
+- `GET /atividades` com filtros de estado, tipo e turma, ordenados por prazo.
+- Papel contextual por turma (ADR-0008): `RegisterRequest` sem `papel`; `GET /turmas` devolve as turmas que a pessoa leciona (com `codigo`) e as que cursa (com contadores); `GET /atividades` só das turmas em que é aluna; criar turma é aberto a qualquer conta.
+- `submitEntrega` responde 403 para o professor da própria turma e para atividade que não aceita atraso com o prazo vencido.
+- Mural: `GET/POST /turmas/{id}/avisos` e `POST /avisos/{id}/comentarios` (RF13 e RF14).
 - `submitEntrega` responde 413 (tamanho), 415 (tipo) e 409 (já avaliada).
 
 ## Falta decidir ou implementar

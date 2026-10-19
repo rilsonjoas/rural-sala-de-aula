@@ -92,6 +92,15 @@ paths:
         '201': {description: Criado, content: {application/json: {schema: {$ref: '#/components/schemas/Aviso'}}}}
         '403': {$ref: '#/components/responses/Problem'}
   /avisos/{avisoId}/comentarios:
+    get:
+      tags: [Avisos]
+      operationId: listComentarios
+      summary: Lista os comentários de um aviso da turma.
+      parameters: [{name: avisoId, in: path, required: true, schema: {type: string, format: uuid}}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Comentario'}}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
     post:
       tags: [Avisos]
       operationId: createComentario
@@ -226,5 +235,6 @@ components:
     AtividadeDetalhe: {allOf: [{$ref: '#/components/schemas/Atividade'}, {type: object, required: [professorNome], properties: {professorNome: {type: string}, minhaEntrega: {allOf: [{$ref: '#/components/schemas/Entrega'}], nullable: true}}}]}
     AvaliacaoInput: {type: object, required: [nota], properties: {nota: {type: number, minimum: 0, maximum: 10, multipleOf: 0.1}, comentarioPrivado: {type: string}}}
     Entrega: {type: object, required: [id, atividadeId, alunoId, alunoNome, nomeOriginal, tamanhoBytes, enviadaEm, atrasada], properties: {id: {type: string, format: uuid}, atividadeId: {type: string, format: uuid}, alunoId: {type: string, format: uuid}, alunoNome: {type: string}, nomeOriginal: {type: string}, tamanhoBytes: {type: integer, minimum: 0}, enviadaEm: {type: string, format: date-time}, atrasada: {type: boolean}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}, comentarioPrivado: {type: string, nullable: true}}}
+    LoginRequest: {type: object, required: [email, senha], properties: {email: {type: string, format: email}, senha: {type: string}}}
     Aviso: {type: object, required: [id, turmaId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}, comentarios: {type: array, items: {$ref: '#/components/schemas/Comentario'}}}}
     Comentario: {type: object, required: [id, avisoId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, avisoId: {type: string, format: uuid}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}}}

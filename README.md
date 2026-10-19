@@ -1,6 +1,6 @@
 # Rural Sala de Aula
 
-Alternativa ao Google Classroom focada em organizar as atividades de quem está em várias turmas: professores administram turmas, atividades e avaliações; alunos entram nas turmas, acompanham e entregam.
+Alternativa ao Google Classroom focada em organizar as atividades de quem está em várias turmas: quem cria uma turma a administra (atividades e avaliações) e quem entra nela pelo código acompanha e entrega. O papel é contextual por turma: a mesma pessoa pode ser professora numa e aluna em outra (ADR-0008).
 
 > **Dupla:** Luiz Felipe (back-end) · Rilson Joás (front-end) · **Entrega dos requisitos P1: 19/10/2026**
 
@@ -17,23 +17,25 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 
 | # | RF | O que faz | Quem |
 |---|---|---|---|
-| 1 | RF01 | Cadastro e login (nome, e-mail, senha) | todos |
-| 2 | RF09 | Cadastrar turmas (nome, disciplina, semestre, dias de aula) | professor |
-| 3 | RF02 | Inscrever-se em turma pelo código | aluno |
-| 4 | RF03 | Consultar as turmas em que está inscrito | aluno |
-| 5 | RF10 | Cadastrar atividades (prazo final, complexidade, tipo, modalidade, disponibilidade) | professor |
-| 6 | RF05 | Acessar e organizar atividades (filtros e ordenação) | aluno |
-| 7 | RF15 | Avaliar entrega (nota e comentário privado) | professor |
-| 8 | RF04 | Entregar atividade (upload de arquivo) — **por último** | aluno |
-| 9 | RF16 | Acessar e baixar entregas — **por último** | professor |
+| 1 | RF01 | Cadastro e login (nome, e-mail, senha, data de nascimento opcional) | todos |
+| 2 | RF09 | Cadastrar turmas (nome, disciplina, semestre, dias de aula) | quem leciona |
+| 3 | RF02 | Inscrever-se em turma pelo código | quem estuda |
+| 4 | RF03 | Consultar as turmas em que leciona ou está inscrito | todos |
+| 5 | RF10 | Cadastrar atividades (nome, tipo, prazo final, disponibilidade, envio com atraso) | quem leciona |
+| 6 | RF05 | Acessar e organizar atividades (filtros por estado, tipo e turma; ordenação por prazo) | quem estuda |
+| 7 | RF15 | Avaliar entrega (nota e comentário privado) | quem leciona |
+| 8 | RF04 | Entregar atividade (upload de arquivo) — **por último** | quem estuda |
+| 9 | RF16 | Acessar e baixar entregas — **por último** | quem leciona |
+| 10 | RF13 | Postar avisos no mural da turma | quem leciona |
+| 11 | RF14 | Comentar nos avisos | todos da turma |
 
-RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
+RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
 
 **Estado (09/10/2026):** o front dos nove P1 está pronto e testado contra uma API simulada (`front/src/mocks/`, ligada com `VITE_API_MOCK=true`); o contrato (`docs/openapi.yaml`) e o schema estão fechados. Falta o back-end implementar os endpoints e integrarmos tela por tela. Ver `docs/design/plano-de-design.md` §8. Guia para o back-end: [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).
 
 ## Backlog (sem data)
 
-Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF03b, RF06, RF07, RF08, RF11, RF12, RF13, RF14, RF17, os RNF, a logo própria e as pendências do back-end.
+Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF03b, RF06, RF07, RF08, RF11, RF12, RF17, os RNF, a logo própria e as pendências do back-end.
 
 > O documento de requisitos numera duas vezes o RF03. Aqui, "Consultar turma" é RF03 e "Sair da turma" é RF03b.
 

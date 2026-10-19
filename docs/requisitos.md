@@ -78,5 +78,5 @@ A comunicação entre professores e alunos ocorrerá por meio de avisos publicad
 | RF05 — "prazo de entrega" | critério de filtro e ordenação | **ordenação** por prazo final (não há filtro por intervalo de datas) | `openapi.yaml` |
 | RF05 — "concluída" | estado distinto de "entregue" | "Concluída" = entrega **avaliada** pelo professor (o texto não define) | CONTEXT.md, DESIGN.md §7 |
 | RF04 — formatos | "formatos como PDF, apresentação de slides ou arquivo de texto" | lista fechada: pdf, ppt, pptx, doc, docx, txt; até 25 MB | ADR-0003 |
-| RF01 — papel | não diz como se define aluno ou professor | escolhido livremente no cadastro | ADR-0007 |
+| RF01 — papel | não diz como se define aluno ou professor | contextual por turma: quem cria leciona, quem entra estuda | ADR-0008 |
 | RF06/RF12 | grupos | atividade "Em grupo" pode ser cadastrada; entrega individual até os grupos entrarem | BACKLOG |

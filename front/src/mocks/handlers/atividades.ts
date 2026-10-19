@@ -24,9 +24,7 @@ import {
 type AtividadeInput = components['schemas']['AtividadeInput'];
 const API = '*/api/v1';
 
-const TIPOS = ['ATIVIDADE', 'TRABALHO', 'PROVA'];
-const MODALIDADES = ['INDIVIDUAL', 'GRUPO'];
-const COMPLEXIDADES = ['BAIXA', 'MEDIA', 'ALTA'];
+const TIPOS = ['PROVA', 'LISTA_DE_EXERCICIO', 'PROJETO_INDIVIDUAL', 'PROJETO_EM_GRUPO'];
 
 function lerFiltros(url: string) {
   const q = new URL(url).searchParams;
@@ -44,10 +42,7 @@ function lerFiltros(url: string) {
 function listar(atividades: AtividadeDb[], usuario: UsuarioComSenha, filtros: ReturnType<typeof lerFiltros>) {
   const comEstado = atividades.map((a) => paraAtividadeApi(a, usuario));
   const base = atividades.map((a, i) => ({ ...a, estado: comEstado[i].estado }));
-  const ordenadas = filtrarEOrdenarAtividades(base, {
-    ...filtros,
-    estado: usuario.papel === 'ALUNO' ? filtros.estado : undefined,
-  });
+  const ordenadas = filtrarEOrdenarAtividades(base, filtros);
   return ordenadas.map((a) => paraAtividadeApi(a, usuario));
 }
 
@@ -56,7 +51,7 @@ export function atividadeVisivel(atividade: AtividadeDb | undefined, usuario: Us
   if (!atividade) return false;
   const turma = db.turmas.find((t) => t.id === atividade.turmaId);
   if (!turma) return false;
-  if (usuario.papel === 'PROFESSOR') return turma.professorId === usuario.id;
+  if (turma.professorId === usuario.id) return true;
   return estaInscrito(turma.id, usuario.id) && new Date(atividade.disponivelEm).getTime() <= agora().getTime();
 }
 
@@ -65,10 +60,11 @@ export const atividadesHandlers = [
     const usuario = usuarioDaSessao();
     if (!usuario) return naoAutenticado();
     const turma = db.turmas.find((t) => t.id === params.turmaId);
-    const visivel = turma && (usuario.papel === 'PROFESSOR' ? turma.professorId === usuario.id : estaInscrito(turma.id, usuario.id));
-    if (!visivel) return naoEncontrado('Turma não encontrada.');
+    const isProfessor = turma?.professorId === usuario.id;
+    const isAluno = turma ? estaInscrito(turma.id, usuario.id) : false;
+    if (!turma || (!isProfessor && !isAluno)) return naoEncontrado('Turma não encontrada.');
 
-    const base = usuario.papel === 'PROFESSOR' ? db.atividades.filter((a) => a.turmaId === turma.id) : atividadesDisponiveis(turma.id);
+    const base = isProfessor ? db.atividades.filter((a) => a.turmaId === turma.id) : atividadesDisponiveis(turma.id);
     return HttpResponse.json(listar(base, usuario, lerFiltros(request.url)));
   }),
 
@@ -77,16 +73,14 @@ export const atividadesHandlers = [
     if (!usuario) return naoAutenticado();
     const turma = db.turmas.find((t) => t.id === params.turmaId);
     if (!turma) return naoEncontrado('Turma não encontrada.');
-    if (usuario.papel !== 'PROFESSOR' || turma.professorId !== usuario.id) {
+    if (turma.professorId !== usuario.id) {
       return proibido('Só o professor da turma pode cadastrar atividades.');
     }
 
     const corpo = (await request.json()) as Partial<AtividadeInput>;
     const campos: NonNullable<components['schemas']['Problem']['campos']> = [];
     if (!corpo.nome?.trim()) campos.push({ campo: 'nome', mensagem: 'Informe o nome da atividade.' });
-    if (!COMPLEXIDADES.includes(corpo.complexidade ?? '')) campos.push({ campo: 'complexidade', mensagem: 'Escolha a complexidade.' });
-    if (!TIPOS.includes(corpo.tipo ?? '')) campos.push({ campo: 'tipo', mensagem: 'Escolha o tipo.' });
-    if (corpo.modalidade && !MODALIDADES.includes(corpo.modalidade)) campos.push({ campo: 'modalidade', mensagem: 'Escolha a modalidade.' });
+    if (!TIPOS.includes(corpo.tipo ?? '')) campos.push({ campo: 'tipo', mensagem: 'Escolha o tipo de atividade.' });
     const prazo = Date.parse(corpo.prazoFinal ?? '');
     if (Number.isNaN(prazo)) campos.push({ campo: 'prazoFinal', mensagem: 'Informe o prazo final.' });
     const disponivel = corpo.disponivelEm ? Date.parse(corpo.disponivelEm) : agora().getTime();
@@ -100,11 +94,10 @@ export const atividadesHandlers = [
       turmaId: turma.id,
       nome: corpo.nome!.trim(),
       ...(corpo.descricao?.trim() ? { descricao: corpo.descricao.trim() } : {}),
-      complexidade: corpo.complexidade!,
       tipo: corpo.tipo!,
-      modalidade: corpo.modalidade ?? 'INDIVIDUAL',
       prazoFinal: new Date(prazo).toISOString(),
       disponivelEm: new Date(disponivel).toISOString(),
+      aceitaAtraso: corpo.aceitaAtraso ?? true,
     };
     db.atividades.push(nova);
     return HttpResponse.json(paraAtividadeApi(nova, usuario), { status: 201 });
@@ -113,7 +106,6 @@ export const atividadesHandlers = [
   http.get(`${API}/atividades`, ({ request }) => {
     const usuario = usuarioDaSessao();
     if (!usuario) return naoAutenticado();
-    if (usuario.papel !== 'ALUNO') return proibido('Esta lista é do aluno.');
 
     const filtros = lerFiltros(request.url);
     const turmasDoAluno = db.inscricoes.filter((i) => i.alunoId === usuario.id).map((i) => i.turmaId);
@@ -130,7 +122,8 @@ export const atividadesHandlers = [
     if (!atividadeVisivel(atividade, usuario)) return naoEncontrado('Atividade não encontrada.');
 
     const turma = db.turmas.find((t) => t.id === atividade!.turmaId)!;
-    const entrega = usuario.papel === 'ALUNO' ? entregaDoAluno(atividade!.id, usuario.id) : undefined;
+    const isAluno = estaInscrito(turma.id, usuario.id);
+    const entrega = isAluno ? entregaDoAluno(atividade!.id, usuario.id) : undefined;
     return HttpResponse.json({
       ...paraAtividadeApi(atividade!, usuario),
       professorNome: nomeDoUsuario(turma.professorId),

@@ -35,7 +35,7 @@ describe('Turmas do aluno', () => {
 
     const a = within(card('Turma A — Algoritmos'));
     expect(a.getByText('Algoritmos e Estruturas de Dados II')).toBeInTheDocument();
-    expect(a.getByText('Prof. Marcos Silva')).toBeInTheDocument();
+    expect(a.getByText('Prof. Paulo Silva')).toBeInTheDocument();
     expect(a.getByText('Seg · Qua')).toBeInTheDocument();
     expect(a.getByText('2026.2')).toBeInTheDocument();
     expect(await a.findByText('1 vence em breve')).toBeInTheDocument();
@@ -105,14 +105,14 @@ describe('Turmas do aluno', () => {
     expect(await within(folha).findByText('Informe o código da turma.')).toBeInTheDocument();
   });
 
-  it('sem turmas, o estado vazio ensina o que fazer e oferece a ação', async () => {
-    await api.POST('/auth/register', { body: { nome: 'Nova Aluna', email: 'nova@ufrpe.br', senha: 'senha1234', papel: 'ALUNO' } });
+  it('sem turmas, o estado vazio ensina o que fazer e oferece as ações', async () => {
+    await api.POST('/auth/register', { body: { nome: 'Nova Aluna', email: 'nova@ufrpe.br', senha: 'senha1234' } });
     renderApp('/turmas');
     await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 });
 
-    expect(await screen.findByText('Você ainda não está em nenhuma turma. Peça o código ao professor e entre.')).toBeInTheDocument();
-    // uma só ação primária: no estado vazio ela fica no aviso, não repetida no topo
+    expect(await screen.findByText('Você ainda não está em nenhuma turma. Cadastre uma turma para lecionar ou entre com o código fornecido pelo professor.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Entrar em turma' })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: 'Cadastrar turma' })).toHaveLength(1);
   });
 
   it('se a API falhar, mostra o erro com "Tentar de novo" e recupera', async () => {
@@ -143,7 +143,7 @@ describe('Turmas do professor', () => {
   it('mostra Nova turma, o semestre mais recente e o código de inscrição de cada turma', async () => {
     await abrirTurmas(PROFESSOR);
 
-    expect(await screen.findByText('1 turma')).toBeInTheDocument();
+    expect(await screen.findByText('3 turmas')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]).toBeInTheDocument();
     const a = within(card('Turma A — Algoritmos'));
     expect(a.getByText('Código de inscrição')).toBeInTheDocument();
@@ -156,7 +156,7 @@ describe('Turmas do professor', () => {
 
   it('copia o código de inscrição', async () => {
     const user = await abrirTurmas(PROFESSOR);
-    await screen.findByText('1 turma');
+    await screen.findByText('3 turmas');
 
     const escrever = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText: escrever }, configurable: true });
@@ -169,7 +169,7 @@ describe('Turmas do professor', () => {
 
   it('cadastra a turma, mostra o código gerado e a turma entra na lista', async () => {
     const user = await abrirTurmas(PROFESSOR);
-    await screen.findByText('1 turma');
+    await screen.findByText('3 turmas');
 
     await user.click(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Nova turma' });
@@ -177,7 +177,6 @@ describe('Turmas do professor', () => {
     expect(within(folha).queryByLabelText('Código')).not.toBeInTheDocument();
 
     await user.type(within(folha).getByLabelText('Nome da turma'), 'Turma D — Redes');
-    await user.type(within(folha).getByLabelText('Disciplina'), 'Redes de Computadores');
     await user.clear(within(folha).getByLabelText('Semestre'));
     await user.type(within(folha).getByLabelText('Semestre'), '2026.2');
     await user.click(within(folha).getByRole('checkbox', { name: 'Ter' }));
@@ -189,13 +188,13 @@ describe('Turmas do professor', () => {
     expect(within(folha).getByRole('button', { name: 'Copiar código' })).toBeInTheDocument();
 
     await user.click(within(folha).getByRole('button', { name: 'Concluir' }));
-    expect(await screen.findByText('2 turmas')).toBeInTheDocument();
+    expect(await screen.findByText('4 turmas')).toBeInTheDocument();
     expect(within(card('Turma D — Redes')).getByText('Ter · Qui')).toBeInTheDocument();
   });
 
   it('valida os campos da turma no próprio campo', async () => {
     const user = await abrirTurmas(PROFESSOR);
-    await screen.findByText('1 turma');
+    await screen.findByText('3 turmas');
     await user.click(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Nova turma' });
 
@@ -204,14 +203,12 @@ describe('Turmas do professor', () => {
     await user.click(within(folha).getByRole('button', { name: 'Cadastrar turma' }));
 
     expect(await within(folha).findByText('Informe o nome da turma.')).toBeInTheDocument();
-    expect(within(folha).getByText('Informe a disciplina.')).toBeInTheDocument();
     expect(within(folha).getByText('Use o formato 2026.1 ou 2026.2.')).toBeInTheDocument();
-    expect(within(folha).getByText('Escolha ao menos um dia de aula.')).toBeInTheDocument();
   });
 
   it('o semestre já vem preenchido com o semestre corrente', async () => {
     const user = await abrirTurmas(PROFESSOR);
-    await screen.findByText('1 turma');
+    await screen.findByText('3 turmas');
     await user.click(screen.getAllByRole('button', { name: 'Cadastrar turma' })[0]);
     const folha = await screen.findByRole('dialog', { name: 'Nova turma' });
 
@@ -220,11 +217,11 @@ describe('Turmas do professor', () => {
     );
   });
 
-  it('sem turmas, mostra o estado vazio do professor', async () => {
-    await api.POST('/auth/register', { body: { nome: 'Prof Nova', email: 'profnova@ufrpe.br', senha: 'senha1234', papel: 'PROFESSOR' } });
+  it('sem turmas, mostra o estado vazio permitindo criar ou entrar', async () => {
+    await api.POST('/auth/register', { body: { nome: 'Prof Nova', email: 'profnova@ufrpe.br', senha: 'senha1234' } });
     renderApp('/turmas');
 
-    expect(await screen.findByText('Você ainda não criou turmas.')).toBeInTheDocument();
+    expect(await screen.findByText('Você ainda não está em nenhuma turma. Cadastre uma turma para lecionar ou entre com o código fornecido pelo professor.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Cadastrar turma' })).toHaveLength(1);
   });
 });

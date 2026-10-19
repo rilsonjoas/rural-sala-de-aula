@@ -15,6 +15,7 @@ export type TurmaDb = {
   semestre: string;
   diasAula: number[];
   codigo: string;
+  descricao?: string;
 };
 
 export type InscricaoDb = { turmaId: string; alunoId: string };
@@ -24,11 +25,12 @@ export type AtividadeDb = {
   turmaId: string;
   nome: string;
   descricao?: string;
-  complexidade: Complexidade;
+  complexidade?: Complexidade;
   tipo: AtividadeTipo;
-  modalidade: AtividadeModalidade;
+  modalidade?: AtividadeModalidade;
   prazoFinal: string;
   disponivelEm: string;
+  aceitaAtraso?: boolean;
 };
 
 export type EntregaDb = {
@@ -42,6 +44,25 @@ export type EntregaDb = {
 };
 
 export type AvaliacaoDb = { entregaId: string; nota: number; comentarioPrivado?: string };
+
+export type AvisoDb = {
+  id: string;
+  turmaId: string;
+  autorId: string;
+  autorNome: string;
+  texto: string;
+  horario: string;
+  comentarios?: ComentarioDb[];
+};
+
+export type ComentarioDb = {
+  id: string;
+  avisoId: string;
+  autorId: string;
+  autorNome: string;
+  texto: string;
+  horario: string;
+};
 
 /** Estado derivado (ADR-0005 e ADR-0006): o prazo final é o limite real e nada é gravado. */
 export function estadoDaAtividade(
@@ -68,7 +89,7 @@ export function gerarCodigo(existentes: string[]): string {
   }
 }
 
-const POSICAO_COMPLEXIDADE: Record<Complexidade, number> = { BAIXA: 0, MEDIA: 1, ALTA: 2 };
+const POSICAO_COMPLEXIDADE: Record<string, number> = { BAIXA: 0, MEDIA: 1, ALTA: 2 };
 
 export type FiltrosDeAtividade = {
   estado?: EstadoAtividade;
@@ -87,11 +108,11 @@ export function filtrarEOrdenarAtividades<T extends AtividadeDb & { estado?: Est
     (a) =>
       (!estado || a.estado === estado) &&
       (!tipo || a.tipo === tipo) &&
-      (!modalidade || a.modalidade === modalidade) &&
-      (!complexidade || a.complexidade === complexidade),
+      (!modalidade || !a.modalidade || a.modalidade === modalidade) &&
+      (!complexidade || !a.complexidade || a.complexidade === complexidade),
   );
 
-  const chave = (a: T) => (ordenar === 'complexidade' ? POSICAO_COMPLEXIDADE[a.complexidade] : new Date(a.prazoFinal).getTime());
+  const chave = (a: T) => (ordenar === 'complexidade' && a.complexidade ? POSICAO_COMPLEXIDADE[a.complexidade] : new Date(a.prazoFinal).getTime());
   const sinal = direcao === 'desc' ? -1 : 1;
 
   return [...filtradas].sort((a, b) => sinal * (chave(a) - chave(b)) || a.nome.localeCompare(b.nome));

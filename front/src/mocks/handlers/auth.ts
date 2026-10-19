@@ -33,7 +33,14 @@ export const authHandlers = [
       return problem(409, 'Esse e-mail já está cadastrado. Entre ou use outro e-mail.');
     }
 
-    const novo = { id: crypto.randomUUID(), nome: corpo.nome.trim(), email: corpo.email, papel: corpo.papel, senha: corpo.senha };
+    const novo = {
+      id: crypto.randomUUID(),
+      nome: corpo.nome.trim(),
+      email: corpo.email,
+      papel: corpo.papel,
+      senha: corpo.senha,
+      dataNascimento: corpo.dataNascimento,
+    };
     db.usuarios.push(novo);
     db.sessaoUsuarioId = novo.id;
     return HttpResponse.json(semSenha(novo), { status: 201 });

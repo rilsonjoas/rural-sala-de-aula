@@ -16,6 +16,7 @@ type Estado = {
   atividades: AtividadeDb[];
   entregas: EntregaDb[];
   avaliacoes: AvaliacaoDb[];
+  avisos: AvisoDb[];
   sessaoUsuarioId: string | null;
 };
 
@@ -38,7 +39,7 @@ export function usuarioDaSessao(): UsuarioComSenha | undefined {
 }
 
 export function semSenha(usuario: UsuarioComSenha): Usuario {
-  return { id: usuario.id, nome: usuario.nome, email: usuario.email, papel: usuario.papel };
+  return { id: usuario.id, nome: usuario.nome, email: usuario.email, dataNascimento: usuario.dataNascimento, papel: usuario.papel };
 }
 
 const SESSOES_DE_TESTE: Record<string, UsuarioComSenha> = { professor: PROFESSOR, aluna: ALUNA, aluno: ALUNO };

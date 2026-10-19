@@ -31,7 +31,7 @@ describe('API simulada: turmas', () => {
 
     expect(data).toHaveLength(3);
     const a = data!.find((t) => t.id === TURMA_A)!;
-    expect(a).toMatchObject({ professorNome: 'Marcos Silva', atividadesPendentes: 1, atividadesAtrasadas: 1 });
+    expect(a).toMatchObject({ professorNome: 'Paulo Silva', atividadesPendentes: 1, atividadesAtrasadas: 1 });
     expect(a).not.toHaveProperty('codigo');
     expect(data!.find((t) => t.id === TURMA_B)).toMatchObject({ atividadesPendentes: 2, atividadesAtrasadas: 0 });
     expect(data!.find((t) => t.id === TURMA_C)).toMatchObject({ atividadesPendentes: 0, atividadesAtrasadas: 0 });
@@ -68,7 +68,7 @@ describe('API simulada: turmas', () => {
       body: { nome: 'Turma D', disciplina: 'Redes', semestre: '2026.2', diasAula: [3, 1] },
     });
 
-    expect(data).toMatchObject({ nome: 'Turma D', diasAula: [1, 3], professorNome: 'Marcos Silva' });
+    expect(data).toMatchObject({ nome: 'Turma D', diasAula: [1, 3], professorNome: 'Paulo Silva' });
     expect(data?.codigo).toMatch(/^[A-Z2-9]{6}$/);
   });
 
@@ -80,9 +80,7 @@ describe('API simulada: turmas', () => {
       status: 422,
       campos: expect.arrayContaining([
         expect.objectContaining({ campo: 'nome' }),
-        expect.objectContaining({ campo: 'disciplina' }),
         expect.objectContaining({ campo: 'semestre' }),
-        expect.objectContaining({ campo: 'diasAula' }),
       ]),
     });
 
@@ -164,17 +162,17 @@ describe('API simulada: atividades', () => {
     expect(data?.map((a) => a.turmaNome)).toEqual(['Turma B — Programação Web', 'Turma A — Algoritmos', 'Turma B — Programação Web']);
   });
 
-  it('filtra por turma, complexidade e modalidade, e ordena por complexidade', async () => {
+  it('filtra por turma e por tipo', async () => {
     await entrarComo(ALUNA);
 
     const porTurma = await api.GET('/atividades', { params: { query: { turmaId: TURMA_C } } });
     expect(porTurma.data).toHaveLength(1);
 
-    const altas = await api.GET('/atividades', { params: { query: { complexidade: 'ALTA', ordenar: 'complexidade', direcao: 'desc' } } });
-    expect(altas.data?.every((a) => a.complexidade === 'ALTA')).toBe(true);
+    const provas = await api.GET('/atividades', { params: { query: { tipo: 'PROVA' } } });
+    expect(provas.data?.every((a) => a.tipo === 'PROVA')).toBe(true);
 
-    const grupo = await api.GET('/atividades', { params: { query: { modalidade: 'GRUPO' } } });
-    expect(grupo.data?.map((a) => a.nome)).toEqual(['Seminário — APIs REST']);
+    const projetos = await api.GET('/atividades', { params: { query: { tipo: 'PROJETO_EM_GRUPO' } } });
+    expect(projetos.data?.map((a) => a.nome)).toEqual(['Seminário — APIs REST']);
   });
 
   it('Minhas atividades é só do aluno', async () => {
@@ -187,7 +185,7 @@ describe('API simulada: atividades', () => {
     await entrarComo(ALUNA);
 
     const pendente = await api.GET('/atividades/{atividadeId}', { params: { path: { atividadeId: A_LISTA_1 } } });
-    expect(pendente.data).toMatchObject({ professorNome: 'Marcos Silva', estado: 'PENDENTE', minhaEntrega: null });
+    expect(pendente.data).toMatchObject({ professorNome: 'Paulo Silva', estado: 'PENDENTE', minhaEntrega: null });
 
     const atrasada = await api.GET('/atividades/{atividadeId}', { params: { path: { atividadeId: A_LISTA_2 } } });
     expect(atrasada.data?.minhaEntrega).toMatchObject({ nomeOriginal: 'lista2_maria.pdf', atrasada: true, nota: null });
@@ -209,12 +207,11 @@ describe('API simulada: atividades', () => {
     await entrarComo(PROFESSOR);
     const corpo = {
       nome: 'Lista 3',
-      complexidade: 'BAIXA' as const,
-      tipo: 'ATIVIDADE' as const,
+      tipo: 'LISTA_DE_EXERCICIO' as const,
       prazoFinal: new Date(Date.now() + 5 * 86400000).toISOString(),
     };
     const { data } = await api.POST('/turmas/{turmaId}/atividades', { params: { path: { turmaId: TURMA_A } }, body: corpo });
-    expect(data).toMatchObject({ nome: 'Lista 3', modalidade: 'INDIVIDUAL', turmaNome: 'Turma A — Algoritmos' });
+    expect(data).toMatchObject({ nome: 'Lista 3', tipo: 'LISTA_DE_EXERCICIO', turmaNome: 'Turma A — Algoritmos' });
 
     await api.POST('/auth/logout');
     await entrarComo(PROFESSORA);
@@ -237,8 +234,7 @@ describe('API simulada: atividades', () => {
         params: { path: { turmaId: TURMA_A } },
         body: {
           nome: 'X',
-          complexidade: 'BAIXA',
-          tipo: 'ATIVIDADE',
+          tipo: 'PROVA',
           disponivelEm: '2026-11-10T10:00:00.000Z',
           prazoFinal: '2026-11-01T10:00:00.000Z',
         },

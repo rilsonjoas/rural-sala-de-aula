@@ -33,14 +33,12 @@ async function abrirDetalhe(atividadeId: string, usuario: { email: string; senha
 const secaoEntrega = () => screen.getByRole('region', { name: 'Sua entrega' });
 
 describe('Detalhe da atividade (aluno)', () => {
-  it('mostra título, turma e professor, tipo, complexidade, modalidade, prazo final e descrição', async () => {
+  it('mostra título, turma e professor, tipo, prazo final e descrição', async () => {
     await abrirDetalhe(A_LISTA_1);
 
     expect(await screen.findByRole('heading', { name: 'Lista 1 — Recursão e Divisão e Conquista', level: 2 })).toBeInTheDocument();
-    expect(screen.getByText('Turma A — Algoritmos · Prof. Marcos Silva')).toBeInTheDocument();
-    expect(screen.getByText('Atividade')).toBeInTheDocument();
-    expect(screen.getByText('Complexidade média')).toBeInTheDocument();
-    expect(screen.getByText('Individual')).toBeInTheDocument();
+    expect(screen.getByText('Turma A — Algoritmos · Prof. Paulo Silva')).toBeInTheDocument();
+    expect(screen.getByText('Lista de Exercício')).toBeInTheDocument();
     expect(screen.getByText(/^Prazo final: \d{2}\/\d{2}(\/\d{4})? às \d{2}:\d{2}$/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Descrição' })).toBeInTheDocument();
     expect(screen.getByText(/Implementar soluções recursivas/)).toBeInTheDocument();

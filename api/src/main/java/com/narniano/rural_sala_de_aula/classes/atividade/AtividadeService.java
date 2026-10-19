@@ -1,0 +1,211 @@
+package com.narniano.rural_sala_de_aula.classes.atividade;
+
+import com.narniano.rural_sala_de_aula.classes.arquivo.Arquivo;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividual;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.ResponseEntregaIndividualDTO;
+import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
+import com.narniano.rural_sala_de_aula.classes.turma.Turma;
+import com.narniano.rural_sala_de_aula.classes.turma.TurmaRepository;
+import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
+import com.narniano.rural_sala_de_aula.common.exception.AppException;
+import com.narniano.rural_sala_de_aula.common.exception.ErrorResponseDTO;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Service
+@RequiredArgsConstructor
+public class AtividadeService {
+
+    private final AtividadeRepository atividadeRepository;
+    private final TurmaRepository turmaRepository;
+    private final InscricaoRepository inscricaoRepository;
+    private final EntregaIndividualRepository entregaRepository;
+
+    @Transactional
+    public ResponseAtividadeDTO cadastrar(UUID turmaId, RequestAtividadeDTO dto, Usuario usuario) {
+        Turma turma = turmaRepository.findById(turmaId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+
+        if (!turma.getProfessor().getId().equals(usuario.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Somente o professor da turma pode cadastrar atividades.");
+        }
+
+        LocalDateTime disponivelEm = dto.disponivelEm() != null ? dto.disponivelEm() : LocalDateTime.now();
+        if (dto.prazoFinal().isBefore(disponivelEm)) {
+            throw new AppException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "O prazo final não pode ser antes de quando a atividade fica disponível.",
+                    List.of(new ErrorResponseDTO.CampoErroDTO("prazoFinal", "O prazo final não pode ser antes de quando a atividade fica disponível."))
+            );
+        }
+
+        Atividade atividade = new Atividade();
+        atividade.setTurma(turma);
+        atividade.setNome(dto.nome().trim());
+        atividade.setDescricao(dto.descricao() != null ? dto.descricao().trim() : null);
+        atividade.setTipo(dto.tipo());
+        atividade.setDisponivelEm(disponivelEm);
+        atividade.setPrazoFinal(dto.prazoFinal());
+        atividade.setAceitaAtraso(dto.aceitaAtraso() == null || dto.aceitaAtraso());
+
+        Atividade salva = atividadeRepository.save(atividade);
+        return mapearParaDTO(salva, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResponseAtividadeDTO> listarPorTurma(UUID turmaId, Usuario usuario) {
+        Turma turma = turmaRepository.findById(turmaId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+
+        boolean isProfessor = turma.getProfessor().getId().equals(usuario.getId());
+        boolean isAluno = inscricaoRepository.existsByTurmaIdAndAlunoId(turmaId, usuario.getId());
+
+        if (!isProfessor && !isAluno) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada.");
+        }
+
+        List<Atividade> atividades = atividadeRepository.findByTurmaId(turmaId);
+        LocalDateTime agora = LocalDateTime.now();
+
+        if (isProfessor) {
+            return atividades.stream()
+                    .map(a -> mapearParaDTO(a, null, null))
+                    .toList();
+        }
+
+        return atividades.stream()
+                .filter(a -> !a.getDisponivelEm().isAfter(agora))
+                .map(a -> {
+                    Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
+                    String estado = calcularEstado(a, entrega.orElse(null), agora);
+                    BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
+                    return mapearParaDTO(a, estado, nota);
+                })
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResponseAtividadeDTO> listarMinhasAtividades(
+            Usuario usuario,
+            String estadoFiltro,
+            TipoAtividade tipoFiltro,
+            UUID turmaIdFiltro
+    ) {
+        List<Atividade> disponiveis = atividadeRepository.findDisponiveisParaAluno(usuario.getId());
+        LocalDateTime agora = LocalDateTime.now();
+
+        return disponiveis.stream()
+                .filter(a -> turmaIdFiltro == null || a.getTurma().getId().equals(turmaIdFiltro))
+                .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
+                .map(a -> {
+                    Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
+                    String estado = calcularEstado(a, entrega.orElse(null), agora);
+                    BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
+                    return mapearParaDTO(a, estado, nota);
+                })
+                .filter(dto -> estadoFiltro == null || estadoFiltro.isBlank() || dto.estado().equalsIgnoreCase(estadoFiltro.trim()))
+                .sorted(Comparator.comparing(ResponseAtividadeDTO::prazoFinal))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseAtividadeDetalheDTO obterDetalhe(UUID atividadeId, Usuario usuario) {
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Atividade não encontrada."));
+
+        Turma turma = atividade.getTurma();
+        boolean isProfessor = turma.getProfessor().getId().equals(usuario.getId());
+        boolean isAluno = inscricaoRepository.existsByTurmaIdAndAlunoId(turma.getId(), usuario.getId());
+
+        if (!isProfessor && !isAluno) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Atividade não encontrada.");
+        }
+
+        LocalDateTime agora = LocalDateTime.now();
+        if (isAluno && atividade.getDisponivelEm().isAfter(agora)) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Atividade ainda não disponível.");
+        }
+
+        Optional<EntregaIndividual> entregaOpt = isAluno
+                ? entregaRepository.findByAtividadeIdAndAlunoId(atividadeId, usuario.getId())
+                : Optional.empty();
+
+        String estado = isAluno ? calcularEstado(atividade, entregaOpt.orElse(null), agora) : null;
+        BigDecimal nota = entregaOpt.map(EntregaIndividual::getNota).orElse(null);
+        ResponseEntregaIndividualDTO minhaEntrega = entregaOpt.map(this::mapearEntregaParaDTO).orElse(null);
+
+        return new ResponseAtividadeDetalheDTO(
+                atividade.getId(),
+                turma.getId(),
+                turma.getNome(),
+                turma.getProfessor().getNome(),
+                atividade.getNome(),
+                atividade.getDescricao(),
+                atividade.getTipo(),
+                atividade.getPrazoFinal(),
+                atividade.getDisponivelEm(),
+                atividade.isAceitaAtraso(),
+                estado,
+                nota,
+                minhaEntrega
+        );
+    }
+
+    public String calcularEstado(Atividade atividade, EntregaIndividual entrega, LocalDateTime agora) {
+        if (entrega != null) {
+            if (entrega.getNota() != null) {
+                return "CONCLUIDA";
+            }
+            if (entrega.isAtrasada()) {
+                return "ENTREGUE_COM_ATRASO";
+            }
+            return "ENTREGUE";
+        }
+        if (agora.isAfter(atividade.getPrazoFinal())) {
+            return "ATRASADA";
+        }
+        return "PENDENTE";
+    }
+
+    private ResponseAtividadeDTO mapearParaDTO(Atividade a, String estado, BigDecimal nota) {
+        return new ResponseAtividadeDTO(
+                a.getId(),
+                a.getTurma().getId(),
+                a.getTurma().getNome(),
+                a.getNome(),
+                a.getDescricao(),
+                a.getTipo(),
+                a.getPrazoFinal(),
+                a.getDisponivelEm(),
+                a.isAceitaAtraso(),
+                estado,
+                nota
+        );
+    }
+
+    public ResponseEntregaIndividualDTO mapearEntregaParaDTO(EntregaIndividual e) {
+        Arquivo arq = e.getArquivos().isEmpty() ? null : e.getArquivos().get(0);
+        String nomeOriginal = arq != null ? arq.getNomeOriginal() : "arquivo.pdf";
+        Long tamanhoBytes = arq != null ? arq.getTamanhoBytes() : 0L;
+
+        return new ResponseEntregaIndividualDTO(
+                e.getId(),
+                e.getAtividade().getId(),
+                e.getAluno().getId(),
+                e.getAluno().getNome(),
+                nomeOriginal,
+                tamanhoBytes,
+                e.getEnviadaEm(),
+                e.isAtrasada(),
+                e.getNota(),
+                e.getComentarioPrivado()
+        );
+    }
+}

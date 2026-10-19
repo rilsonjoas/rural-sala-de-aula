@@ -43,20 +43,18 @@ export function MinhasAtividadesPage() {
   const grupos: GrupoDeChips[] = [
     { chave: 'estado', rotulo: 'Estado', opcoes: opcoes(ROTULO_ESTADO) },
     { chave: 'tipo', rotulo: 'Tipo', opcoes: opcoes(ROTULO_TIPO) },
-    { chave: 'modalidade', rotulo: 'Modalidade', opcoes: opcoes(ROTULO_MODALIDADE) },
-    { chave: 'complexidade', rotulo: 'Complexidade', opcoes: opcoes(ROTULO_COMPLEXIDADE) },
     { chave: 'turmaId', rotulo: 'Turma', opcoes: (turmas.data ?? []).map((t) => ({ valor: t.id, rotulo: t.nome })) },
   ];
   const lista = atividades.data ?? [];
 
   return (
-    <section aria-labelledby="titulo-pagina" className="space-y-5">
-      <div className="space-y-1">
-        <h2 id="titulo-pagina" className="text-2xl font-bold text-primary">
+    <section aria-labelledby="titulo-pagina" className="space-y-4 sm:space-y-5">
+      <div className="space-y-0.5 sm:space-y-1">
+        <h2 id="titulo-pagina" className="text-xl sm:text-2xl font-bold text-primary">
           Minhas atividades
         </h2>
         {atividades.isSuccess ? (
-          <p className="text-muted-foreground">{`Todas as turmas · ${plural(lista.length, 'atividade')}`}</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{`Todas as turmas · ${plural(lista.length, 'atividade')}`}</p>
         ) : null}
       </div>
 
@@ -89,7 +87,7 @@ export function MinhasAtividadesPage() {
         desktop ? (
           <AtividadesTabela atividades={lista} ordenar={filtros.ordenar} onOrdenar={(ordenar) => setFiltros({ ...filtros, ordenar })} />
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2">
             {lista.map((a) => (
               <AtividadeCard key={a.id} atividade={a} variante="minhas" />
             ))}

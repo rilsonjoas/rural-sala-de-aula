@@ -14,11 +14,11 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
-export function RequireRole({ papel }: { papel: Usuario['papel'] }) {
+export function RequireRole({ papel }: { papel?: Usuario['papel'] }) {
   const { usuario, isLoading } = useSession();
 
   if (isLoading) return <PageSkeleton />;
-  if (usuario?.papel !== papel) return <Navigate to="/turmas" replace />;
+  if (papel && usuario?.papel && usuario.papel !== papel) return <Navigate to="/turmas" replace />;
   return <Outlet />;
 }
 

@@ -31,14 +31,9 @@ export default function App() {
             <Route path="/turmas" element={<TurmasPage />} />
             <Route path="/turmas/:turmaId" element={<TurmaPage />} />
 
-            <Route element={<RequireRole papel="ALUNO" />}>
-              <Route path="/atividades" element={<MinhasAtividadesPage />} />
-              <Route path="/atividades/:atividadeId" element={<DetalheAtividadePage />} />
-            </Route>
-
-            <Route element={<RequireRole papel="PROFESSOR" />}>
-              <Route path="/atividades/:atividadeId/entregas" element={<EntregasPage />} />
-            </Route>
+            <Route path="/atividades" element={<MinhasAtividadesPage />} />
+            <Route path="/atividades/:atividadeId" element={<DetalheAtividadePage />} />
+            <Route path="/atividades/:atividadeId/entregas" element={<EntregasPage />} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Route>

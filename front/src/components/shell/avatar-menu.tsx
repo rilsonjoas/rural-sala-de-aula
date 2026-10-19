@@ -31,7 +31,7 @@ export function AvatarMenu({ usuario, onSair }: { usuario: Usuario; onSair: () =
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuLabel className="font-normal">
           <span className="block font-semibold text-foreground">{usuario.nome}</span>
-          <span className="block text-sm text-muted-foreground">{ROTULO_PAPEL[usuario.papel]}</span>
+          <span className="block text-sm text-muted-foreground">{usuario.papel && usuario.papel in ROTULO_PAPEL ? ROTULO_PAPEL[usuario.papel] : usuario.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSair} className="min-h-11">

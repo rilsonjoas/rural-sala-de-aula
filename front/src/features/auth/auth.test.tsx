@@ -121,42 +121,27 @@ describe('Criar conta', () => {
     return usuario;
   }
 
-  it('mostra Nome, E-mail, Senha e o papel sem nada pré-marcado', async () => {
+  it('mostra Nome, E-mail, Senha e Data de nascimento (opcional)', async () => {
     await abrirCriarConta();
 
+    expect(screen.getByLabelText('Nome')).toBeInTheDocument();
     expect(screen.getByLabelText('E-mail')).toBeInTheDocument();
     expect(screen.getByLabelText('Senha')).toBeInTheDocument();
+    expect(screen.getByLabelText('Data de nascimento')).toBeInTheDocument();
     expect(screen.getByText('Mínimo de 8 caracteres')).toBeInTheDocument();
-    const grupo = screen.getByRole('radiogroup', { name: 'Eu sou' });
-    expect(grupo).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /Aluno/ })).not.toBeChecked();
-    expect(screen.getByRole('radio', { name: /Professor/ })).not.toBeChecked();
-    expect(screen.getByText('Entro em turmas e entrego atividades')).toBeInTheDocument();
-    expect(screen.getByText('Crio turmas e avalio entregas')).toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
   });
 
-  it('cria a conta de professor, já entra logado e vai para Turmas', async () => {
+  it('cria a conta, já entra logado e vai para Turmas', async () => {
     const usuario = await abrirCriarConta();
 
     await usuario.type(screen.getByLabelText('Nome'), 'Ana Souza');
     await usuario.type(screen.getByLabelText('E-mail'), 'ana@ufrpe.br');
     await usuario.type(screen.getByLabelText('Senha'), 'senha1234');
-    await usuario.click(screen.getByRole('radio', { name: /Professor/ }));
     await usuario.click(screen.getByRole('button', { name: 'Criar conta' }));
 
     expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
-    expect((await api.GET('/me')).data).toMatchObject({ nome: 'Ana Souza', papel: 'PROFESSOR' });
-  });
-
-  it('exige escolher o papel', async () => {
-    const usuario = await abrirCriarConta();
-
-    await usuario.type(screen.getByLabelText('Nome'), 'Ana Souza');
-    await usuario.type(screen.getByLabelText('E-mail'), 'ana@ufrpe.br');
-    await usuario.type(screen.getByLabelText('Senha'), 'senha1234');
-    await usuario.click(screen.getByRole('button', { name: 'Criar conta' }));
-
-    expect(await screen.findByText('Escolha como você vai usar o Rural Sala de Aula.')).toBeInTheDocument();
+    expect((await api.GET('/me')).data).toMatchObject({ nome: 'Ana Souza', email: 'ana@ufrpe.br' });
   });
 
   it('exige senha com no mínimo 8 caracteres', async () => {
@@ -174,7 +159,6 @@ describe('Criar conta', () => {
     await usuario.type(screen.getByLabelText('Nome'), 'Outra Maria');
     await usuario.type(screen.getByLabelText('E-mail'), ALUNA.email);
     await usuario.type(screen.getByLabelText('Senha'), 'senha1234');
-    await usuario.click(screen.getByRole('radio', { name: /Aluno/ }));
     await usuario.click(screen.getByRole('button', { name: 'Criar conta' }));
 
     expect(await screen.findByText('Esse e-mail já está cadastrado. Entre ou use outro e-mail.')).toBeInTheDocument();

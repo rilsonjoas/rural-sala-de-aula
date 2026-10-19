@@ -273,14 +273,18 @@ export interface components {
             nome: string;
             /** Format: email */
             email: string;
-            papel: components["schemas"]["Papel"];
+            /** Format: date */
+            dataNascimento?: string;
+            papel?: components["schemas"]["Papel"];
         };
         RegisterRequest: {
             nome: string;
             /** Format: email */
             email: string;
             senha: string;
-            papel: components["schemas"]["Papel"];
+            /** Format: date */
+            dataNascimento?: string;
+            papel?: components["schemas"]["Papel"];
         };
         LoginRequest: {
             /** Format: email */
@@ -293,6 +297,7 @@ export interface components {
             /** @example 2026.2 */
             semestre: string;
             diasAula: number[];
+            descricao?: string;
         };
         Turma: components["schemas"]["TurmaInput"] & {
             /** Format: uuid */
@@ -302,17 +307,18 @@ export interface components {
             professorNome: string;
             /** @description Visível apenas ao professor dono */
             codigo?: string;
+            descricao?: string;
             /** @description Só para ALUNO: atividades disponíveis com estado PENDENTE */
             atividadesPendentes?: number;
             /** @description Só para ALUNO: atividades disponíveis com estado ATRASADA */
             atividadesAtrasadas?: number;
         };
         /** @enum {string} */
-        AtividadeTipo: "ATIVIDADE" | "TRABALHO" | "PROVA";
+        AtividadeTipo: "PROVA" | "LISTA_DE_EXERCICIO" | "PROJETO_INDIVIDUAL" | "PROJETO_EM_GRUPO";
         /** @enum {string} */
-        AtividadeModalidade: "INDIVIDUAL" | "GRUPO";
+        AtividadeModalidade?: "INDIVIDUAL" | "GRUPO";
         /** @enum {string} */
-        Complexidade: "BAIXA" | "MEDIA" | "ALTA";
+        Complexidade?: "BAIXA" | "MEDIA" | "ALTA";
         /**
          * @description Derivado do prazoFinal, o limite real definido pelo professor. A data de entrega é a do próprio aluno (Entrega.enviadaEm). PENDENTE = sem entrega e agora ≤ prazoFinal. ATRASADA = sem entrega e agora > prazoFinal. ENTREGUE_COM_ATRASO = enviadaEm > prazoFinal. CONCLUIDA = entrega avaliada.
          * @enum {string}
@@ -321,7 +327,7 @@ export interface components {
         AtividadeInput: {
             nome: string;
             descricao?: string;
-            complexidade: components["schemas"]["Complexidade"];
+            complexidade?: components["schemas"]["Complexidade"];
             tipo: components["schemas"]["AtividadeTipo"];
             modalidade?: components["schemas"]["AtividadeModalidade"];
             /**
@@ -331,6 +337,7 @@ export interface components {
             prazoFinal: string;
             /** Format: date-time */
             disponivelEm?: string;
+            aceitaAtraso?: boolean;
         };
         Atividade: components["schemas"]["AtividadeInput"] & {
             /** Format: uuid */
@@ -338,9 +345,10 @@ export interface components {
             /** Format: uuid */
             turmaId: string;
             turmaNome: string;
-            modalidade: components["schemas"]["AtividadeModalidade"];
+            modalidade?: components["schemas"]["AtividadeModalidade"];
             /** Format: date-time */
             disponivelEm: string;
+            aceitaAtraso?: boolean;
             /** @description Derivado; só para ALUNO */
             estado?: components["schemas"]["EstadoAtividade"];
             /** @description Só para ALUNO: nota da entrega, quando já avaliada (para o selo Concluída · nota 9,5) */
@@ -350,6 +358,23 @@ export interface components {
             professorNome: string;
             /** @description Entrega do próprio aluno, se houver (inclui nota e comentarioPrivado quando avaliada) */
             minhaEntrega?: components["schemas"]["Entrega"] | null;
+        };
+        Aviso: {
+            id: string;
+            turmaId: string;
+            autorId: string;
+            autorNome: string;
+            texto: string;
+            horario: string;
+            comentarios?: components["schemas"]["Comentario"][];
+        };
+        Comentario: {
+            id: string;
+            avisoId: string;
+            autorId: string;
+            autorNome: string;
+            texto: string;
+            horario: string;
         };
         AvaliacaoInput: {
             /** @description Até 1 casa decimal */

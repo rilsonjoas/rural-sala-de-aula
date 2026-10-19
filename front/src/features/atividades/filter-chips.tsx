@@ -30,11 +30,11 @@ export function FilterChips({ grupos, filtros, onChange }: Props) {
                   aria-pressed={ativo}
                   onClick={() => onChange({ ...filtros, [grupo.chave]: ativo ? undefined : opcao.valor })}
                   className={cn(
-                    'inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-4 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                    'inline-flex min-h-9 sm:min-h-10 shrink-0 items-center gap-1.5 rounded-full px-3 sm:px-4 text-xs sm:text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     ativo ? 'bg-primary text-primary-foreground' : 'bg-secondary text-primary hover:bg-accent',
                   )}
                 >
-                  {ativo ? <Check aria-hidden="true" className="size-4" /> : null}
+                  {ativo ? <Check aria-hidden="true" className="size-3.5 sm:size-4" /> : null}
                   {opcao.rotulo}
                 </button>
               );
@@ -44,12 +44,12 @@ export function FilterChips({ grupos, filtros, onChange }: Props) {
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1.5">
-          <span id={idOrdenar} className="text-sm font-semibold text-primary">
+        <div className="space-y-1 sm:space-y-1.5">
+          <span id={idOrdenar} className="text-xs sm:text-sm font-semibold text-primary">
             Ordenar por
           </span>
           <Select value={filtros.ordenar} onValueChange={(valor) => onChange({ ...filtros, ordenar: valor as Ordenacao })}>
-            <SelectTrigger aria-labelledby={idOrdenar} className="w-full sm:w-80">
+            <SelectTrigger aria-labelledby={idOrdenar} className="w-full sm:w-80 h-9 sm:h-10 text-xs sm:text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

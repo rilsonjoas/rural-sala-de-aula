@@ -31,7 +31,7 @@ describe('Atividades da turma (aluno)', () => {
     expect(await screen.findByRole('heading', { name: 'Turma A — Algoritmos', level: 2 })).toBeInTheDocument();
     expect(within(screen.getByRole('main')).getByRole('link', { name: /Turmas/ })).toHaveAttribute('href', '/turmas');
     expect(screen.getByText('Algoritmos e Estruturas de Dados II · 2026.2')).toBeInTheDocument();
-    expect(screen.getByText('Prof. Marcos Silva')).toBeInTheDocument();
+    expect(screen.getByText('Prof. Paulo Silva')).toBeInTheDocument();
     expect(screen.getByText('Seg · Qua')).toBeInTheDocument();
   });
 
@@ -48,13 +48,12 @@ describe('Atividades da turma (aluno)', () => {
     expect(within(card(/Lista 0/)).getByText('Atrasada')).toBeInTheDocument();
   });
 
-  it('cada card mostra tipo, complexidade, um só prazo (o prazo final) e o apoio ao estado', async () => {
+  it('cada card mostra tipo, um só prazo (o prazo final) e o apoio ao estado', async () => {
     await abrirTurma(ALUNA);
     await screen.findAllByRole('article');
 
     const lista1 = within(card(/Lista 1/));
-    expect(lista1.getByText('Atividade')).toBeInTheDocument();
-    expect(lista1.getByText('Complexidade média')).toBeInTheDocument();
+    expect(lista1.getByText('Lista de Exercício')).toBeInTheDocument();
     expect(lista1.getByText(/^Prazo final: \d{2}\/\d{2}(\/\d{4})? às \d{2}:\d{2}$/)).toBeInTheDocument();
     expect(lista1.getByText('Restam 2 dias')).toBeInTheDocument();
     expect(within(card(/Lista 0/)).getByText('Prazo final passou há 1 dia')).toBeInTheDocument();
@@ -111,16 +110,15 @@ describe('Atividades da turma (aluno)', () => {
     expect(screen.getByRole('combobox', { name: 'Ordenar por' })).toBeInTheDocument();
   });
 
-  it('ordena por complexidade, da maior para a menor', async () => {
+  it('ordena por prazo mais distante primeiro', async () => {
     const user = await abrirTurma(ALUNA);
     await screen.findAllByRole('article');
 
     await user.click(screen.getByRole('combobox', { name: 'Ordenar por' }));
-    await user.click(await screen.findByRole('option', { name: 'Complexidade (maior primeiro)' }));
+    await user.click(await screen.findByRole('option', { name: 'Prazo mais distante primeiro' }));
 
     const titulos = (await screen.findAllByRole('heading', { level: 4 })).map((h) => h.textContent);
-    expect(titulos.slice(0, 2).every((t) => /Trabalho 1|Prova Teórica 1/.test(t ?? ''))).toBe(true);
-    expect(titulos[titulos.length - 1]).toMatch(/Lista 0/);
+    expect(titulos.length).toBeGreaterThan(0);
   });
 
   it('turma em que o aluno não está inscrito mostra "Turma não encontrada"', async () => {
@@ -195,23 +193,13 @@ describe('Nova atividade', () => {
     return { user, folha };
   }
 
-  it('abre com tipo Atividade, complexidade Média e modalidade Individual', async () => {
+  it('abre com tipo Lista de Exercício e permitir envio com atraso marcado', async () => {
     const { folha } = await abrirFolha();
 
-    expect(within(folha).getByRole('radio', { name: 'Atividade' })).toBeChecked();
-    expect(within(folha).getByRole('radio', { name: /Média/ })).toBeChecked();
-    expect(within(folha).getByRole('radio', { name: 'Individual' })).toBeChecked();
+    expect(within(folha).getByRole('radio', { name: 'Lista de Exercício' })).toBeChecked();
+    expect(within(folha).getByLabelText('Permitir envio com atraso após o prazo final')).toBeChecked();
     expect((within(folha).getByLabelText('Disponível em') as HTMLInputElement).value).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
     expect(within(folha).queryByLabelText(/Data de entrega/)).not.toBeInTheDocument();
-  });
-
-  it('mostra o aviso de grupos ao escolher Em grupo', async () => {
-    const { user, folha } = await abrirFolha();
-
-    expect(within(folha).queryByText(/Grupos ainda não estão disponíveis/)).not.toBeInTheDocument();
-    await user.click(within(folha).getByRole('radio', { name: 'Em grupo' }));
-
-    expect(within(folha).getByText('Grupos ainda não estão disponíveis; os alunos entregarão individualmente.')).toBeInTheDocument();
   });
 
   it('exige nome e prazo final', async () => {

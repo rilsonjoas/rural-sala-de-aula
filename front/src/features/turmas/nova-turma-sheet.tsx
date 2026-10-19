@@ -16,9 +16,9 @@ const DIAS = [1, 2, 3, 4, 5, 6, 7];
 
 const schema = z.object({
   nome: z.string().trim().min(1, 'Informe o nome da turma.'),
-  disciplina: z.string().trim().min(1, 'Informe a disciplina.'),
+  descricao: z.string().trim().optional(),
   semestre: z.string().regex(/^[0-9]{4}\.[12]$/, 'Use o formato 2026.1 ou 2026.2.'),
-  diasAula: z.array(z.string()).min(1, 'Escolha ao menos um dia de aula.'),
+  diasAula: z.array(z.string()).default([]),
 });
 type Valores = z.infer<typeof schema>;
 
@@ -43,14 +43,20 @@ function NovaTurmaConteudo({ aoConcluir, aoCriar }: { aoConcluir: () => void; ao
   const form = useForm<Valores>({
     resolver: zodResolver(schema),
     mode: 'onBlur',
-    defaultValues: { nome: '', disciplina: '', semestre: semestreCorrente(), diasAula: [] },
+    defaultValues: { nome: '', descricao: '', semestre: semestreCorrente(), diasAula: [] },
   });
   const { errors, isSubmitting } = form.formState;
 
   const enviar = form.handleSubmit(async (valores) => {
     setErroGeral(undefined);
     try {
-      const turma = await criar.mutateAsync({ ...valores, diasAula: valores.diasAula.map(Number) });
+      const turma = await criar.mutateAsync({
+        nome: valores.nome,
+        disciplina: valores.nome,
+        descricao: valores.descricao?.trim() ? valores.descricao.trim() : undefined,
+        semestre: valores.semestre,
+        diasAula: valores.diasAula.map(Number),
+      });
       setCriada(turma);
       aoCriar(turma);
     } catch (erro) {
@@ -75,11 +81,11 @@ function NovaTurmaConteudo({ aoConcluir, aoCriar }: { aoConcluir: () => void; ao
 
   return (
     <form onSubmit={enviar} noValidate className="space-y-4">
-      <Campo rotulo="Nome da turma" obrigatorio erro={errors.nome?.message}>
+      <Campo rotulo="Nome da turma" obrigatorio dica="Ex: Programação Web, Cálculo 1 ou Algoritmos II (Manhã)" erro={errors.nome?.message}>
         {(props) => <Input {...props} {...form.register('nome')} />}
       </Campo>
-      <Campo rotulo="Disciplina" obrigatorio erro={errors.disciplina?.message}>
-        {(props) => <Input {...props} {...form.register('disciplina')} />}
+      <Campo rotulo="Descrição" dica="Opcional. Ex: Sala 3, link do Meet, turno ou orientações." erro={errors.descricao?.message}>
+        {(props) => <Input {...props} {...form.register('descricao')} />}
       </Campo>
       <Campo rotulo="Semestre" obrigatorio dica="Formato: 2026.1 ou 2026.2" erro={errors.semestre?.message}>
         {(props) => <Input {...props} inputMode="decimal" {...form.register('semestre')} />}
@@ -87,17 +93,17 @@ function NovaTurmaConteudo({ aoConcluir, aoCriar }: { aoConcluir: () => void; ao
 
       <div className="space-y-1.5">
         <span id="rotulo-dias" className="text-sm font-semibold text-primary">
-          Dias de aula <span aria-hidden="true">*</span>
+          Dias de aula <span className="text-xs font-normal text-muted-foreground">(opcional)</span>
         </span>
-        <div role="group" aria-labelledby="rotulo-dias" className="flex flex-wrap gap-2">
+        <div role="group" aria-labelledby="rotulo-dias" className="grid grid-cols-4 sm:grid-cols-7 gap-1.5 sm:gap-2">
           {DIAS.map((dia) => {
             const rotulo = formatDias([dia]);
             return (
               <label key={dia} className="group cursor-pointer">
                 <input type="checkbox" value={dia} className="peer sr-only" {...form.register('diasAula')} />
-                <span className="inline-flex min-h-11 min-w-14 items-center justify-center gap-1 rounded-md border border-input bg-card px-3 text-sm font-semibold text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 group-has-[input:checked]:border-primary group-has-[input:checked]:bg-primary group-has-[input:checked]:text-primary-foreground">
-                  <Check aria-hidden="true" className="hidden size-4 group-has-[input:checked]:block" />
-                  {rotulo}
+                <span className="flex min-h-10 sm:min-h-11 w-full items-center justify-center gap-1 rounded-md border border-input bg-card px-2 py-1.5 text-xs sm:text-sm font-semibold text-primary transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 group-has-[input:checked]:border-primary group-has-[input:checked]:bg-primary group-has-[input:checked]:text-primary-foreground">
+                  <Check aria-hidden="true" className="hidden size-3.5 shrink-0 group-has-[input:checked]:block" />
+                  <span>{rotulo}</span>
                 </span>
               </label>
             );
@@ -112,7 +118,7 @@ function NovaTurmaConteudo({ aoConcluir, aoCriar }: { aoConcluir: () => void; ao
         </p>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full min-h-10 text-sm font-semibold" disabled={isSubmitting}>
         {isSubmitting ? 'Cadastrando…' : 'Cadastrar turma'}
       </Button>
     </form>

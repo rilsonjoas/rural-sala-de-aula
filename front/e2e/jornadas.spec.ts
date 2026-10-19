@@ -43,12 +43,11 @@ test('aluna: entra, abre a turma, envia a entrega e vê o estado mudar', async (
 });
 
 test('professor: cria turma, cadastra atividade e avalia uma entrega', async ({ page }) => {
-  await entrar(page, 'marcos@ufrpe.br');
+  await entrar(page, 'paulo@ufrpe.br');
 
   await page.getByRole('button', { name: 'Cadastrar turma' }).first().click();
   const folha = page.getByRole('dialog', { name: 'Nova turma' });
   await folha.getByLabel('Nome da turma').fill('Turma D — Redes');
-  await folha.getByLabel('Disciplina').fill('Redes de Computadores');
   await folha.getByText('Ter', { exact: true }).click();
   await folha.getByRole('button', { name: 'Cadastrar turma' }).click();
   await expect(folha.getByText(/Turma criada\. Código de inscrição: [A-Z2-9]{6}/)).toBeVisible();
@@ -89,7 +88,7 @@ test('no celular a navegação é a barra inferior; no desktop são links no cab
 
 test('o professor não tem a barra inferior no celular', async ({ page }) => {
   await page.setViewportSize({ width: 360, height: 740 });
-  await entrar(page, 'marcos@ufrpe.br');
+  await entrar(page, 'paulo@ufrpe.br');
 
   await expect(page.getByRole('navigation', { name: 'Navegação principal' })).toBeHidden();
 });

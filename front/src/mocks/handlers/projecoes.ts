@@ -45,6 +45,7 @@ export function atividadesDisponiveis(turmaId: string) {
 }
 
 export function paraTurmaApi(turma: TurmaDb, usuario: UsuarioComSenha): S['Turma'] {
+  const isProfessor = turma.professorId === usuario.id;
   const base: S['Turma'] = {
     id: turma.id,
     professorId: turma.professorId,
@@ -53,9 +54,10 @@ export function paraTurmaApi(turma: TurmaDb, usuario: UsuarioComSenha): S['Turma
     disciplina: turma.disciplina,
     semestre: turma.semestre,
     diasAula: turma.diasAula,
+    descricao: turma.descricao,
   };
 
-  if (usuario.papel === 'PROFESSOR') return { ...base, codigo: turma.codigo };
+  if (isProfessor) return { ...base, codigo: turma.codigo };
 
   const estados = atividadesDisponiveis(turma.id).map((a) => estadoParaAluno(a, usuario.id));
   return {
@@ -67,18 +69,18 @@ export function paraTurmaApi(turma: TurmaDb, usuario: UsuarioComSenha): S['Turma
 
 export function paraAtividadeApi(atividade: AtividadeDb, usuario: UsuarioComSenha): S['Atividade'] {
   const turma = db.turmas.find((t) => t.id === atividade.turmaId)!;
+  const isAluno = estaInscrito(turma.id, usuario.id);
   return {
     id: atividade.id,
     turmaId: atividade.turmaId,
     turmaNome: turma.nome,
     nome: atividade.nome,
     ...(atividade.descricao ? { descricao: atividade.descricao } : {}),
-    complexidade: atividade.complexidade,
     tipo: atividade.tipo,
-    modalidade: atividade.modalidade,
     prazoFinal: atividade.prazoFinal,
     disponivelEm: atividade.disponivelEm,
-    ...(usuario.papel === 'ALUNO'
+    aceitaAtraso: atividade.aceitaAtraso ?? true,
+    ...(isAluno
       ? { estado: estadoParaAluno(atividade, usuario.id), nota: notaDoAluno(atividade.id, usuario.id) }
       : {}),
   };

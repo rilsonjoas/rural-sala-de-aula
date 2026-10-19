@@ -59,7 +59,7 @@ function Conteudo({ aoEntrar }: { aoEntrar: (turma: Turma) => void }) {
         </p>
       ) : null}
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full min-h-10 text-sm font-semibold" disabled={isSubmitting}>
         {isSubmitting ? 'Entrando…' : 'Entrar na turma'}
       </Button>
     </form>

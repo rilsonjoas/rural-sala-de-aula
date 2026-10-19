@@ -16,11 +16,10 @@ function atividade(parcial: Partial<AtividadeDb> = {}): AtividadeDb {
     id: 'a1',
     turmaId: 't1',
     nome: 'Lista',
-    complexidade: 'MEDIA',
-    tipo: 'ATIVIDADE',
-    modalidade: 'INDIVIDUAL',
+    tipo: 'LISTA_DE_EXERCICIO',
     prazoFinal: em(2),
     disponivelEm: em(-5),
+    aceitaAtraso: true,
     ...parcial,
   };
 }
@@ -71,9 +70,9 @@ describe('gerarCodigo', () => {
 
 describe('filtrarEOrdenarAtividades', () => {
   const lista = [
-    { ...atividade({ id: 'a', complexidade: 'BAIXA', tipo: 'ATIVIDADE', modalidade: 'INDIVIDUAL', prazoFinal: em(5) }), estado: 'PENDENTE' as const },
-    { ...atividade({ id: 'b', complexidade: 'ALTA', tipo: 'TRABALHO', modalidade: 'GRUPO', prazoFinal: em(1) }), estado: 'PENDENTE' as const },
-    { ...atividade({ id: 'c', complexidade: 'MEDIA', tipo: 'PROVA', modalidade: 'INDIVIDUAL', prazoFinal: em(-2) }), estado: 'ATRASADA' as const },
+    { ...atividade({ id: 'a', tipo: 'LISTA_DE_EXERCICIO', prazoFinal: em(5) }), estado: 'PENDENTE' as const },
+    { ...atividade({ id: 'b', tipo: 'PROJETO_EM_GRUPO', prazoFinal: em(1) }), estado: 'PENDENTE' as const },
+    { ...atividade({ id: 'c', tipo: 'PROVA', prazoFinal: em(-2) }), estado: 'ATRASADA' as const },
   ];
   const ids = (resultado: { id: string }[]) => resultado.map((x) => x.id);
 
@@ -85,19 +84,13 @@ describe('filtrarEOrdenarAtividades', () => {
     expect(ids(filtrarEOrdenarAtividades(lista, { ordenar: 'prazo', direcao: 'desc' }))).toEqual(['a', 'b', 'c']);
   });
 
-  it('ordena da maior para a menor complexidade', () => {
-    expect(ids(filtrarEOrdenarAtividades(lista, { ordenar: 'complexidade', direcao: 'desc' }))).toEqual(['b', 'c', 'a']);
-  });
-
-  it('filtra por estado, tipo, modalidade e complexidade', () => {
+  it('filtra por estado e tipo', () => {
     expect(ids(filtrarEOrdenarAtividades(lista, { estado: 'ATRASADA' }))).toEqual(['c']);
-    expect(ids(filtrarEOrdenarAtividades(lista, { tipo: 'TRABALHO' }))).toEqual(['b']);
-    expect(ids(filtrarEOrdenarAtividades(lista, { modalidade: 'GRUPO' }))).toEqual(['b']);
-    expect(ids(filtrarEOrdenarAtividades(lista, { complexidade: 'BAIXA' }))).toEqual(['a']);
+    expect(ids(filtrarEOrdenarAtividades(lista, { tipo: 'PROJETO_EM_GRUPO' }))).toEqual(['b']);
+    expect(ids(filtrarEOrdenarAtividades(lista, { tipo: 'PROVA' }))).toEqual(['c']);
   });
 
   it('combina filtros (E lógico)', () => {
-    expect(ids(filtrarEOrdenarAtividades(lista, { estado: 'PENDENTE', modalidade: 'INDIVIDUAL' }))).toEqual(['a']);
-    expect(ids(filtrarEOrdenarAtividades(lista, { estado: 'ATRASADA', tipo: 'TRABALHO' }))).toEqual([]);
+    expect(ids(filtrarEOrdenarAtividades(lista, { estado: 'PENDENTE', tipo: 'LISTA_DE_EXERCICIO' }))).toEqual(['a']);
   });
 });

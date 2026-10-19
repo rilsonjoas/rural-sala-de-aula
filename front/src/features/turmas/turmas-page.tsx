@@ -23,34 +23,36 @@ function Esqueleto() {
 
 export function TurmasPage() {
   const { usuario } = useSession();
-  const professor = usuario?.papel === 'PROFESSOR';
   usePageTitle('Minhas turmas');
   const turmas = useTurmas();
   const [escolhido, setEscolhido] = useState<string>();
-  const [folhaAberta, setFolhaAberta] = useState(false);
+  const [sheetAberta, setSheetAberta] = useState<'criar' | 'entrar' | null>(null);
 
   const todas = turmas.data ?? [];
   const semestres = [...new Set(todas.map((t) => t.semestre))].sort().reverse();
   const semestre = escolhido ?? semestres[0] ?? TODOS_OS_SEMESTRES;
   const visiveis = semestre === TODOS_OS_SEMESTRES ? todas : todas.filter((t) => t.semestre === semestre);
 
-  const acao = (
-    <Button type="button" className="w-full sm:w-auto" onClick={() => setFolhaAberta(true)}>
-      {professor ? 'Cadastrar turma' : 'Entrar em turma'}
-    </Button>
+  const acoes = (
+    <div className="flex flex-col gap-2 sm:flex-row w-full sm:w-auto">
+      <Button type="button" variant="outline" className="w-full sm:w-auto" onClick={() => setSheetAberta('entrar')}>
+        Entrar em turma
+      </Button>
+      <Button type="button" className="w-full sm:w-auto" onClick={() => setSheetAberta('criar')}>
+        Cadastrar turma
+      </Button>
+    </div>
   );
 
-  const contador = professor
-    ? plural(visiveis.length, 'turma')
-    : `${plural(visiveis.length, 'turma')} ${visiveis.length === 1 ? 'inscrita' : 'inscritas'}`;
+  const contador = plural(visiveis.length, 'turma');
 
   return (
-    <section aria-labelledby="titulo-pagina" className="space-y-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h2 id="titulo-pagina" className="text-2xl font-bold text-primary">
+    <section aria-labelledby="titulo-pagina" className="space-y-4 sm:space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 id="titulo-pagina" className="text-xl sm:text-2xl font-bold text-primary">
           Minhas turmas
         </h2>
-        {turmas.isSuccess && todas.length === 0 ? null : acao}
+        {turmas.isSuccess && todas.length === 0 ? null : acoes}
       </div>
 
       {turmas.isPending ? <Esqueleto /> : null}
@@ -64,36 +66,42 @@ export function TurmasPage() {
 
       {turmas.isSuccess && todas.length === 0 ? (
         <EmptyState
-          mensagem={
-            professor
-              ? 'Você ainda não criou turmas.'
-              : 'Você ainda não está em nenhuma turma. Peça o código ao professor e entre.'
-          }
-          acao={acao}
+          mensagem="Você ainda não está em nenhuma turma. Cadastre uma turma para lecionar ou entre com o código fornecido pelo professor."
+          acao={acoes}
         />
       ) : null}
 
       {turmas.isSuccess && todas.length > 0 ? (
         <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
             <SemestreSelect semestres={semestres} valor={semestre} onChange={setEscolhido} />
-            <span className="inline-flex min-h-8 w-fit items-center rounded-full bg-secondary px-3 text-sm font-semibold text-primary">
+            <span className="inline-flex min-h-7 sm:min-h-8 w-fit items-center rounded-full bg-secondary px-2.5 sm:px-3 text-xs sm:text-sm font-semibold text-primary">
               {contador}
             </span>
           </div>
-          <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
-            {visiveis.map((turma: Turma) =>
-              professor ? <TurmaCardProfessor key={turma.id} turma={turma} /> : <TurmaCardAluno key={turma.id} turma={turma} />,
-            )}
+          <div className="grid gap-3 sm:gap-4 grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))]">
+            {visiveis.map((turma: Turma) => {
+              const isProfessor = turma.professorId === usuario?.id;
+              return isProfessor ? (
+                <TurmaCardProfessor key={turma.id} turma={turma} />
+              ) : (
+                <TurmaCardAluno key={turma.id} turma={turma} />
+              );
+            })}
           </div>
         </>
       ) : null}
 
-      {professor ? (
-        <NovaTurmaSheet open={folhaAberta} onOpenChange={setFolhaAberta} aoCriar={(t) => setEscolhido(t.semestre)} />
-      ) : (
-        <EntrarEmTurmaSheet open={folhaAberta} onOpenChange={setFolhaAberta} aoEntrar={(t) => setEscolhido(t.semestre)} />
-      )}
+      <NovaTurmaSheet
+        open={sheetAberta === 'criar'}
+        onOpenChange={(aberto) => !aberto && setSheetAberta(null)}
+        aoCriar={(t) => setEscolhido(t.semestre)}
+      />
+      <EntrarEmTurmaSheet
+        open={sheetAberta === 'entrar'}
+        onOpenChange={(aberto) => !aberto && setSheetAberta(null)}
+        aoEntrar={(t) => setEscolhido(t.semestre)}
+      />
     </section>
   );
 }

@@ -16,25 +16,25 @@ expect_fail() { # $1=descrição, stdin=SQL
 }
 
 q <<'SQL'
-INSERT INTO usuario (id,nome,email,hash_senha,papel) VALUES
- ('00000000-0000-0000-0000-000000000001','Prof','p@x.br','h','PROFESSOR'),
- ('00000000-0000-0000-0000-000000000002','Aluno','a@x.br','h','ALUNO');
-INSERT INTO turma (id,professor_id,nome,disciplina,semestre,dias_aula,codigo) VALUES
- ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000001','T1','Algoritmos','2026.2','{1,3}','ABC123');
+INSERT INTO usuario (id,nome,email,senha) VALUES
+ ('00000000-0000-0000-0000-000000000001','Prof','p@x.br','h'),
+ ('00000000-0000-0000-0000-000000000002','Aluno','a@x.br','h');
+INSERT INTO turma (id,professor_id,nome,disciplina,semestre,dias_aula,codigo,descricao) VALUES
+ ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000001','T1','Algoritmos','2026.2','{1,3}','ABC123','Descricao da turma');
 INSERT INTO inscricao (turma_id,aluno_id) VALUES ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002');
-INSERT INTO atividade (id,turma_id,nome,complexidade,tipo,modalidade,prazo_final,disponivel_em) VALUES
- ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','Lista 1','MEDIA','ATIVIDADE','INDIVIDUAL',now()+interval '8 day',now());
-INSERT INTO entrega (id,atividade_id,aluno_id,arquivo_chave,nome_original) VALUES
- ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','k1','lista.pdf');
-INSERT INTO avaliacao (entrega_id,nota,comentario_privado) VALUES ('30000000-0000-0000-0000-000000000001',9.5,'bom');
+INSERT INTO atividade (id,turma_id,nome,descricao,tipo,prazo_final,disponivel_em,aceita_atraso) VALUES
+ ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','Lista 1','Instrucoes','LISTA_DE_EXERCICIO',now()+interval '8 day',now(),true);
+INSERT INTO entrega (id,atividade_id,aluno_id,nota,comentario_privado) VALUES
+ ('30000000-0000-0000-0000-000000000001','20000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002',9.5,'bom');
+INSERT INTO arquivo (entrega_id,nome_original,nome_armazenado,caminho,tipo_conteudo,tamanho) VALUES
+ ('30000000-0000-0000-0000-000000000001','lista.pdf','uuid-lista.pdf','/uploads/uuid-lista.pdf','application/pdf',1024);
+INSERT INTO aviso (turma_id,usuario_id,texto) VALUES
+ ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000001','Bem-vindos a aula!');
 SQL
 echo "ok  caminho feliz"
 
 expect_fail "e-mail duplicado (case-insensitive)" <<'SQL'
-INSERT INTO usuario (nome,email,hash_senha,papel) VALUES ('X','A@X.BR','h','ALUNO');
-SQL
-expect_fail "turma criada por ALUNO" <<'SQL'
-INSERT INTO turma (professor_id,nome,disciplina,semestre,dias_aula,codigo) VALUES ('00000000-0000-0000-0000-000000000002','T','D','2026.2','{1}','ZZZ999');
+INSERT INTO usuario (nome,email,senha) VALUES ('X','A@X.BR','h');
 SQL
 expect_fail "código de turma duplicado" <<'SQL'
 INSERT INTO turma (professor_id,nome,disciplina,semestre,dias_aula,codigo) VALUES ('00000000-0000-0000-0000-000000000001','T','D','2026.2','{1}','abc123');
@@ -42,16 +42,13 @@ SQL
 expect_fail "inscrição duplicada" <<'SQL'
 INSERT INTO inscricao (turma_id,aluno_id) VALUES ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002');
 SQL
-expect_fail "inscrição de PROFESSOR" <<'SQL'
-INSERT INTO inscricao (turma_id,aluno_id) VALUES ('10000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000001');
-SQL
 expect_fail "segunda entrega do mesmo aluno na atividade" <<'SQL'
-INSERT INTO entrega (atividade_id,aluno_id,arquivo_chave,nome_original) VALUES ('20000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002','k2','b.pdf');
+INSERT INTO entrega (atividade_id,aluno_id) VALUES ('20000000-0000-0000-0000-000000000001','00000000-0000-0000-0000-000000000002');
 SQL
 expect_fail "nota acima de 10" <<'SQL'
-UPDATE avaliacao SET nota = 10.5;
+UPDATE entrega SET nota = 10.5;
 SQL
 expect_fail "prazo_final antes da disponibilidade" <<'SQL'
-INSERT INTO atividade (turma_id,nome,complexidade,tipo,modalidade,prazo_final,disponivel_em) VALUES ('10000000-0000-0000-0000-000000000001','Y','BAIXA','ATIVIDADE','INDIVIDUAL',now()-interval '1 day',now());
+INSERT INTO atividade (turma_id,nome,tipo,prazo_final,disponivel_em) VALUES ('10000000-0000-0000-0000-000000000001','Y','PROVA',now()-interval '1 day',now());
 SQL
 echo "Schema OK."

@@ -10,7 +10,7 @@ npm install
 VITE_API_MOCK=true VITE_API_MOCK_USER=aluna npm run dev   # ou professor
 ```
 
-Usuários de teste: `maria@ufrpe.br` (aluna) e `marcos@ufrpe.br` (professor), senha `senha1234`. Os dados ficam na memória da aba; recarregar volta ao início.
+Usuários de teste: `maria@ufrpe.br` (aluna) e `paulo@ufrpe.br` (professor), senha `senha1234`. Os dados ficam na memória da aba; recarregar volta ao início.
 
 ## Onde está a especificação
 

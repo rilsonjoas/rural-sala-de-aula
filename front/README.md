@@ -10,7 +10,7 @@ VITE_API_MOCK=true VITE_API_MOCK_USER=aluna npm run dev   # com a API simulada, 
 npm run dev                                               # com a API real (proxy /api → VITE_API_PROXY_TARGET)
 ```
 
-Com `VITE_API_MOCK=true` o app usa a API simulada (MSW, dados na memória: a página recarregada volta ao início). `VITE_API_MOCK_USER` (ou `?mockUser=` na URL) abre a sessão como `aluna`, `aluno` ou `professor`; vazio (`?mockUser=`) abre deslogado. Usuários de teste: `maria@ufrpe.br` (aluna), `marcos@ufrpe.br` (professor), todos com a senha `senha1234`.
+Com `VITE_API_MOCK=true` o app usa a API simulada (MSW, dados na memória: a página recarregada volta ao início). `VITE_API_MOCK_USER` (ou `?mockUser=` na URL) abre a sessão como `aluna`, `aluno` ou `professor`; vazio (`?mockUser=`) abre deslogado. Usuários de teste: `maria@ufrpe.br` (aluna), `paulo@ufrpe.br` (professor), todos com a senha `senha1234`.
 
 ## Verificar
 

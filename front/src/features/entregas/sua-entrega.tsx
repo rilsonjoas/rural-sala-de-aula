@@ -25,6 +25,15 @@ function Formulario({ atividade, trocando, aoTerminar }: { atividade: AtividadeD
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [erro, setErro] = useState<string>();
   const prazoPassou = new Date(atividade.prazoFinal).getTime() < Date.now();
+  const atrasoBloqueado = prazoPassou && atividade.aceitaAtraso === false;
+
+  if (atrasoBloqueado) {
+    return (
+      <p className="text-sm text-destructive font-medium">
+        O prazo para envio desta atividade encerrou e ela não aceita envios com atraso.
+      </p>
+    );
+  }
 
   async function submeter() {
     if (!arquivo) return;
@@ -49,7 +58,7 @@ function Formulario({ atividade, trocando, aoTerminar }: { atividade: AtividadeD
         </p>
       ) : null}
       {enviar.isPending ? <Barra /> : null}
-      <Button type="button" className="w-full sm:w-auto" disabled={!arquivo || enviar.isPending} onClick={() => void submeter()}>
+      <Button type="button" className="w-full sm:w-auto min-h-10 text-sm font-semibold" disabled={!arquivo || enviar.isPending} onClick={() => void submeter()}>
         {enviar.isPending ? 'Enviando…' : 'Enviar entrega'}
       </Button>
     </div>
@@ -64,21 +73,21 @@ export function SuaEntrega({ atividade }: { atividade: AtividadeDetalhe }) {
   const avaliada = entrega?.nota != null;
 
   return (
-    <section aria-labelledby={idTitulo} className="space-y-3 rounded-xl border border-border bg-card p-4">
-      <h3 ref={titulo} id={idTitulo} tabIndex={-1} className="text-lg font-semibold text-primary outline-none">
+    <section aria-labelledby={idTitulo} className="space-y-3 rounded-xl border border-border bg-card p-3.5 sm:p-4">
+      <h3 ref={titulo} id={idTitulo} tabIndex={-1} className="text-base sm:text-lg font-semibold text-primary outline-none">
         Sua entrega
       </h3>
 
       {entrega ? (
-        <div className="space-y-3 rounded-lg bg-secondary p-3">
+        <div className="space-y-3 rounded-lg bg-secondary p-3 sm:p-3.5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="flex items-center gap-2 font-medium text-primary">
+              <p className="flex items-center gap-2 text-sm sm:text-base font-medium text-primary">
                 <FileText aria-hidden="true" className="size-4 shrink-0" />
                 <NomeDeArquivo nome={entrega.nomeOriginal} />
               </p>
-              <p className="text-sm text-muted-foreground">{formatTamanho(entrega.tamanhoBytes)}</p>
-              <p className="text-sm text-muted-foreground">{enviadaEm(entrega)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{formatTamanho(entrega.tamanhoBytes)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{enviadaEm(entrega)}</p>
             </div>
             <StatusBadge estado={avaliada ? 'CONCLUIDA' : entrega.atrasada ? 'ENTREGUE_COM_ATRASO' : 'ENTREGUE'} />
           </div>
@@ -86,8 +95,8 @@ export function SuaEntrega({ atividade }: { atividade: AtividadeDetalhe }) {
             <div className="space-y-2">
               <NotaChip nota={entrega.nota} />
               <div className="rounded-md bg-card p-3">
-                <p className="text-sm font-semibold text-primary">Comentário do professor</p>
-                <p className="text-sm text-foreground">{entrega.comentarioPrivado || 'Sem comentário.'}</p>
+                <p className="text-xs sm:text-sm font-semibold text-primary">Comentário do professor</p>
+                <p className="text-xs sm:text-sm text-foreground">{entrega.comentarioPrivado || 'Sem comentário.'}</p>
               </div>
             </div>
           ) : null}
@@ -95,9 +104,9 @@ export function SuaEntrega({ atividade }: { atividade: AtividadeDetalhe }) {
       ) : null}
 
       {avaliada ? (
-        <p className="text-sm text-muted-foreground">Esta entrega já foi avaliada e não aceita novo envio.</p>
+        <p className="text-xs sm:text-sm text-muted-foreground">Esta entrega já foi avaliada e não aceita novo envio.</p>
       ) : entrega && !trocando ? (
-        <Button type="button" variant="secondary" onClick={() => setTrocando(true)}>
+        <Button type="button" variant="secondary" className="min-h-10 text-sm" onClick={() => setTrocando(true)}>
           Enviar outro arquivo
         </Button>
       ) : (

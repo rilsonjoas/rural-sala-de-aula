@@ -1,6 +1,5 @@
 import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ComplexidadeIndicator } from '@/components/complexidade-indicator';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { formatDataHora } from '@/lib/format';
@@ -25,7 +24,7 @@ function CabecalhoOrdenavel({
   primeiraDirecao,
 }: {
   rotulo: string;
-  campo: 'prazo' | 'complexidade';
+  campo: 'prazo';
   ordenar: Ordenacao;
   onOrdenar: (ordenar: Ordenacao) => void;
   primeiraDirecao: 'asc' | 'desc';
@@ -65,7 +64,6 @@ export function AtividadesTabela({ atividades, ordenar, onOrdenar }: Props) {
             <th scope="col" className={simples}>
               Tipo
             </th>
-            <CabecalhoOrdenavel rotulo="Complexidade" campo="complexidade" ordenar={ordenar} onOrdenar={onOrdenar} primeiraDirecao="desc" />
             <CabecalhoOrdenavel rotulo="Prazo final" campo="prazo" ordenar={ordenar} onOrdenar={onOrdenar} primeiraDirecao="asc" />
             <th scope="col" className={simples}>
               Estado
@@ -85,9 +83,6 @@ export function AtividadesTabela({ atividades, ordenar, onOrdenar }: Props) {
               </td>
               <td className="px-3 py-3 text-muted-foreground">{a.turmaNome}</td>
               <td className="px-3 py-3">{ROTULO_TIPO[a.tipo]}</td>
-              <td className="px-3 py-3">
-                <ComplexidadeIndicator nivel={a.complexidade} />
-              </td>
               <td className="px-3 py-3 whitespace-nowrap">{formatDataHora(a.prazoFinal)}</td>
               <td className="px-3 py-3">{a.estado ? <StatusBadge estado={a.estado} nota={a.nota} urgente={alunoComPressa(a)} /> : null}</td>
               <td className="px-3 py-3 text-right">

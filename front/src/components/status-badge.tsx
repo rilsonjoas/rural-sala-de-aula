@@ -32,7 +32,7 @@ const PRAZO_ENCERRADO: Config = {
   classes: 'bg-secondary text-muted-foreground',
 };
 
-const SELO = 'inline-flex min-h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-semibold';
+const SELO = 'inline-flex min-h-5 sm:min-h-6 items-center gap-1 sm:gap-1.5 whitespace-nowrap rounded-full px-2 sm:px-2.5 text-[11px] sm:text-xs font-semibold';
 
 /**
  * Selo do estado da atividade. Sempre ícone + texto: o estado nunca depende só da cor.

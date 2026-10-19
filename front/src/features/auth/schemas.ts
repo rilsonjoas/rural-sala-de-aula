@@ -11,7 +11,7 @@ export const registroSchema = z.object({
   nome: z.string().trim().min(1, 'Informe seu nome.'),
   email,
   senha: z.string().min(8, 'A senha precisa ter no mínimo 8 caracteres.'),
-  papel: z.enum(['ALUNO', 'PROFESSOR'], { error: 'Escolha como você vai usar o Rural Sala de Aula.' }),
+  dataNascimento: z.string().optional(),
 });
 
 export type LoginValores = z.infer<typeof loginSchema>;

@@ -66,13 +66,14 @@ export function ResponsiveSheet({ open, onOpenChange, titulo, descricao, childre
       <SheetContent
         side="bottom"
         data-variante="folha"
-        className="max-h-[92dvh] overflow-y-auto rounded-t-xl"
+        className="max-h-[92dvh] overflow-y-auto rounded-t-2xl pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
       >
-        <SheetHeader>
-          <SheetTitle>{titulo}</SheetTitle>
-          {descricao ? <SheetDescription>{descricao}</SheetDescription> : null}
+        <div className="mx-auto mb-1 mt-1 h-1.5 w-12 rounded-full bg-muted-foreground/30 shrink-0" aria-hidden="true" />
+        <SheetHeader className="px-4 py-2">
+          <SheetTitle className="text-lg font-bold sm:text-xl">{titulo}</SheetTitle>
+          {descricao ? <SheetDescription className="text-xs sm:text-sm">{descricao}</SheetDescription> : null}
         </SheetHeader>
-        <div className="px-4 pb-6">{children}</div>
+        <div className="px-4 pb-4">{children}</div>
       </SheetContent>
     </Sheet>
   );

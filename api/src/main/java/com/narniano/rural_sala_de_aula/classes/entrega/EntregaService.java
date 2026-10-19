@@ -66,7 +66,7 @@ public class EntregaService {
         LocalDateTime agora = LocalDateTime.now();
         boolean atrasada = agora.isAfter(atividade.getPrazoFinal());
         if (atrasada && !atividade.isAceitaAtraso()) {
-            throw new AppException(HttpStatus.CONFLICT, "Esta atividade não aceita envios após o prazo final.");
+            throw new AppException(HttpStatus.FORBIDDEN, "O prazo encerrou e esta atividade não aceita entregas com atraso.");
         }
 
         Optional<EntregaIndividual> existenteOpt = entregaRepository.findByAtividadeIdAndAlunoId(atividadeId, aluno.getId());

@@ -83,7 +83,7 @@ public class TurmaService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Não encontramos uma turma com esse código. Confira com o professor."));
 
         if (turma.getProfessor().getId().equals(aluno.getId())) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Você é o professor desta turma.");
+            throw new AppException(HttpStatus.CONFLICT, "Você é o professor desta turma.");
         }
 
         if (inscricaoRepository.existsByTurmaIdAndAlunoId(turma.getId(), aluno.getId())) {

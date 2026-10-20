@@ -37,7 +37,7 @@ O item 4 é o que dá mais retorno depois do 1: o Java só foi compilado de verd
 
 - **Confirmar com o Luiz:** (a) o professor define só o prazo final (ADR-0006); (b) o aluno entrega individualmente atividade "Em grupo" até o RF06 entrar. Hoje valem como decididos, mas a confirmação não está registrada.
 - **Tag `luiz/servicos-originais`** (aponta para `7ea7e79`, a pasta `servicos/` dele antes da consolidação em `classes/`): existe só na máquina do Rilson. Falta publicar (`git push origin luiz/servicos-originais`) e avisar o Luiz de que `servicos/` foi consolidada em `classes/<domínio>/`. Do trabalho dele ainda valem `listarPorTurma`, `listarPorGrupo` (membros de turma e grupo) e `excluir` (usuário e turma), no padrão novo e com DTOs.
-- **`hetzner-infra`, PR #2** (documentação do Rural em produção): aberto, falta o merge. Há dois assuntos separados nele: o `POSTGRES_DBS` do `.env.example` ainda lista `umami_db`, que **não** está no `.env` real da VPS (se o Umami usa esse banco, ele está fora do backup; confirmar antes de mexer).
+- **`hetzner-infra`:** o PR #2 (documentação do Rural em produção) foi mergeado em 20/10. Fica uma dúvida separada: o `POSTGRES_DBS` do `.env.example` ainda lista `umami_db`, que **não** está no `.env` real da VPS (se o Umami usa esse banco, ele está fora do backup; confirmar antes de mexer).
 
 ## Como retomar
 

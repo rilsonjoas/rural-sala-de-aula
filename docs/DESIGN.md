@@ -131,7 +131,7 @@ Mensagens já definidas: entrega já avaliada → "Esta entrega já foi avaliada
 Lista completa em [`BACKLOG.md`](BACKLOG.md). Resumo:
 
 
-Sair da turma, grupos (solicitar, aprovar, sair), calendário de carga semanal, editar atividade, notificações, perfil/edição de conta, recuperação de senha, tema escuro. Atividade com modalidade "Em grupo" pode ser cadastrada, mas **sem fluxo de grupo**: mostra o selo "Em grupo" e o aluno entrega individualmente até o backlog entrar.
+Sair da turma, grupos (solicitar, aprovar, sair), calendário de carga semanal, editar atividade, notificações, perfil/edição de conta, recuperação de senha, tema escuro. Atividade do tipo "Projeto em grupo" pode ser cadastrada, mas **sem fluxo de grupo**: mostra o selo "Em grupo" e o aluno entrega individualmente até o backlog entrar.
 
 ## 10. Decisões em aberto
 

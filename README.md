@@ -21,13 +21,15 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 | 2 | RF09 | Cadastrar turmas (nome, disciplina, semestre, dias de aula) | quem leciona |
 | 3 | RF02 | Inscrever-se em turma pelo código | quem estuda |
 | 4 | RF03 | Consultar as turmas em que leciona ou está inscrito | todos |
-| 5 | RF10 | Cadastrar atividades (nome, tipo, prazo final, disponibilidade, envio com atraso) | quem leciona |
+| 5 | RF10 | Cadastrar atividades (nome, descrição, tipo, prazo final, disponibilidade, envio com atraso) | quem leciona |
 | 6 | RF05 | Acessar e organizar atividades (filtros por estado, tipo e turma; ordenação por prazo) | quem estuda |
 | 7 | RF15 | Avaliar entrega (nota e comentário privado) | quem leciona |
 | 8 | RF04 | Entregar atividade (upload de arquivo) — **por último** | quem estuda |
 | 9 | RF16 | Acessar e baixar entregas — **por último** | quem leciona |
 | 10 | RF13 | Postar avisos no mural da turma | quem leciona |
 | 11 | RF14 | Comentar nos avisos | todos da turma |
+
+**Fora do escopo por decisão (RF10 e RF05):** a atividade **não tem complexidade nem modalidade**. A modalidade é o próprio tipo (`PROJETO_EM_GRUPO` é em grupo), então o filtro por tipo a cobre; a complexidade não foi implementada, e portanto não há filtro nem ordenação por ela. Decisão confirmada com o Luiz Felipe; o texto original está em [`docs/requisitos.md`](docs/requisitos.md) com o registro.
 
 RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
 

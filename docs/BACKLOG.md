@@ -2,6 +2,11 @@
 
 Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no [README](../README.md).
 
+## Decidido não implementar
+
+- **Complexidade da atividade** (RF10 e RF05): sem campo, sem indicador e sem filtro ou ordenação por complexidade. Decisão confirmada com o Luiz Felipe em conversa direta (sem data registrada). Se um dia entrar: coluna na atividade (3 níveis), campo no formulário do professor, indicador na lista e no detalhe, e `ordenar=complexidade` e filtro no `GET /atividades`.
+- **Modalidade da atividade** (RF10 e RF05): não é um campo; o tipo `PROJETO_EM_GRUPO` já indica que é em grupo e o filtro por tipo cobre o caso. Mesma decisão.
+
 ## Requisitos funcionais (do documento de requisitos)
 
 | RF | O que é | Observações |
@@ -9,8 +14,8 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 | RF03b | Sair da turma (aluno) | o documento numera duas vezes o RF03 |
 | RF06 | Solicitar e participar de grupos | atividade "Em grupo" já pode ser cadastrada, mas o aluno entrega individualmente até este RF entrar |
 | RF07 | Sair do grupo | |
-| RF08 | Calendário com carga semanal (pesada, média, livre) | |
-| RF11 | Atualizar atividades | o P1 não edita atividade, então a folha Nova atividade pede confirmação antes de salvar |
+| RF08 | Calendário com carga semanal (pesada, média, livre) | o texto classifica por quantidade **e complexidade**; sem complexidade (decisão de escopo), a classificação teria de usar só a quantidade de atividades |
+| RF11 | Atualizar atividades | o P1 não edita atividade, então a folha Nova atividade pede confirmação antes de salvar. O texto cita alterar complexidade e modalidade, que não existem no projeto |
 | RF12 | Configurar e aprovar grupos | |
 | RF14b | Responder a comentários (comentar em aviso já existe) | RF13 e RF14 entraram no mural da turma |
 | RF17 | Receber notificações | |
@@ -51,4 +56,4 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - Confirmar que o aluno entrega individualmente atividades "Em grupo" até os grupos entrarem.
 - Antivírus ou verificação do conteúdo dos arquivos enviados.
 - Java 25 (LTS) e Postgres 17/18: hoje Java 21 e Postgres 16, alinhado ao Postgres compartilhado do Hetzner. Subir os dois juntos com a infra.
-- Primeiro deploy no Hetzner: `1 - Pessoal/hetzner-infra/rural-sala-de-aula/README.md`.
+- **Feito (19/10/2026):** em produção no Hetzner, em `https://rural-sala-de-aula.narniano.com` (runbook em `1 - Pessoal/hetzner-infra/rural-sala-de-aula/README.md`). Pendências de infraestrutura (rate limit no login, CI com a migration do zero, versão real no `/health`, sessão persistente, Sentry) estão na seção "Pendências para production-ready" desse README.

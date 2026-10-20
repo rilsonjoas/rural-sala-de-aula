@@ -85,12 +85,12 @@
 
 ## Tarefa 6 — Componentes compartilhados e formatadores
 
-**Arquivos:** criar `src/lib/format.ts`; `src/components/{status-badge,complexidade-indicator,empty-state,error-state,responsive-sheet}.tsx`; testes ao lado de cada um.
+**Arquivos:** criar `src/lib/format.ts`; `src/components/{status-badge,empty-state,error-state,responsive-sheet}.tsx`; testes ao lado de cada um.
 
-**Produz:** `formatDataHora(iso, agora)`, `formatNota(n)`, `formatDias(dias[])`, `formatPrazoRelativo(prazoFinal, agora)`; `<StatusBadge estado>`, `<ComplexidadeIndicator nivel>`, `<EmptyState titulo descricao acao>`, `<ErrorState mensagem onRetry>`, `<ResponsiveSheet>`.
+**Produz:** `formatDataHora(iso, agora)`, `formatNota(n)`, `formatDias(dias[])`, `formatPrazoRelativo(prazoFinal, agora)`; `<StatusBadge estado>`, `<EmptyState titulo descricao acao>`, `<ErrorState mensagem onRetry>`, `<ResponsiveSheet>`.
 
 - [ ] **Testes (RED) dos formatadores:** `15/10 às 23:59`; com ano só se diferente ("15/10/2027 às 23:59"); nota `9,5` e `8,0`; dias `[1,3]` → "Seg · Qua", `[6,7]` → "Sáb · Dom"; relativo: "Restam 2 dias", "Resta 1 dia", "Prazo final passou há 1 dia", "Prazo final passou há 3 dias".
-- [ ] **Testes (RED) dos selos:** cada um dos 5 estados mostra ícone + texto (`Pendente`, `Entregue`, `Entregue com atraso`, `Concluída · nota 9,5`, `Atrasada`) e nunca só cor (o texto está no DOM); `ComplexidadeIndicator` mostra 1, 2 ou 3 barras e o texto "Complexidade baixa/média/alta".
+- [ ] **Testes (RED) dos selos:** cada um dos 5 estados mostra ícone + texto (`Pendente`, `Entregue`, `Entregue com atraso`, `Concluída · nota 9,5`, `Atrasada`) e nunca só cor (o texto está no DOM).
 - [ ] Implementar. `ResponsiveSheet` usa `Sheet` abaixo de 1024 px e `Dialog` acima, com foco preso e fechamento por Esc. `ErrorState` chama `onRetry` ao clicar em "Tentar de novo".
 - [ ] Rodar `bash scripts/verify.sh`. Commit.
 

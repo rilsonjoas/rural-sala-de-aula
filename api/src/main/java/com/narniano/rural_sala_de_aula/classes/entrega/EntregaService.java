@@ -166,7 +166,8 @@ public class EntregaService {
                 Files.createDirectories(pastaUploads);
             }
             Path destino = pastaUploads.resolve(nomeArmazenado);
-            file.transferTo(destino.toFile());
+            // caminho absoluto: com caminho relativo o Tomcat grava no diretorio temporario dele
+            file.transferTo(destino.toAbsolutePath());
             return destino.toString();
         } catch (IOException e) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao gravar arquivo em disco: " + e.getMessage());

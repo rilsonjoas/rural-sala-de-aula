@@ -3,10 +3,12 @@ package com.narniano.rural_sala_de_aula.common.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.web.server.ResponseStatusException;
@@ -66,6 +68,24 @@ public class RestExceptionHandler {
                 .message(ex.getReason() != null ? ex.getReason() : ex.getMessage())
                 .build();
         return ResponseEntity.status(ex.getStatusCode()).body(body);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponseDTO> handleCorpoIlegivel(HttpMessageNotReadableException ex) {
+        ErrorResponseDTO body = ErrorResponseDTO.builder()
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .message("Dados inválidos. Confira os valores enviados.")
+                .build();
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDTO> handleParametroInvalido(MethodArgumentTypeMismatchException ex) {
+        ErrorResponseDTO body = ErrorResponseDTO.builder()
+                .status(HttpStatus.UNPROCESSABLE_ENTITY.value())
+                .message("Valor inválido para '" + ex.getName() + "'.")
+                .build();
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

@@ -24,20 +24,26 @@ public class AtividadeController {
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) TipoAtividade tipo,
             @RequestParam(required = false) UUID turmaId,
+            @RequestParam(required = false, defaultValue = "prazo") String ordenar,
+            @RequestParam(required = false, defaultValue = "asc") String direcao,
             HttpSession session
     ) {
         Usuario usuario = authService.getUsuarioAutenticado(session);
-        List<ResponseAtividadeDTO> atividades = atividadeService.listarMinhasAtividades(usuario, estado, tipo, turmaId);
+        List<ResponseAtividadeDTO> atividades = atividadeService.listarMinhasAtividades(usuario, estado, tipo, turmaId, ordenar, direcao);
         return ResponseEntity.ok(atividades);
     }
 
     @GetMapping("/api/v1/turmas/{turmaId}/atividades")
     public ResponseEntity<List<ResponseAtividadeDTO>> listarPorTurma(
             @PathVariable UUID turmaId,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) TipoAtividade tipo,
+            @RequestParam(required = false, defaultValue = "prazo") String ordenar,
+            @RequestParam(required = false, defaultValue = "asc") String direcao,
             HttpSession session
     ) {
         Usuario usuario = authService.getUsuarioAutenticado(session);
-        List<ResponseAtividadeDTO> atividades = atividadeService.listarPorTurma(turmaId, usuario);
+        List<ResponseAtividadeDTO> atividades = atividadeService.listarPorTurma(turmaId, usuario, estado, tipo, ordenar, direcao);
         return ResponseEntity.ok(atividades);
     }
 

@@ -25,7 +25,7 @@ public class AuthService {
         String email = dto.email().trim().toLowerCase();
         if (usuarioRepository.existsByEmail(email)) {
             throw new AppException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    HttpStatus.CONFLICT,
                     "Esse e-mail já está cadastrado. Entre ou use outro e-mail.",
                     List.of(new ErrorResponseDTO.CampoErroDTO("email", "Esse e-mail já está cadastrado. Entre ou use outro e-mail."))
             );

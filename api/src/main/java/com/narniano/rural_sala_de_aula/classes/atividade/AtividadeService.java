@@ -60,7 +60,17 @@ public class AtividadeService {
     }
 
     @Transactional(readOnly = true)
-    public List<ResponseAtividadeDTO> listarPorTurma(UUID turmaId, Usuario usuario) {
+    public List<ResponseAtividadeDTO> listarPorTurma(
+            UUID turmaId,
+            Usuario usuario,
+            String estadoFiltro,
+            TipoAtividade tipoFiltro,
+            String ordenar,
+            String direcao
+    ) {
+        String estado = normalizarEstado(estadoFiltro);
+        Comparator<ResponseAtividadeDTO> ordem = ordenacao(ordenar, direcao);
+
         Turma turma = turmaRepository.findById(turmaId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
 
@@ -75,19 +85,25 @@ public class AtividadeService {
         LocalDateTime agora = LocalDateTime.now();
 
         if (isProfessor) {
+            // o estado e do aluno (depende da entrega dele): o professor so filtra por tipo
             return atividades.stream()
+                    .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                     .map(a -> mapearParaDTO(a, null, null))
+                    .sorted(ordem)
                     .toList();
         }
 
         return atividades.stream()
                 .filter(a -> !a.getDisponivelEm().isAfter(agora))
+                .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                 .map(a -> {
                     Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
-                    String estado = calcularEstado(a, entrega.orElse(null), agora);
+                    String estadoAtual = calcularEstado(a, entrega.orElse(null), agora);
                     BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
-                    return mapearParaDTO(a, estado, nota);
+                    return mapearParaDTO(a, estadoAtual, nota);
                 })
+                .filter(dto -> estado == null || dto.estado().equals(estado))
+                .sorted(ordem)
                 .toList();
     }
 
@@ -96,8 +112,12 @@ public class AtividadeService {
             Usuario usuario,
             String estadoFiltro,
             TipoAtividade tipoFiltro,
-            UUID turmaIdFiltro
+            UUID turmaIdFiltro,
+            String ordenar,
+            String direcao
     ) {
+        String estado = normalizarEstado(estadoFiltro);
+        Comparator<ResponseAtividadeDTO> ordem = ordenacao(ordenar, direcao);
         List<Atividade> disponiveis = atividadeRepository.findDisponiveisParaAluno(usuario.getId());
         LocalDateTime agora = LocalDateTime.now();
 
@@ -106,13 +126,43 @@ public class AtividadeService {
                 .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                 .map(a -> {
                     Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
-                    String estado = calcularEstado(a, entrega.orElse(null), agora);
+                    String estadoAtual = calcularEstado(a, entrega.orElse(null), agora);
                     BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
-                    return mapearParaDTO(a, estado, nota);
+                    return mapearParaDTO(a, estadoAtual, nota);
                 })
-                .filter(dto -> estadoFiltro == null || estadoFiltro.isBlank() || dto.estado().equalsIgnoreCase(estadoFiltro.trim()))
-                .sorted(Comparator.comparing(ResponseAtividadeDTO::prazoFinal))
+                .filter(dto -> estado == null || dto.estado().equals(estado))
+                .sorted(ordem)
                 .toList();
+    }
+
+    private static final Set<String> ESTADOS = Set.of(
+            "PENDENTE", "ENTREGUE", "ENTREGUE_COM_ATRASO", "CONCLUIDA", "ATRASADA"
+    );
+
+    private String normalizarEstado(String estadoFiltro) {
+        if (estadoFiltro == null || estadoFiltro.isBlank()) {
+            return null;
+        }
+        String estado = estadoFiltro.trim().toUpperCase();
+        if (!ESTADOS.contains(estado)) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Estado inválido. Use PENDENTE, ENTREGUE, ENTREGUE_COM_ATRASO, CONCLUIDA ou ATRASADA.");
+        }
+        return estado;
+    }
+
+    private Comparator<ResponseAtividadeDTO> ordenacao(String ordenar, String direcao) {
+        if (!"prazo".equalsIgnoreCase(ordenar)) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "Ordenação inválida. Use ordenar=prazo.");
+        }
+        Comparator<ResponseAtividadeDTO> porPrazo = Comparator.comparing(ResponseAtividadeDTO::prazoFinal);
+        if ("desc".equalsIgnoreCase(direcao)) {
+            return porPrazo.reversed();
+        }
+        if (!"asc".equalsIgnoreCase(direcao)) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "Direção inválida. Use asc ou desc.");
+        }
+        return porPrazo;
     }
 
     @Transactional(readOnly = true)

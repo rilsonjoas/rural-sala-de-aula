@@ -135,7 +135,7 @@ public class TurmaService {
                 turma.getNome(),
                 turma.getDisciplina(),
                 turma.getSemestre(),
-                turma.getDiasAula(),
+                turma.getDiasAula() != null ? new ArrayList<>(turma.getDiasAula()) : new ArrayList<>(),
                 codigo,
                 turma.getDescricao(),
                 pendentes,

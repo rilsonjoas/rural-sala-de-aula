@@ -15,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -101,8 +103,13 @@ public class EntregaService {
         arquivo.setDataEnvio(agora);
 
         arquivoRepository.save(arquivo);
+        List<String> caminhosSubstituidos = salva.getArquivos().stream()
+                .map(Arquivo::getCaminho)
+                .filter(caminho -> !caminho.equals(caminhoRelativo))
+                .toList();
         salva.getArquivos().clear();
         salva.getArquivos().add(arquivo);
+        apagarDoDiscoAposCommit(caminhosSubstituidos);
 
         return atividadeService.mapearEntregaParaDTO(salva);
     }
@@ -158,6 +165,25 @@ public class EntregaService {
         byte[] conteudo = lerArquivoDoDisco(arquivo.getCaminho());
 
         return Map.entry(arquivo, conteudo);
+    }
+
+    /** O reenvio troca a linha de arquivo no banco; o arquivo antigo so sai do disco se a troca for confirmada. */
+    private void apagarDoDiscoAposCommit(List<String> caminhos) {
+        if (caminhos.isEmpty() || !TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                for (String caminho : caminhos) {
+                    try {
+                        Files.deleteIfExists(Paths.get(caminho).toAbsolutePath());
+                    } catch (IOException e) {
+                        // arquivo orfao nao deve derrubar um envio ja confirmado
+                    }
+                }
+            }
+        });
     }
 
     private String salvarArquivoNoDisco(MultipartFile file, String nomeArmazenado) {

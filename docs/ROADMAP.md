@@ -18,6 +18,7 @@ Produção roda o commit `434cdfe` ou posterior (conferir com `git -C /opt/rural
 - **Complexidade e modalidade da atividade: não serão implementadas** (confirmado com o Luiz Felipe). A modalidade é o próprio tipo (`PROJETO_EM_GRUPO`). Detalhes em `requisitos.md` ("Onde o projeto decidiu diferente").
 - **Sentry: não será usado neste projeto.** Os erros da API ficam nos logs do container.
 - **Sem Spring Security.** A sessão é a `HttpSession` do Spring; CSRF coberto por `SameSite=Lax` e pelo CORS (ADR-0004).
+- **Qualquer conta cria turma**, sem convite nem aprovação (ADR-0008). **Sem aviso de privacidade (LGPD)**, por ser um projeto universitário.
 - **Domínio único** em produção, sem CORS entre origens (ADR-0004).
 
 ## Próximos passos, em ordem

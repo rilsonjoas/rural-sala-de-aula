@@ -104,7 +104,7 @@ A estrutura de cada tela (campos, textos, endpoints e estados) está em [`design
 
 ## 7. Estados da atividade (RF05)
 
-Todos derivados do **prazo final**: pendente = sem entrega e antes do prazo final; atrasada = sem entrega e depois dele; entregue com atraso = enviada depois dele. O envio nunca é bloqueado por prazo; só é bloqueado depois da avaliação.
+Todos derivados do **prazo final**: pendente = sem entrega e antes do prazo final; atrasada = sem entrega e depois dele; entregue com atraso = enviada depois dele. Por padrão o envio não é bloqueado por prazo (`aceitaAtraso` ligado); o professor pode desligar a opção na atividade, e então o envio depois do prazo final é recusado (403). Depois da avaliação o reenvio é sempre bloqueado.
 
 | Estado | Selo | Cor (nunca só cor: ícone + texto) |
 |---|---|---|
@@ -176,7 +176,7 @@ Feita com os checklists do cofre (`qualidade-de-interface` e `revisao-de-interfa
 - Todo número na tela é fato calculado agora: contadores de turmas, "N pendentes/atrasadas" (vêm da API), "Restam N dias" (do prazo real), resumo das entregas (da lista).
 - "Atrasada" é verdade por definição (sem entrega depois do prazo final), mas o sistema só sabe do que foi enviado por ele. O texto não acusa: diz o que fazer ("Você ainda pode enviar"). Se a escola aceitar entrega fora do sistema, isso precisa de uma forma de o professor marcar como entregue (backlog).
 - Não há anúncio, upsell, contador de sequência, notificação de cobrança nem prazo artificial. Nada vem pré-marcado no cadastro. Os padrões da folha Nova atividade (Atividade, Média, Individual) são do próprio professor e passam por uma etapa de confirmação com o resumo.
-- Dados pessoais (nome, e-mail): o cadastro não tem aviso de privacidade. É requisito da LGPD informar a finalidade na coleta (backlog).
+- Dados pessoais (nome, e-mail): o cadastro não tem aviso de privacidade. Decidido não fazer, por ser um projeto universitário (ver `BACKLOG.md`).
 
 **Desvios assumidos:** nenhum botão do P1 desvia da regra; o "Baixar" do professor é só verbo, com o objeto no nome acessível ("Baixar arquivo de Maria…").
 

@@ -7,6 +7,9 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - **Complexidade da atividade** (RF10 e RF05): sem campo, sem indicador e sem filtro ou ordenação por complexidade. Decisão confirmada com o Luiz Felipe em conversa direta (sem data registrada). Se um dia entrar: coluna na atividade (3 níveis), campo no formulário do professor, indicador na lista e no detalhe, e `ordenar=complexidade` e filtro no `GET /atividades`.
 - **Modalidade da atividade** (RF10 e RF05): não é um campo; o tipo `PROJETO_EM_GRUPO` já indica que é em grupo e o filtro por tipo cobre o caso. Mesma decisão.
 
+- **Limitar quem cria turma:** qualquer conta cria turma, e o papel é contextual por turma (ADR-0008). O Rilson decidiu manter assim, sem convite nem aprovação por e-mail institucional.
+- **Aviso de privacidade (LGPD) no cadastro:** não será feito, por ser um projeto universitário. O app coleta nome e e-mail sem informar a finalidade; o risco está aceito.
+
 ## Requisitos funcionais (do documento de requisitos)
 
 | RF | O que é | Observações |
@@ -33,10 +36,8 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - **Logo própria**, inspirada nos conceitos da UFRPE e não no desenho (o manual veda alterar o símbolo). Troca o capelo provisório do cabeçalho.
 - **Lista de inscritos que ainda não entregaram**, na tela de entregas do professor (hoje só aparece quem entregou).
 - **Contador de entregas a avaliar no card de turma** do professor (hoje só aparece em cada atividade; somar por turma pede um campo na API ou várias requisições).
-- **Limitar quem cria turma** (hoje qualquer conta cria; o papel é contextual, ADR-0008). Convite ou aprovação por e-mail institucional, se a universidade exigir.
 - Recuperação de senha, edição de perfil e tema escuro.
 - Filtros do aluno salvos no servidor (hoje ficam no navegador).
-- **Aviso de privacidade (LGPD)** no cadastro: o app coleta nome e e-mail e não informa a finalidade na coleta.
 - **Marcar como entregue** (o professor registra uma entrega feita fora do sistema), para a atividade não ficar "Atrasada" por engano.
 - **Progresso real do upload** (hoje a barra é indeterminada; `fetch` não informa progresso; pede `XMLHttpRequest`).
 - Dividir o código por rota (o pacote principal tem ~700 KB, 215 KB comprimido).

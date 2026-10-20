@@ -44,7 +44,8 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 
 - **Contrato mudou durante o front (ver `plano-de-design.md` C7):** `Atividade.nota`, `disponivelEm` obrigatório, `diasAula` com ao menos um dia, `GET /atividades` com os filtros do RF05 (estado, tipo e turma), papel contextual por turma (ADR-0008). A API simulada do front (`front/src/mocks/`, com testes) é uma especificação executável do comportamento esperado.
 
-- **P1, mas ainda não implementado:** Spring Security com sessão em cookie httpOnly (ADR-0004) e proteção contra CSRF; todos os endpoints do `docs/openapi.yaml`; armazenamento dos arquivos (ADR-0003).
+- **Feito (19/10/2026):** todos os endpoints do `docs/openapi.yaml`, a sessão em cookie httpOnly e o armazenamento dos arquivos em volume (ADR-0003). **Decisão a revisar:** a sessão usa `HttpSession` do Spring, sem Spring Security e sem token CSRF; o cookie é `SameSite=Lax`, que já impede o envio em POST/PUT/DELETE vindos de outro site. Se o domínio passar a ter subdomínios não confiáveis ou a API for chamada de outra origem, adicionar token CSRF.
+- **Integridade das entregas:** não há restrição no banco que impeça duas entregas do mesmo aluno na mesma atividade em requisições simultâneas (a regra é checada na aplicação). Pede mover `atividade_id` para `entrega_individual` com `UNIQUE (atividade_id, aluno_id)`.
 - Confirmar que o professor define só o **prazo final** (a data de entrega é a do aluno) e ajustar o texto do RF10 no documento de requisitos.
 - Confirmar que o aluno entrega individualmente atividades "Em grupo" até os grupos entrarem.
 - Antivírus ou verificação do conteúdo dos arquivos enviados.

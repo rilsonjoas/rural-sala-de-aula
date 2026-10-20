@@ -31,7 +31,13 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 
 RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
 
-**Estado (09/10/2026):** o front dos nove P1 está pronto e testado contra uma API simulada (`front/src/mocks/`, ligada com `VITE_API_MOCK=true`); o contrato (`docs/openapi.yaml`) e o schema estão fechados. Falta o back-end implementar os endpoints e integrarmos tela por tela. Ver `docs/design/plano-de-design.md` §8. Guia para o back-end: [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).
+**Estado (19/10/2026):** os nove requisitos P1 estão implementados no front, no back-end e no banco, e **em produção** em `https://rural-sala-de-aula.narniano.com`. Verificado de ponta a ponta contra a API real:
+
+- `scripts/smoke-p1.py` (API, 80 verificações: casos felizes, permissões entre usuários, validações e limites de upload);
+- `npm run test:e2e:real` em `front/` (jornada pela interface: cadastro, turma, atividade, entrada por código, filtro, entrega, download, avaliação e nota);
+- `npm test` (265 testes do front contra a API simulada), `npm run typecheck`, `npm run lint` e `npm run build`.
+
+A API simulada (`front/src/mocks/`, `VITE_API_MOCK=true`) continua servindo para desenvolver o front sem o back. O guia de integração original está em [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).
 
 ## Backlog (sem data)
 

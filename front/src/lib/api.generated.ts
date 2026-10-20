@@ -255,7 +255,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Somente PROFESSOR dono da turma. */
+        /** Professor dono da turma ou o próprio aluno autor da entrega. Outros alunos recebem 403. */
         get: operations["downloadEntrega"];
         put?: never;
         post?: never;

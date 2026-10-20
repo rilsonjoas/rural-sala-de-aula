@@ -189,7 +189,7 @@ paths:
     get:
       tags: [Entregas]
       operationId: downloadEntrega
-      summary: Somente PROFESSOR dono da turma.
+      summary: Professor dono da turma ou o próprio aluno autor da entrega. Outros alunos recebem 403.
       parameters: [{name: entregaId, in: path, required: true, schema: {type: string, format: uuid}}]
       responses:
         '200': {description: Arquivo, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
@@ -208,7 +208,7 @@ paths:
         '422': {$ref: '#/components/responses/Problem'}
 components:
   securitySchemes:
-    cookieAuth: {type: apiKey, in: cookie, name: SESSION, description: 'Cookie httpOnly, SameSite=Lax (ADR-0004)'}
+    cookieAuth: {type: apiKey, in: cookie, name: JSESSIONID, description: 'Cookie httpOnly, SameSite=Lax, Secure em produção (ADR-0004)'}
   parameters:
     TurmaId: {name: turmaId, in: path, required: true, schema: {type: string, format: uuid}}
     AtividadeId: {name: atividadeId, in: path, required: true, schema: {type: string, format: uuid}}

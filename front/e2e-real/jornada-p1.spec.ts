@@ -55,7 +55,8 @@ test('RF09 e RF10 professor cria turma e atividade', async ({ page }) => {
   await folha.getByRole('button', { name: 'Concluir' }).click();
 
   await page.getByRole('article', { name: new RegExp(turma) }).getByRole('link', { name: /Ver (turma|atividades)/ }).click();
-  await page.getByRole('button', { name: 'Atividades', exact: true }).click();
+  await expect(page.getByText('Escreva um comunicado para a turma...')).toBeVisible(); // RF13: quem leciona publica
+  await page.getByRole('button', { name: /^Atividades/ }).click();
   await page.getByRole('button', { name: 'Cadastrar atividade' }).click();
   const nova = page.getByRole('dialog', { name: 'Nova atividade' });
   await nova.getByLabel('Nome da atividade').fill(atividade);
@@ -73,6 +74,10 @@ test('RF02, RF03, RF05 e RF04 aluno entra pelo código, filtra e entrega', async
   await entrar.getByLabel(/Código/).fill(codigo);
   await entrar.getByRole('button', { name: 'Entrar na turma' }).click();
   await expect(page.getByRole('article', { name: new RegExp(turma) })).toBeVisible();
+
+  await page.getByRole('article', { name: new RegExp(turma) }).getByRole('link', { name: /Ver (turma|atividades)/ }).click();
+  await expect(page.getByText('Nenhum aviso postado ainda.')).toBeVisible();
+  await expect(page.getByText('Escreva um comunicado para a turma...')).toHaveCount(0); // aluno nao publica aviso
 
   await page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: 'Atividades' }).click();
   await expect(page.getByRole('heading', { name: 'Minhas atividades' })).toBeVisible();
@@ -94,7 +99,7 @@ test('RF16 e RF15 professor baixa a entrega e avalia', async ({ page }) => {
   await page.getByLabel('Senha', { exact: true }).fill(SENHA);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await page.getByRole('article', { name: new RegExp(turma) }).getByRole('link', { name: /Ver (turma|atividades)/ }).click();
-  await page.getByRole('button', { name: 'Atividades', exact: true }).click();
+  await page.getByRole('button', { name: /^Atividades/ }).click();
   await page.getByRole('article', { name: new RegExp(atividade) }).getByRole('link', { name: 'Ver entregas' }).click();
 
   const baixar = page.waitForEvent('download');

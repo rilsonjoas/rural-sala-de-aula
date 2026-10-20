@@ -34,6 +34,9 @@ public class AvisoService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
 
         validarMembroDaTurma(turma, autor);
+        if (!turma.getProfessor().getId().equals(autor.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Só quem leciona a turma pode publicar avisos.");
+        }
 
         Aviso aviso = new Aviso();
         aviso.setTurma(turma);

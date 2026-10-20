@@ -69,6 +69,7 @@ public class EntregaService {
             throw new AppException(HttpStatus.FORBIDDEN, "O prazo encerrou e esta atividade não aceita entregas com atraso.");
         }
 
+        entregaRepository.travarEnvio(atividadeId + ":" + aluno.getId());
         Optional<EntregaIndividual> existenteOpt = entregaRepository.findByAtividadeIdAndAlunoId(atividadeId, aluno.getId());
         EntregaIndividual entrega;
 

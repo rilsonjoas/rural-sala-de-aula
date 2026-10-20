@@ -9,6 +9,7 @@ import sys
 import urllib.error
 import urllib.request
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8081/api/v1").rstrip("/")
@@ -21,9 +22,9 @@ class Client:
         self.jar = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.jar))
 
-    def call(self, method, path, body=None, raw=None, ctype=None):
+    def call(self, method, path, body=None, raw=None, ctype=None, extra=None):
         data = None
-        headers = {}
+        headers = dict(extra or {})
         if body is not None:
             data = json.dumps(body).encode()
             headers["Content-Type"] = "application/json"
@@ -257,6 +258,55 @@ s, d = aluno.call("GET", f"/atividades/{A}")
 check("RF15", "aluno ve a propria nota e estado CONCLUIDA", s == 200 and d.get("estado") == "CONCLUIDA" and (d.get("nota") == 8.5 or (d.get("entrega") or {}).get("nota") == 8.5), f"{s} {json.dumps(d)[:300]}")
 s, b = aluno.upload(f"/atividades/{A}/entregas", "depois.pdf", pdf, "application/pdf")
 check("RF15", "entrega avaliada nao aceita novo envio (409)", s == 409, f"{s} {b}")
+
+# ---------------- RF13/RF14 avisos e comentarios (fora da lista P1, mas ja no front)
+print("RF13/RF14 Avisos e comentarios")
+s, av = prof.call("POST", f"/turmas/{tid}/avisos", {"texto": f"Aviso {tag}"})
+check("RF13", "professor publica aviso (201)", s == 201, f"{s} {av}")
+s, b = aluno.call("POST", f"/turmas/{tid}/avisos", {"texto": "x"})
+check("RF13", "aluno nao publica aviso (403)", s == 403, f"{s} {b}")
+s, b = prof.call("POST", f"/turmas/{tid}/avisos", {"texto": "  "})
+check("RF13", "aviso vazio recusado (422)", s == 422, f"{s} {b}")
+s, lst = aluno.call("GET", f"/turmas/{tid}/avisos")
+check("RF13", "aluno ve o aviso", s == 200 and any(a.get("id") == av.get("id") for a in lst), f"{s}")
+s, b = prof2.call("GET", f"/turmas/{tid}/avisos")
+check("RF13", "quem nao e da turma nao ve avisos (403/404)", s in (403, 404), f"{s} {b}")
+aid = av.get("id") if isinstance(av, dict) else None
+s, c1 = aluno.call("POST", f"/avisos/{aid}/comentarios", {"texto": "Duvida do aluno"})
+check("RF14", "aluno comenta (201)", s == 201, f"{s} {c1}")
+s, c2 = prof.call("POST", f"/avisos/{aid}/comentarios", {"texto": "Resposta do professor"})
+check("RF14", "professor responde (201)", s == 201, f"{s} {c2}")
+s, b = prof2.call("POST", f"/avisos/{aid}/comentarios", {"texto": "intruso"})
+check("RF14", "quem nao e da turma nao comenta (403/404)", s in (403, 404), f"{s} {b}")
+s, b = aluno.call("POST", f"/avisos/{aid}/comentarios", {"texto": ""})
+check("RF14", "comentario vazio recusado (422)", s == 422, f"{s} {b}")
+s, lst = prof.call("GET", f"/avisos/{aid}/comentarios")
+check("RF14", "lista os dois comentarios", s == 200 and len(lst) == 2, f"{s} {lst}")
+
+# ---------------- integridade: envios simultaneos do mesmo aluno
+print("Integridade das entregas (RNF02): envios simultaneos")
+s, conc = prof.call("POST", f"/turmas/{tid}/atividades", {"nome": f"Concorrencia {tag}", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=2)), "disponivelEm": iso(timedelta(hours=-1))})
+cid = conc.get("id")
+eu = intruso.call("GET", "/me")[1].get("id")
+N = 8
+with ThreadPoolExecutor(max_workers=N) as pool:
+    codigos = list(pool.map(lambda i: intruso.upload(f"/atividades/{cid}/entregas", f"simultaneo{i}.pdf", pdf + str(i).encode(), "application/pdf")[0], range(N)))
+check("RNF02", f"{N} envios simultaneos nao geram erro 5xx", all(c < 500 for c in codigos), codigos)
+s, ents = prof.call("GET", f"/atividades/{cid}/entregas")
+do_aluno = [e for e in ents if e.get("alunoId") == eu] if s == 200 else []
+check("RNF02", "existe UMA unica entrega do aluno na atividade", len(do_aluno) == 1, f"{len(do_aluno)} entregas; codigos={codigos}")
+
+# ---------------- origem das requisicoes (defesa extra contra CSRF)
+print("Origem das requisicoes (CSRF)")
+mesma = "/".join(BASE.split("/")[:3])
+s, b = aluno.call("POST", "/inscricoes", {"codigo": "ZZZZZZ"}, extra={"Origin": "https://site-malicioso.example"})
+check("CSRF", "POST com Origin de outro site e bloqueado (403)", s == 403, f"{s} {b}")
+s, b = aluno.call("POST", "/inscricoes", {"codigo": "ZZZZZZ"}, extra={"Origin": mesma})
+check("CSRF", "POST com a propria origem chega ao servico (404 do codigo)", s == 404, f"{s} {b}")
+s, b = aluno.call("POST", "/inscricoes", {"codigo": "ZZZZZZ"})
+check("CSRF", "POST sem Origin (cliente nao navegador) passa (404 do codigo)", s == 404, f"{s} {b}")
+s, b = aluno.call("GET", "/turmas", extra={"Origin": mesma})
+check("CSRF", "GET da propria origem funciona (200)", s == 200, f"{s}")
 
 # ---------------- resumo
 falhas = [r for r in RESULTS if not r[2]]

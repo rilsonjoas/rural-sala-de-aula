@@ -7,7 +7,7 @@ import { useSession } from '@/features/session/use-session';
 import { formatDataHora, iniciais } from '@/lib/format';
 import { useAvisos, useCriarAviso, useCriarComentario, type Aviso } from './api';
 
-export function MuralAba({ turmaId }: { turmaId: string }) {
+export function MuralAba({ turmaId, podePublicar }: { turmaId: string; podePublicar: boolean }) {
   const { usuario } = useSession();
   const avisosQuery = useAvisos(turmaId);
   const criarAviso = useCriarAviso(turmaId);
@@ -26,45 +26,47 @@ export function MuralAba({ turmaId }: { turmaId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Caixa de criação de aviso */}
-      <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
-        {!expandido ? (
-          <button
-            type="button"
-            onClick={() => setExpandido(true)}
-            className="flex w-full items-center gap-3 rounded-lg border border-input bg-secondary/50 px-4 py-3 text-left text-sm text-muted-foreground hover:bg-secondary transition-colors"
-          >
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-              {iniciais(usuario?.nome ?? 'Eu')}
-            </div>
-            <span>Escreva um comunicado para a turma...</span>
-          </button>
-        ) : (
-          <form onSubmit={handlePostarAviso} className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+      {/* Caixa de criação de aviso: só quem leciona publica (RF13) */}
+      {podePublicar && (
+        <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+          {!expandido ? (
+            <button
+              type="button"
+              onClick={() => setExpandido(true)}
+              className="flex w-full items-center gap-3 rounded-lg border border-input bg-secondary/50 px-4 py-3 text-left text-sm text-muted-foreground hover:bg-secondary transition-colors"
+            >
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                 {iniciais(usuario?.nome ?? 'Eu')}
               </div>
-              <span className="text-sm font-semibold text-primary">{usuario?.nome}</span>
-            </div>
-            <Textarea
-              placeholder="Escreva um comunicado ou orientação para a turma..."
-              value={textoAviso}
-              onChange={(e) => setTextoAviso(e.target.value)}
-              rows={3}
-              autoFocus
-            />
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => setExpandido(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" size="sm" disabled={!textoAviso.trim() || criarAviso.isPending}>
-                {criarAviso.isPending ? 'Postando…' : 'Postar'}
-              </Button>
-            </div>
-          </form>
-        )}
-      </div>
+              <span>Escreva um comunicado para a turma...</span>
+            </button>
+          ) : (
+            <form onSubmit={handlePostarAviso} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                  {iniciais(usuario?.nome ?? 'Eu')}
+                </div>
+                <span className="text-sm font-semibold text-primary">{usuario?.nome}</span>
+              </div>
+              <Textarea
+                placeholder="Escreva um comunicado ou orientação para a turma..."
+                value={textoAviso}
+                onChange={(e) => setTextoAviso(e.target.value)}
+                rows={3}
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" size="sm" onClick={() => setExpandido(false)}>
+                  Cancelar
+                </Button>
+                <Button type="submit" size="sm" disabled={!textoAviso.trim() || criarAviso.isPending}>
+                  {criarAviso.isPending ? 'Postando…' : 'Postar'}
+                </Button>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
 
       {/* Lista de avisos */}
       {avisos.length === 0 ? (

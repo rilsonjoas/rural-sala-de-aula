@@ -36,6 +36,9 @@ class Client:
                 payload, status = r.read(), r.status
         except urllib.error.HTTPError as e:
             payload, status = e.read(), e.code
+        except (urllib.error.URLError, ConnectionError) as e:
+            # o nginx fecha a conexao assim que ve um corpo acima do limite, antes do cliente terminar de enviar
+            payload, status = str(e).encode(), 0
         try:
             return status, json.loads(payload)
         except Exception:
@@ -195,7 +198,7 @@ for nome, ct in (("slides.pptx", "application/octet-stream"), ("notas.txt", "tex
 s, b = aluno.upload(f"/atividades/{A}/entregas", "virus.exe", b"MZ", "application/octet-stream")
 check("RF04", "recusa .exe (415)", s == 415, f"{s} {b}")
 s, b = aluno.upload(f"/atividades/{A}/entregas", "grande.pdf", b"0" * (26 * 1024 * 1024), "application/pdf")
-check("RF04", "recusa mais de 25 MB (413)", s == 413, f"{s} {str(b)[:120]}")
+check("RF04", "recusa mais de 25 MB (413, ou conexao fechada pelo nginx)", s in (413, 0), f"{s} {str(b)[:120]}")
 s, b = aluno.upload(f"/atividades/{A}/entregas", "vazio.pdf", b"", "application/pdf")
 check("RF04", "recusa arquivo vazio (422)", s == 422, f"{s} {b}")
 s, b = prof.upload(f"/atividades/{A}/entregas", "prof.pdf", pdf, "application/pdf")

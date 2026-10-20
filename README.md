@@ -43,6 +43,10 @@ Os dois primeiros também rodam contra produção (`python3 -I scripts/smoke-p1.
 
 A API simulada (`front/src/mocks/`, `VITE_API_MOCK=true`) continua servindo para desenvolver o front sem o back. O guia de integração original está em [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).
 
+## Roadmap
+
+O que falta para endurecer o que já está no ar (rate limit no login, versão e volta, sessão persistente, CI, hash dos arquivos), as decisões de escopo e o que depende de gente: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
 ## Backlog (sem data)
 
 Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF03b, RF06, RF07, RF08, RF11, RF12, RF17, os RNF, a logo própria e as pendências do back-end.

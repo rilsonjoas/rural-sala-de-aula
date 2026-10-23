@@ -311,6 +311,17 @@ check("CSRF", "POST sem Origin (cliente nao navegador) passa (404 do codigo)", s
 s, b = aluno.call("GET", "/turmas", extra={"Origin": mesma})
 check("CSRF", "GET da propria origem funciona (200)", s == 200, f"{s}")
 
+# ---------------- limite de tentativas de login (RNF de seguranca)
+print("Limite de tentativas de login")
+alvo = Client("forca-bruta")
+codigos = [alvo.call("POST", "/auth/login", {"email": email("inexistente"), "senha": "errada"})[0] for _ in range(5)]
+check("SEG", "5 senhas erradas seguidas ainda respondem 401", codigos == [401] * 5, codigos)
+s, b = alvo.call("POST", "/auth/login", {"email": email("inexistente"), "senha": "errada"})
+check("SEG", "a 6a tentativa para o mesmo e-mail e barrada (429)", s == 429, f"{s} {b}")
+check("SEG", "a resposta 429 traz mensagem em portugues", isinstance(b, dict) and "tentativas" in b.get("message", "").lower(), b)
+s, _ = Client("outra").call("POST", "/auth/login", {"email": email("prof"), "senha": SENHA})
+check("SEG", "o bloqueio de um e-mail nao afeta outras contas", s == 200, s)
+
 # ---------------- resumo
 falhas = [r for r in RESULTS if not r[2]]
 print(f"\nResumo: {len(RESULTS) - len(falhas)}/{len(RESULTS)} verificacoes passaram")

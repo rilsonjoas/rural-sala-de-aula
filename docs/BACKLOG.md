@@ -57,4 +57,4 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - Confirmar que o aluno entrega individualmente atividades "Em grupo" até os grupos entrarem.
 - Antivírus ou verificação do conteúdo dos arquivos enviados.
 - Java 25 (LTS) e Postgres 17/18: hoje Java 21 e Postgres 16, alinhado ao Postgres compartilhado do Hetzner. Subir os dois juntos com a infra.
-- **Feito (19/10/2026):** em produção no Hetzner, em `https://rural-sala-de-aula.narniano.com` (runbook em `1 - Pessoal/hetzner-infra/rural-sala-de-aula/README.md`). Pendências de infraestrutura (rate limit no login, CI com a migration do zero, versão real no `/health`, sessão persistente, Sentry) estão na seção "Pendências para production-ready" desse README.
+- **Feito (19/10/2026):** em produção no Hetzner, em `https://rural-sala-de-aula.narniano.com` (runbook em `1 - Pessoal/hetzner-infra/rural-sala-de-aula/README.md`). Pendências de infraestrutura (CI com a migration do zero, versão real no `/health`, sessão persistente, Sentry) estão na seção "Pendências para production-ready" desse README.

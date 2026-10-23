@@ -35,7 +35,7 @@ RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF0
 
 **Estado (19/10/2026):** os nove requisitos P1 estão implementados no front, no back-end e no banco, e **em produção** em `https://rural-sala-de-aula.narniano.com`. Verificado de ponta a ponta contra a API real:
 
-- `scripts/smoke-p1.py` (API, 96 verificações: casos felizes, permissões entre usuários, validações, limites de upload, avisos e comentários, envios simultâneos e bloqueio de outra origem);
+- `scripts/smoke-p1.py` (API, 100 verificações: casos felizes, permissões entre usuários, validações, limites de upload, avisos e comentários, envios simultâneos, bloqueio de outra origem e limite de tentativas de login);
 - `npm run test:e2e:real` em `front/` (jornada pela interface: cadastro, turma, atividade, entrada por código, filtro, entrega, download, avaliação e nota);
 - `npm test` (265 testes do front contra a API simulada), `npm run typecheck`, `npm run lint` e `npm run build`.
 

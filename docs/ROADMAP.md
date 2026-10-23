@@ -7,11 +7,11 @@ Estado em **20/10/2026**. O escopo P1 está entregue e em produção; o que segu
 | Camada | Estado | Como foi verificado |
 |---|---|---|
 | Front (9 requisitos P1, mais mural RF13 e RF14) | pronto, em produção | 265 testes, `tsc`, ESLint e build; jornada pela interface com a API real (`npm run test:e2e:real`, 5 testes, local e produção) |
-| Back-end (todos os endpoints do `openapi.yaml`) | pronto, em produção | `scripts/smoke-p1.py`: 96 verificações (felizes, permissões, validações, limites, avisos, envios simultâneos, outra origem), local e produção |
+| Back-end (todos os endpoints do `openapi.yaml`) | pronto, em produção | `scripts/smoke-p1.py`: 100 verificações (felizes, permissões, validações, limites, avisos, envios simultâneos, outra origem, limite de login), local e produção |
 | Banco | pronto, em produção | Flyway V1 aplicado do zero com `ddl-auto=validate`; backup e restore automático testados; 13 tabelas |
 | Produção | `https://rural-sala-de-aula.narniano.com` | HTTPS, domínio único (a API fica em `/api/`), volume de uploads no backup, monitor no Uptime Kuma |
 
-Produção roda o commit `434cdfe` ou posterior (conferir com `git -C /opt/rural-sala-de-aula log --oneline -1` na VPS).
+Produção roda o commit `434cdfe` (o rate limit de 22/10 ainda não foi publicado) (conferir com `git -C /opt/rural-sala-de-aula log --oneline -1` na VPS).
 
 ## Decisões de escopo (não voltar a discutir sem motivo novo)
 
@@ -25,7 +25,7 @@ Produção roda o commit `434cdfe` ou posterior (conferir com `git -C /opt/rural
 
 | # | Item | Pilar do padrão | Por quê | Onde mexer |
 |---|---|---|---|---|
-| 1 | **Rate limit em `/auth/login` e `/auth/register`** | P0 Segurança | hoje qualquer um tenta senhas sem limite; é o buraco de segurança mais importante | API (filtro por IP e por e-mail) e, se couber, Traefik |
+| 1 | ~~Rate limit em `/auth/login` e `/auth/register`~~ **feito em 22/10 (no código; falta publicar)** | P0 Segurança | login: 5 falhas por e-mail e 30 por IP em 15 min; cadastro: 30 por IP por hora; acima disso 429 com `Retry-After` (ADR-0004) | `LimitadorDeTentativas`, `AuthService` |
 | 2 | **Versão no ar e caminho de volta** | P1 Infra | `/api/v1/health` devolve `0.0.1-SNAPSHOT`; não dá para saber qual commit está no ar nem voltar sem adivinhar | `pom.xml`/build com o commit, tag no git, `/health` com a versão, passo de rollback no runbook |
 | 3 | **Desligamento gracioso e sessão persistente** | P2 Saúde | cada deploy derruba as sessões e pode cortar um envio no meio | `server.shutdown=graceful`; `spring-session-jdbc` (tabela nova via Flyway V2) |
 | 4 | **CI no GitHub Actions** | P3/P4 | nada roda antes do deploy; a lição do padrão é aplicar a migration **do zero** | build da API, `mvn test`, testes do front, Flyway num Postgres limpo, `smoke-p1` contra o stack do compose |
@@ -46,7 +46,7 @@ O item 4 é o que dá mais retorno depois do 1: o Java só foi compilado de verd
 # stack local (raiz do repositório)
 docker compose up -d --build
 
-# API: 96 verificações
+# API: 100 verificações
 python3 -I scripts/smoke-p1.py                      # padrão http://localhost:8081/api/v1
 
 # interface com a API real (em front/)

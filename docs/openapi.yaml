@@ -26,6 +26,7 @@ paths:
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RegisterRequest'}}}}
       responses:
         '201': {description: Criado, content: {application/json: {schema: {$ref: '#/components/schemas/Usuario'}}}}
+        '429': {description: 'Muitas tentativas (limite por IP). Traz o cabeçalho Retry-After, em segundos.', content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}}
         '409': {$ref: '#/components/responses/Problem'}
         '422': {$ref: '#/components/responses/Problem'}
   /auth/login:
@@ -37,6 +38,7 @@ paths:
       responses:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Usuario'}}}}
         '401': {$ref: '#/components/responses/Problem'}
+        '429': {description: 'Muitas falhas para esse e-mail ou IP. Traz o cabeçalho Retry-After, em segundos.', content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}}
   /auth/logout:
     post:
       tags: [Auth]

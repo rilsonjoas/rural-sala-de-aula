@@ -29,6 +29,17 @@ public class RestExceptionHandler {
         return ResponseEntity.status(ex.getStatus()).body(body);
     }
 
+    @ExceptionHandler(TentativasExcedidasException.class)
+    public ResponseEntity<ErrorResponseDTO> handleTentativasExcedidas(TentativasExcedidasException ex) {
+        ErrorResponseDTO body = ErrorResponseDTO.builder()
+                .status(ex.getStatus().value())
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.status(ex.getStatus())
+                .header("Retry-After", String.valueOf(ex.getSegundosAteLiberar()))
+                .body(body);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDTO> handleValidationException(MethodArgumentNotValidException ex) {
         List<ErrorResponseDTO.CampoErroDTO> campos = new ArrayList<>();

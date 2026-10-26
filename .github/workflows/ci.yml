@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API (testes e migrations do zero)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sala
+          POSTGRES_PASSWORD: sala
+          POSTGRES_DB: rural_sala_de_aula
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sala -d rural_sala_de_aula"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      # O contexto sobe contra um Postgres vazio: aplica o Flyway do zero e o
+      # Hibernate confere o schema (ddl-auto=validate).
+      - name: mvn test
+        working-directory: api
+        run: mvn -B -ntp test
+
+  front:
+    name: Front (tipos, lint, testes, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+      - run: npm ci
+      - name: Tipos do contrato em dia com o openapi.yaml
+        run: |
+          npm run generate:api
+          git diff --exit-code -- src/lib/api.generated.ts
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  stack:
+    name: Stack completo (smoke da API e jornada pela interface)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sobe db, API e front
+        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Smoke da API
+        run: python3 -I scripts/smoke-p1.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+      - name: Jornada pela interface com a API real
+        working-directory: front
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          npm run test:e2e:real
+      - name: Logs da API (se falhou)
+        if: failure()
+        run: docker compose logs --tail 200 rural-sala-de-aula-api
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-resultados
+          path: front/test-results
+          if-no-files-found: ignore

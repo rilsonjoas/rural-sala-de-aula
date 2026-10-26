@@ -290,6 +290,8 @@ export interface components {
             status: string;
             service: string;
             version: string;
+            /** @description SHA curto do commit da imagem no ar ("dev" fora do deploy) */
+            commit?: string;
             /** Format: date-time */
             timestamp: string;
         };
@@ -495,6 +497,15 @@ export interface operations {
             };
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            /** @description Muitas tentativas (limite por IP). Traz o cabeçalho Retry-After, em segundos. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     login: {
@@ -520,6 +531,15 @@ export interface operations {
                 };
             };
             401: components["responses"]["Problem"];
+            /** @description Muitas falhas para esse e-mail ou IP. Traz o cabeçalho Retry-After, em segundos. */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     logout: {

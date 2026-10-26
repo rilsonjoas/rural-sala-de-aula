@@ -56,7 +56,12 @@ class Pessoa:
         status, _ = self.call("POST", "/auth/login", {"email": self.email, "senha": SENHA})
         if status == 200:
             return False
-        self.ok("POST", "/auth/register", {"nome": self.nome, "email": self.email, "senha": SENHA})
+        status, dados = self.call("POST", "/auth/register", {"nome": self.nome, "email": self.email, "senha": SENHA})
+        if status == 409:
+            sys.exit(f"{self.email} ja existe com outra senha (uma execucao anterior usou outra DEMO_SENHA). "
+                     "Apague a demonstracao e rode de novo: DOMINIO=demo.rural bash rural-sala-de-aula/limpar-testes.sh --apply")
+        if status != 201:
+            sys.exit(f"POST /auth/register -> {status} {dados}")
         return True
 
     def enviar(self, atividade_id, nome_arquivo, conteudo):

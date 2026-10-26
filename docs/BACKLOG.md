@@ -10,17 +10,22 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - **Limitar quem cria turma:** qualquer conta cria turma, e o papel é contextual por turma (ADR-0008). O Rilson decidiu manter assim, sem convite nem aprovação por e-mail institucional.
 - **Aviso de privacidade (LGPD) no cadastro:** não será feito, por ser um projeto universitário. O app coleta nome e e-mail sem informar a finalidade; o risco está aceito.
 
+## Feito depois da P1 (26/10/2026)
+
+- **RF03b, sair da turma:** `DELETE /turmas/{id}/inscricao`. O aluno deixa de ver a turma; entregas e notas ficam com o professor; volta pelo código. O professor não sai da própria turma (409).
+- **RF11, editar atividade:** `PUT /atividades/{id}`, só o professor da turma, mesmas validações do cadastro. A folha "Nova atividade" serve também para editar. Complexidade e modalidade seguem fora (decisão de escopo).
+- **RF14b, responder a comentários:** `comentarioPaiId` no comentário; um nível só (responder a uma resposta fica sob o comentário original).
+- **Lista de inscritos que ainda não entregaram:** `GET /atividades/{id}/sem-entrega`, na tela de entregas do professor.
+- **RNF02, hash SHA-256:** calculado no envio (Flyway V3), conferido no download (erro 500 se o arquivo no disco não bater) e mostrado ao professor na avaliação. Entregas anteriores ficam sem hash.
+
 ## Requisitos funcionais (do documento de requisitos)
 
 | RF | O que é | Observações |
 |---|---|---|
-| RF03b | Sair da turma (aluno) | o documento numera duas vezes o RF03 |
 | RF06 | Solicitar e participar de grupos | atividade "Em grupo" já pode ser cadastrada, mas o aluno entrega individualmente até este RF entrar |
 | RF07 | Sair do grupo | |
 | RF08 | Calendário com carga semanal (pesada, média, livre) | o texto classifica por quantidade **e complexidade**; sem complexidade (decisão de escopo), a classificação teria de usar só a quantidade de atividades |
-| RF11 | Atualizar atividades | o P1 não edita atividade, então a folha Nova atividade pede confirmação antes de salvar. O texto cita alterar complexidade e modalidade, que não existem no projeto |
 | RF12 | Configurar e aprovar grupos | |
-| RF14b | Responder a comentários (comentar em aviso já existe) | RF13 e RF14 entraram no mural da turma |
 | RF17 | Receber notificações | |
 
 ## Requisitos não funcionais
@@ -28,13 +33,12 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 | RNF | O que falta |
 |---|---|
 | RNF01 Usabilidade | medir com usuários reais (aluno e professor) depois do P1 |
-| RNF02 Integridade das entregas | o P1 guarda aluno, atividade e `enviada_em`. Falta guardar o **hash (SHA-256) do arquivo** para provar que não foi alterado |
+| RNF02 Integridade das entregas | feito: aluno, atividade, `enviada_em` e hash SHA-256 (ver "Feito depois da P1"); falta só conferir o hash dos arquivos antigos, que não têm |
 | RNF03 Escalabilidade | paginação das listas, índices por consulta real, armazenamento de arquivos em bucket (ADR-0003) |
 
 ## Produto e interface
 
 - **Logo própria**, inspirada nos conceitos da UFRPE e não no desenho (o manual veda alterar o símbolo). Troca o capelo provisório do cabeçalho.
-- **Lista de inscritos que ainda não entregaram**, na tela de entregas do professor (hoje só aparece quem entregou).
 - **Contador de entregas a avaliar no card de turma** do professor (hoje só aparece em cada atividade; somar por turma pede um campo na API ou várias requisições).
 - Recuperação de senha, edição de perfil e tema escuro.
 - Filtros do aluno salvos no servidor (hoje ficam no navegador).

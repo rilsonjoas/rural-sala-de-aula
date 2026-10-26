@@ -35,9 +35,9 @@ RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF0
 
 **Estado (19/10/2026):** os nove requisitos P1 estão implementados no front, no back-end e no banco, e **em produção** em `https://rural-sala-de-aula.narniano.com`. Verificado de ponta a ponta contra a API real:
 
-- `scripts/smoke-p1.py` (API, 100 verificações: casos felizes, permissões entre usuários, validações, limites de upload, avisos e comentários, envios simultâneos, bloqueio de outra origem e limite de tentativas de login);
+- `scripts/smoke-p1.py` (API, 120 verificações: casos felizes, permissões entre usuários, validações, limites de upload, avisos e comentários, envios simultâneos, bloqueio de outra origem e limite de tentativas de login);
 - `npm run test:e2e:real` em `front/` (jornada pela interface: cadastro, turma, atividade, entrada por código, filtro, entrega, download, avaliação e nota);
-- `npm test` (265 testes do front contra a API simulada), `npm run typecheck`, `npm run lint` e `npm run build`.
+- `npm test` (276 testes do front contra a API simulada), `npm run typecheck`, `npm run lint` e `npm run build`.
 
 Tudo isso roda no GitHub Actions (`.github/workflows/ci.yml`) em cada push na `main` e em cada PR, com a migration do Flyway aplicada num Postgres vazio.
 
@@ -47,13 +47,13 @@ A API simulada (`front/src/mocks/`, `VITE_API_MOCK=true`) continua servindo para
 
 ## Roadmap
 
-O que falta para endurecer o que já está no ar (rate limit no login, versão e volta, sessão persistente, CI, hash dos arquivos), as decisões de escopo e o que depende de gente: [`docs/ROADMAP.md`](docs/ROADMAP.md).
+O que falta para endurecer o que já está no ar (restore dos uploads com arquivo real e o que depende de gente), as decisões de escopo e o que depende de gente: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Backlog (sem data)
 
-Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF03b, RF06, RF07, RF08, RF11, RF12, RF17, os RNF, a logo própria e as pendências do back-end.
+Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF06, RF07, RF08, RF12, RF17, os RNF, a logo própria e as pendências do back-end.
 
-> O documento de requisitos numera duas vezes o RF03. Aqui, "Consultar turma" é RF03 e "Sair da turma" é RF03b.
+> O documento de requisitos numera duas vezes o RF03. Aqui, "Consultar turma" é RF03 e "Sair da turma" é RF03b (já feito, junto com RF11, RF14b, a lista de quem não entregou e o hash SHA-256, entre as entregas 1 e 2).
 
 ## Como rodar
 

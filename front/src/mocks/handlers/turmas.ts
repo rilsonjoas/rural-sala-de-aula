@@ -63,6 +63,18 @@ export const turmasHandlers = [
     return HttpResponse.json(paraTurmaApi(turma!, usuario));
   }),
 
+  http.delete(`${API}/turmas/:turmaId/inscricao`, ({ params }) => {
+    const usuario = usuarioDaSessao();
+    if (!usuario) return naoAutenticado();
+    const turma = db.turmas.find((t) => t.id === params.turmaId);
+    if (!turma) return naoEncontrado('Turma não encontrada.');
+    if (turma.professorId === usuario.id) return problem(409, 'O professor não sai da própria turma.');
+    const indice = db.inscricoes.findIndex((i) => i.turmaId === turma.id && i.alunoId === usuario.id);
+    if (indice < 0) return naoEncontrado('Turma não encontrada.');
+    db.inscricoes.splice(indice, 1);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.post(`${API}/inscricoes`, async ({ request }) => {
     const usuario = usuarioDaSessao();
     if (!usuario) return naoAutenticado();

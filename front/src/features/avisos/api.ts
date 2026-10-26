@@ -37,10 +37,10 @@ export function useCriarAviso(turmaId: string) {
 export function useCriarComentario(turmaId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ avisoId, texto }: { avisoId: string; texto: string }) => {
+    mutationFn: async ({ avisoId, texto, comentarioPaiId }: { avisoId: string; texto: string; comentarioPaiId?: string }) => {
       const { data } = await api.POST('/avisos/{avisoId}/comentarios', {
         params: { path: { avisoId } },
-        body: { texto },
+        body: { texto, comentarioPaiId },
       });
       return data as Comentario;
     },

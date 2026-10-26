@@ -54,6 +54,7 @@ export type AvisoDb = {
 export type ComentarioDb = {
   id: string;
   avisoId: string;
+  comentarioPaiId?: string | null;
   autorId: string;
   autorNome: string;
   texto: string;

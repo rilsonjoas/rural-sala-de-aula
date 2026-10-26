@@ -17,6 +17,17 @@ export function useEntregas(atividadeId: string) {
   });
 }
 
+export type AlunoResumo = components['schemas']['AlunoResumo'];
+
+/** Inscritos que ainda não entregaram (só o professor da turma). */
+export function useSemEntrega(atividadeId: string) {
+  return useQuery({
+    queryKey: [...ENTREGAS_KEY, 'sem-entrega', atividadeId],
+    queryFn: async () =>
+      (await api.GET('/atividades/{atividadeId}/sem-entrega', { params: { path: { atividadeId } } })).data ?? [],
+  });
+}
+
 export function useAvaliarEntrega() {
   const queryClient = useQueryClient();
   return useMutation({

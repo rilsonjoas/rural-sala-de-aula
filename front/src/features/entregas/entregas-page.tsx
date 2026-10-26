@@ -15,6 +15,7 @@ import { useEntregas, type Entrega } from './api';
 import { AvaliarSheet } from './avaliar-sheet';
 import { EntregasLista } from './entregas-lista';
 import { EntregasTabela } from './entregas-tabela';
+import { SemEntrega } from './sem-entrega';
 
 function Esqueleto() {
   return (
@@ -92,6 +93,8 @@ export function EntregasPage() {
           <EntregasLista entregas={lista} onAvaliar={setAvaliando} />
         )
       ) : null}
+
+      {atividadeId ? <SemEntrega atividadeId={atividadeId} /> : null}
 
       <AvaliarSheet entrega={avaliando} onOpenChange={(aberto) => !aberto && setAvaliando(null)} />
     </section>

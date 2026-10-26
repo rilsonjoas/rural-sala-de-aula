@@ -60,14 +60,22 @@ export const avisosHandlers = [
     const aviso = (db.avisos ?? []).find((a) => a.id === params.avisoId);
     if (!aviso) return naoEncontrado('Aviso não encontrado.');
 
-    const { texto } = (await request.json()) as { texto?: string };
+    const { texto, comentarioPaiId } = (await request.json()) as { texto?: string; comentarioPaiId?: string };
     if (!texto?.trim()) {
       return problem(422, 'O comentário não pode ser vazio.');
+    }
+    let paiRaiz: string | null = null;
+    if (comentarioPaiId) {
+      const pai = (aviso.comentarios ?? []).find((c) => c.id === comentarioPaiId);
+      if (!pai) return problem(422, 'O comentário respondido não existe neste aviso.');
+      // um nível só: responder a uma resposta vira resposta ao comentário original
+      paiRaiz = pai.comentarioPaiId ?? pai.id;
     }
 
     const novoComentario: ComentarioDb = {
       id: crypto.randomUUID(),
       avisoId: aviso.id,
+      comentarioPaiId: paiRaiz,
       autorId: usuario.id,
       autorNome: usuario.nome,
       texto: texto.trim(),

@@ -20,4 +20,4 @@ Disco é mais simples agora; migrar para bucket depois exige copiar os arquivos,
 - A tabela `arquivo` guarda `nome_original`, `nome_armazenado`, `caminho` (relativo, `uploads/<nome>`), `tipo_conteudo`, `tamanho` e `data_envio`, ligada à entrega; a entrega guarda a atividade, o aluno e `enviada_em`.
 - 413 para mais de 25 MB e 415 para tipo fora da lista. Em produção o nginx do front recusa corpos acima de 26 MB e pode fechar a conexão antes de a resposta chegar; por isso o front também barra acima de 25 MB no navegador.
 - O reenvio (antes da avaliação) troca o arquivo e **apaga o antigo do disco depois do commit**. Envios simultâneos do mesmo aluno são serializados por `pg_advisory_xact_lock`.
-- Ainda falta o hash SHA-256 do arquivo (RNF02, no BACKLOG).
+- O hash SHA-256 do arquivo é calculado no envio e conferido no download (RNF02, Flyway V3, 26/10/2026); arquivos anteriores não têm hash.

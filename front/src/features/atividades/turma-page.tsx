@@ -6,6 +6,7 @@ import { ErrorState } from '@/components/error-state';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/features/session/use-session';
 import { CopiarCodigo } from '@/features/turmas/copiar-codigo';
+import { SairDaTurma } from '@/features/turmas/sair-da-turma';
 import { useTurma } from '@/features/turmas/api';
 import { ApiError } from '@/lib/api-error';
 import { formatDias } from '@/lib/format';
@@ -21,6 +22,7 @@ import {
   ROTULO_ESTADO,
   ROTULO_TIPO,
   temFiltroAtivo,
+  type Atividade,
   type Filtros,
 } from './filtros';
 import { NovaAtividadeSheet } from './nova-atividade-sheet';
@@ -53,6 +55,7 @@ export function TurmaPage() {
   const [abaAtiva, setAbaAtiva] = useState<'mural' | 'atividades'>('mural');
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [folhaAberta, setFolhaAberta] = useState(false);
+  const [editando, setEditando] = useState<Atividade | null>(null);
   const atividades = useAtividadesDaTurma(turmaId, filtros);
 
   if (turma.isError && turma.error instanceof ApiError && turma.error.status === 404) {
@@ -123,6 +126,7 @@ export function TurmaPage() {
               </span>
             ) : null}
           </div>
+          {!professor ? <SairDaTurma turmaId={turmaId} turmaNome={turma.data.nome} /> : null}
           {professor && turma.data.codigo ? (
             <div className="flex items-center justify-between gap-3 rounded-lg bg-secondary p-3">
               <div>
@@ -214,13 +218,25 @@ export function TurmaPage() {
                   atividade={atividade}
                   variante={professor ? 'turma-professor' : 'turma-aluno'}
                   nivelTitulo={4}
+                  onEditar={professor ? setEditando : undefined}
                 />
               ))}
             </div>
           ) : null}
 
           {professor && turma.data ? (
-            <NovaAtividadeSheet turmaId={turmaId} turmaNome={turma.data.nome} open={folhaAberta} onOpenChange={setFolhaAberta} />
+            <>
+              <NovaAtividadeSheet turmaId={turmaId} turmaNome={turma.data.nome} open={folhaAberta} onOpenChange={setFolhaAberta} />
+              <NovaAtividadeSheet
+                turmaId={turmaId}
+                turmaNome={turma.data.nome}
+                atividade={editando}
+                open={editando !== null}
+                onOpenChange={(aberto) => {
+                  if (!aberto) setEditando(null);
+                }}
+              />
+            </>
           ) : null}
         </div>
       )}

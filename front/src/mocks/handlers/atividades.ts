@@ -99,6 +99,52 @@ export const atividadesHandlers = [
     return HttpResponse.json(paraAtividadeApi(nova, usuario), { status: 201 });
   }),
 
+  http.put(`${API}/atividades/:atividadeId`, async ({ params, request }) => {
+    const usuario = usuarioDaSessao();
+    if (!usuario) return naoAutenticado();
+    const atividade = db.atividades.find((a) => a.id === params.atividadeId);
+    if (!atividade) return naoEncontrado('Atividade não encontrada.');
+    const turma = db.turmas.find((t) => t.id === atividade.turmaId)!;
+    if (turma.professorId !== usuario.id) return proibido('Somente o professor da turma pode editar atividades.');
+
+    const corpo = (await request.json()) as Partial<AtividadeInput>;
+    const campos: NonNullable<components['schemas']['Problem']['campos']> = [];
+    if (!corpo.nome?.trim()) campos.push({ campo: 'nome', mensagem: 'Informe o nome da atividade.' });
+    if (!TIPOS.includes(corpo.tipo ?? '')) campos.push({ campo: 'tipo', mensagem: 'Escolha o tipo de atividade.' });
+    const prazo = Date.parse(corpo.prazoFinal ?? '');
+    if (Number.isNaN(prazo)) campos.push({ campo: 'prazoFinal', mensagem: 'Informe o prazo final.' });
+    const disponivel = corpo.disponivelEm ? Date.parse(corpo.disponivelEm) : Date.parse(atividade.disponivelEm);
+    if (!Number.isNaN(prazo) && prazo < disponivel) {
+      campos.push({ campo: 'prazoFinal', mensagem: 'O prazo final não pode ser antes de quando a atividade fica disponível.' });
+    }
+    if (campos.length > 0) return dadosInvalidos(campos);
+
+    atividade.nome = corpo.nome!.trim();
+    atividade.descricao = corpo.descricao?.trim() || undefined;
+    atividade.tipo = corpo.tipo!;
+    atividade.prazoFinal = new Date(prazo).toISOString();
+    atividade.disponivelEm = new Date(disponivel).toISOString();
+    if (corpo.aceitaAtraso !== undefined) atividade.aceitaAtraso = corpo.aceitaAtraso;
+    return HttpResponse.json(paraAtividadeApi(atividade, usuario));
+  }),
+
+  http.get(`${API}/atividades/:atividadeId/sem-entrega`, ({ params }) => {
+    const usuario = usuarioDaSessao();
+    if (!usuario) return naoAutenticado();
+    const atividade = db.atividades.find((a) => a.id === params.atividadeId);
+    if (!atividade) return naoEncontrado('Atividade não encontrada.');
+    const turma = db.turmas.find((t) => t.id === atividade.turmaId)!;
+    if (turma.professorId !== usuario.id) return proibido('Acesso restrito ao professor da turma.');
+
+    const entregaram = new Set(db.entregas.filter((e) => e.atividadeId === atividade.id).map((e) => e.alunoId));
+    const lista = db.inscricoes
+      .filter((i) => i.turmaId === turma.id && !entregaram.has(i.alunoId))
+      .map((i) => db.usuarios.find((u) => u.id === i.alunoId)!)
+      .map((u) => ({ id: u.id, nome: u.nome, email: u.email }))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+    return HttpResponse.json(lista);
+  }),
+
   http.get(`${API}/atividades`, ({ request }) => {
     const usuario = usuarioDaSessao();
     if (!usuario) return naoAutenticado();

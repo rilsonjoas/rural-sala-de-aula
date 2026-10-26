@@ -26,8 +26,8 @@ jobs:
           --health-cmd "pg_isready -U sala -d rural_sala_de_aula"
           --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
@@ -45,8 +45,8 @@ jobs:
       run:
         working-directory: front
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -65,12 +65,12 @@ jobs:
     name: Stack completo (smoke da API e jornada pela interface)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Sobe db, API e front
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Smoke da API
         run: python3 -I scripts/smoke-p1.py
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm

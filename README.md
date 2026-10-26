@@ -39,6 +39,8 @@ RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF0
 - `npm run test:e2e:real` em `front/` (jornada pela interface: cadastro, turma, atividade, entrada por código, filtro, entrega, download, avaliação e nota);
 - `npm test` (265 testes do front contra a API simulada), `npm run typecheck`, `npm run lint` e `npm run build`.
 
+Tudo isso roda no GitHub Actions (`.github/workflows/ci.yml`) em cada push na `main` e em cada PR, com a migration do Flyway aplicada num Postgres vazio.
+
 Os dois primeiros também rodam contra produção (`python3 -I scripts/smoke-p1.py https://rural-sala-de-aula.narniano.com/api/v1` e `E2E_BASE_URL=https://rural-sala-de-aula.narniano.com npm run test:e2e:real`). Eles criam usuários `@teste.rural`; a limpeza fica no repositório de infraestrutura (`hetzner-infra`, passo de limpeza dos testes).
 
 A API simulada (`front/src/mocks/`, `VITE_API_MOCK=true`) continua servindo para desenvolver o front sem o back. O guia de integração original está em [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).

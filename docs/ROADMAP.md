@@ -11,7 +11,7 @@ Estado em **20/10/2026**. O escopo P1 está entregue e em produção; o que segu
 | Banco | pronto, em produção | Flyway V1 aplicado do zero com `ddl-auto=validate`; backup e restore automático testados; 13 tabelas |
 | Produção | `https://rural-sala-de-aula.narniano.com` | HTTPS, domínio único (a API fica em `/api/`), volume de uploads no backup, monitor no Uptime Kuma |
 
-Produção roda o commit `434cdfe` (o rate limit de 22/10 ainda não foi publicado) (conferir com `git -C /opt/rural-sala-de-aula log --oneline -1` na VPS).
+Produção roda o commit `ff6afae` desde 26/10 (rate limit e `commit` no `/health`); smoke de produção 100/100. Publicar: `make sala-deploy` na VPS; conferir: `make sala-versao` (conferir com `git -C /opt/rural-sala-de-aula log --oneline -1` na VPS).
 
 ## Decisões de escopo (não voltar a discutir sem motivo novo)
 
@@ -25,8 +25,8 @@ Produção roda o commit `434cdfe` (o rate limit de 22/10 ainda não foi publica
 
 | # | Item | Pilar do padrão | Por quê | Onde mexer |
 |---|---|---|---|---|
-| 1 | ~~Rate limit em `/auth/login` e `/auth/register`~~ **feito em 22/10 (no código; falta publicar)** | P0 Segurança | login: 5 falhas por e-mail e 30 por IP em 15 min; cadastro: 30 por IP por hora; acima disso 429 com `Retry-After` (ADR-0004) | `LimitadorDeTentativas`, `AuthService` |
-| 2 | ~~Versão no ar e caminho de volta~~ **feito em 25/10 (no código; falta publicar; PR #5 do `hetzner-infra`)**: `/health` devolve `commit`, `make sala-versao`, `make sala-rollback SHA=` | P1 Infra | `/api/v1/health` devolve `0.0.1-SNAPSHOT`; não dá para saber qual commit está no ar nem voltar sem adivinhar | `pom.xml`/build com o commit, tag no git, `/health` com a versão, passo de rollback no runbook |
+| 1 | ~~Rate limit em `/auth/login` e `/auth/register`~~ **feito em 22/10, em produção desde 26/10** | P0 Segurança | login: 5 falhas por e-mail e 30 por IP em 15 min; cadastro: 30 por IP por hora; acima disso 429 com `Retry-After` (ADR-0004) | `LimitadorDeTentativas`, `AuthService` |
+| 2 | ~~Versão no ar e caminho de volta~~ **feito em 25/10, em produção desde 26/10**: `/health` devolve `commit`, `make sala-versao`, `make sala-rollback SHA=` | P1 Infra | `/api/v1/health` devolve `0.0.1-SNAPSHOT`; não dá para saber qual commit está no ar nem voltar sem adivinhar | `pom.xml`/build com o commit, tag no git, `/health` com a versão, passo de rollback no runbook |
 | 3 | **Desligamento gracioso e sessão persistente** | P2 Saúde | cada deploy derruba as sessões e pode cortar um envio no meio | `server.shutdown=graceful`; `spring-session-jdbc` (tabela nova via Flyway V2) |
 | 4 | **CI no GitHub Actions** | P3/P4 | nada roda antes do deploy; a lição do padrão é aplicar a migration **do zero** | build da API, `mvn test`, testes do front, Flyway num Postgres limpo, `smoke-p1` contra o stack do compose |
 | 5 | **Restore dos uploads com arquivo real** | P6 Backups | o teste automático só confere que o tarball está íntegro | enviar uma entrega, `make backup`, restaurar e comparar o conteúdo |
@@ -56,4 +56,4 @@ npm run test:e2e:real
 cd front && npm test && npm run typecheck && npm run lint && npm run build
 ```
 
-Publicar na VPS: `git -C /opt/rural-sala-de-aula pull --ff-only` e `make sala-up` a partir de `~/hetzner-infra`; acesso pelo Tailscale (`narniano@100.67.163.103`). Rodar o smoke contra produção cria usuários `@teste.rural`; a limpeza é `rural-sala-de-aula/limpar-testes.sh` no `hetzner-infra` (mostra primeiro, apaga só com `--apply`). Runbook completo: `hetzner-infra/rural-sala-de-aula/README.md`.
+Publicar na VPS: `git -C /opt/rural-sala-de-aula pull --ff-only` e `make sala-up` a partir de `~/hetzner-infra` (ou só `make sala-deploy`); acesso pelo Tailscale (`narniano@100.67.163.103`). Rodar o smoke contra produção cria usuários `@teste.rural`; a limpeza é `rural-sala-de-aula/limpar-testes.sh` no `hetzner-infra` (mostra primeiro, apaga só com `--apply`). Runbook completo: `hetzner-infra/rural-sala-de-aula/README.md`.

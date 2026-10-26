@@ -58,6 +58,25 @@ public class AtividadeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(atividade);
     }
 
+    @PutMapping("/api/v1/atividades/{atividadeId}")
+    public ResponseEntity<ResponseAtividadeDTO> atualizar(
+            @PathVariable UUID atividadeId,
+            @RequestBody @Valid RequestAtividadeDTO dto,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.ok(atividadeService.atualizar(atividadeId, dto, usuario));
+    }
+
+    @GetMapping("/api/v1/atividades/{atividadeId}/sem-entrega")
+    public ResponseEntity<List<AlunoResumoDTO>> listarSemEntrega(
+            @PathVariable UUID atividadeId,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.ok(atividadeService.listarSemEntrega(atividadeId, usuario));
+    }
+
     @GetMapping("/api/v1/atividades/{atividadeId}")
     public ResponseEntity<ResponseAtividadeDetalheDTO> obterDetalhe(
             @PathVariable UUID atividadeId,

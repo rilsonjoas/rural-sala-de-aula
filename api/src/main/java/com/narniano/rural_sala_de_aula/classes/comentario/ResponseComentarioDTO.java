@@ -6,6 +6,7 @@ import java.util.UUID;
 public record ResponseComentarioDTO(
         UUID id,
         UUID avisoId,
+        UUID comentarioPaiId,
         UUID autorId,
         String autorNome,
         String texto,

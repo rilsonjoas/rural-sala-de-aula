@@ -40,6 +40,16 @@ public class TurmaController {
         return ResponseEntity.status(HttpStatus.CREATED).body(turma);
     }
 
+    @DeleteMapping("/{turmaId}/inscricao")
+    public ResponseEntity<Void> sairDaTurma(
+            @PathVariable UUID turmaId,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        turmaService.sairDaTurma(turmaId, usuario);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{turmaId}")
     public ResponseEntity<ResponseTurmaDTO> obterTurma(
             @PathVariable UUID turmaId,

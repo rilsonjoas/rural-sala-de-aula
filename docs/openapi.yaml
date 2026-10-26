@@ -89,10 +89,20 @@ paths:
       tags: [Avisos]
       operationId: createAviso
       summary: Posta um aviso no mural da turma.
-      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [texto], properties: {texto: {type: string}}}}}}
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [texto], properties: {texto: {type: string}, comentarioPaiId: {type: string, format: uuid, description: 'Comentário que está sendo respondido. Resposta a uma resposta fica sob o comentário original (um nível).'}}}}}}
       responses:
         '201': {description: Criado, content: {application/json: {schema: {$ref: '#/components/schemas/Aviso'}}}}
         '403': {$ref: '#/components/responses/Problem'}
+  /turmas/{turmaId}/inscricao:
+    delete:
+      tags: [Turmas]
+      operationId: leaveTurma
+      summary: O aluno sai da turma. Entregas e notas ficam com a turma. O professor não sai da própria turma (409).
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      responses:
+        '204': {description: Saiu da turma}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /avisos/{avisoId}/comentarios:
     get:
       tags: [Avisos]
@@ -157,6 +167,17 @@ paths:
       responses:
         '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Atividade'}}}}}
   /atividades/{atividadeId}:
+    put:
+      tags: [Atividades]
+      operationId: updateAtividade
+      summary: Edita a atividade (só o professor da turma). Mesmas regras do cadastro.
+      parameters: [{$ref: '#/components/parameters/AtividadeId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/AtividadeInput'}}}}
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Atividade'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
     get:
       tags: [Atividades]
       operationId: getAtividade
@@ -164,6 +185,16 @@ paths:
       parameters: [{$ref: '#/components/parameters/AtividadeId'}]
       responses:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/AtividadeDetalhe'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /atividades/{atividadeId}/sem-entrega:
+    get:
+      tags: [Entregas]
+      operationId: listSemEntrega
+      summary: Alunos inscritos que ainda não entregaram (só o professor da turma).
+      parameters: [{$ref: '#/components/parameters/AtividadeId'}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/AlunoResumo'}}}}}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
   /atividades/{atividadeId}/entregas:
@@ -236,7 +267,8 @@ components:
     Atividade: {allOf: [{$ref: '#/components/schemas/AtividadeInput'}, {type: object, required: [id, turmaId, turmaNome, disponivelEm], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, turmaNome: {type: string}, disponivelEm: {type: string, format: date-time}, aceitaAtraso: {type: boolean}, estado: {allOf: [{$ref: '#/components/schemas/EstadoAtividade'}]}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}}}]}
     AtividadeDetalhe: {allOf: [{$ref: '#/components/schemas/Atividade'}, {type: object, required: [professorNome], properties: {professorNome: {type: string}, minhaEntrega: {allOf: [{$ref: '#/components/schemas/Entrega'}], nullable: true}}}]}
     AvaliacaoInput: {type: object, required: [nota], properties: {nota: {type: number, minimum: 0, maximum: 10, multipleOf: 0.1}, comentarioPrivado: {type: string}}}
-    Entrega: {type: object, required: [id, atividadeId, alunoId, alunoNome, nomeOriginal, tamanhoBytes, enviadaEm, atrasada], properties: {id: {type: string, format: uuid}, atividadeId: {type: string, format: uuid}, alunoId: {type: string, format: uuid}, alunoNome: {type: string}, nomeOriginal: {type: string}, tamanhoBytes: {type: integer, minimum: 0}, enviadaEm: {type: string, format: date-time}, atrasada: {type: boolean}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}, comentarioPrivado: {type: string, nullable: true}}}
+    Entrega: {type: object, required: [id, atividadeId, alunoId, alunoNome, nomeOriginal, tamanhoBytes, enviadaEm, atrasada], properties: {id: {type: string, format: uuid}, atividadeId: {type: string, format: uuid}, alunoId: {type: string, format: uuid}, alunoNome: {type: string}, nomeOriginal: {type: string}, tamanhoBytes: {type: integer, minimum: 0}, hashSha256: {type: string, nullable: true, description: 'SHA-256 (hex) do arquivo no envio; nulo nas entregas anteriores ao RNF02'}, enviadaEm: {type: string, format: date-time}, atrasada: {type: boolean}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}, comentarioPrivado: {type: string, nullable: true}}}
     LoginRequest: {type: object, required: [email, senha], properties: {email: {type: string, format: email}, senha: {type: string}}}
     Aviso: {type: object, required: [id, turmaId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}, comentarios: {type: array, items: {$ref: '#/components/schemas/Comentario'}}}}
-    Comentario: {type: object, required: [id, avisoId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, avisoId: {type: string, format: uuid}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}}}
+    AlunoResumo: {type: object, required: [id, nome, email], properties: {id: {type: string, format: uuid}, nome: {type: string}, email: {type: string, format: email}}}
+    Comentario: {type: object, required: [id, avisoId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, avisoId: {type: string, format: uuid}, comentarioPaiId: {type: string, format: uuid, nullable: true}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}}}

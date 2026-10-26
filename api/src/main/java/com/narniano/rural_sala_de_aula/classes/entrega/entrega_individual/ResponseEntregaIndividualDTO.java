@@ -11,6 +11,7 @@ public record ResponseEntregaIndividualDTO(
         String alunoNome,
         String nomeOriginal,
         Long tamanhoBytes,
+        String hashSha256,
         LocalDateTime enviadaEm,
         boolean atrasada,
         BigDecimal nota,

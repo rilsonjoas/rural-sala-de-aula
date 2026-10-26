@@ -68,14 +68,7 @@ public class AvisoService {
                 .map(a -> {
                     List<ResponseComentarioDTO> comentarios = comentarioRepository.findByAvisoIdOrderByHorarioAsc(a.getId())
                             .stream()
-                            .map(c -> new ResponseComentarioDTO(
-                                    c.getId(),
-                                    a.getId(),
-                                    c.getUsuario().getId(),
-                                    c.getUsuario().getNome(),
-                                    c.getTexto(),
-                                    c.getHorario()
-                            ))
+                            .map(this::paraDTO)
                             .toList();
 
                     return new ResponseAvisoDTO(
@@ -99,20 +92,20 @@ public class AvisoService {
         validarMembroDaTurma(aviso.getTurma(), autor);
 
         Comentario comentario = new Comentario();
+        if (dto.comentarioPaiId() != null) {
+            Comentario pai = comentarioRepository.findById(dto.comentarioPaiId())
+                    .filter(c -> c.getAviso().getId().equals(avisoId))
+                    .orElseThrow(() -> new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "O comentário respondido não existe neste aviso."));
+            // so um nivel de resposta: responder a uma resposta vira resposta ao comentario original
+            comentario.setComentarioPai(pai.getComentarioPai() != null ? pai.getComentarioPai() : pai);
+        }
         comentario.setAviso(aviso);
         comentario.setUsuario(autor);
         comentario.setTexto(dto.texto().trim());
         comentario.setHorario(LocalDateTime.now());
 
         Comentario salvo = comentarioRepository.save(comentario);
-        return new ResponseComentarioDTO(
-                salvo.getId(),
-                aviso.getId(),
-                autor.getId(),
-                autor.getNome(),
-                salvo.getTexto(),
-                salvo.getHorario()
-        );
+        return paraDTO(salvo);
     }
 
     @Transactional(readOnly = true)
@@ -123,15 +116,20 @@ public class AvisoService {
         validarMembroDaTurma(aviso.getTurma(), usuario);
 
         return comentarioRepository.findByAvisoIdOrderByHorarioAsc(avisoId).stream()
-                .map(c -> new ResponseComentarioDTO(
-                        c.getId(),
-                        avisoId,
-                        c.getUsuario().getId(),
-                        c.getUsuario().getNome(),
-                        c.getTexto(),
-                        c.getHorario()
-                ))
+                .map(this::paraDTO)
                 .toList();
+    }
+
+    private ResponseComentarioDTO paraDTO(Comentario c) {
+        return new ResponseComentarioDTO(
+                c.getId(),
+                c.getAviso().getId(),
+                c.getComentarioPai() != null ? c.getComentarioPai().getId() : null,
+                c.getUsuario().getId(),
+                c.getUsuario().getNome(),
+                c.getTexto(),
+                c.getHorario()
+        );
     }
 
     private void validarMembroDaTurma(Turma turma, Usuario usuario) {

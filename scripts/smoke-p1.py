@@ -3,6 +3,7 @@
 Uso: python3 -I scripts/smoke-p1.py [base_url]   (padrao http://localhost:8081/api/v1)
 Cria usuarios descartaveis pela propria API. Nao depende do seed.
 """
+import hashlib
 import http.cookiejar
 import json
 import sys
@@ -285,6 +286,59 @@ s, b = aluno.call("POST", f"/avisos/{aid}/comentarios", {"texto": ""})
 check("RF14", "comentario vazio recusado (422)", s == 422, f"{s} {b}")
 s, lst = prof.call("GET", f"/avisos/{aid}/comentarios")
 check("RF14", "lista os dois comentarios", s == 200 and len(lst) == 2, f"{s} {lst}")
+
+# ---------------- itens alem da P1: sair da turma, editar atividade, sem entrega, resposta a comentario, hash
+print("Alem da P1: RF03b, RF11, RF14b, sem-entrega, hash SHA-256")
+saidor = Client("saidor")
+saidor.call("POST", "/auth/register", {"nome": "Saidor", "email": email("saidor"), "senha": SENHA})
+saidor.call("POST", "/inscricoes", {"codigo": codigo})
+s, _ = saidor.call("DELETE", f"/turmas/{tid}/inscricao")
+check("RF03b", "aluno sai da turma (204)", s == 204, s)
+s, _ = saidor.call("GET", f"/turmas/{tid}")
+check("RF03b", "depois de sair nao ve mais a turma (404)", s == 404, s)
+s, _ = saidor.call("DELETE", f"/turmas/{tid}/inscricao")
+check("RF03b", "sair de turma em que nao esta (404)", s == 404, s)
+s, _ = prof.call("DELETE", f"/turmas/{tid}/inscricao")
+check("RF03b", "professor nao sai da propria turma (409)", s == 409, s)
+s, b = saidor.call("POST", "/inscricoes", {"codigo": codigo})
+check("RF03b", "pode entrar de novo pelo codigo (201)", s == 201, f"{s} {b}")
+
+s, b = prof.call("PUT", f"/atividades/{A}", {"nome": f"Lista editada {tag}", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=3)), "descricao": "nova descricao", "aceitaAtraso": False})
+check("RF11", "professor edita a atividade (200)", s == 200 and b.get("nome") == f"Lista editada {tag}" and b.get("aceitaAtraso") is False, f"{s} {b}")
+s, d = aluno.call("GET", f"/atividades/{A}")
+check("RF11", "a edicao aparece para o aluno", s == 200 and d.get("nome") == f"Lista editada {tag}" and d.get("descricao") == "nova descricao", f"{s} {d}")
+s, b = aluno.call("PUT", f"/atividades/{A}", {"nome": "x", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=3))})
+check("RF11", "aluno nao edita atividade (403)", s == 403, f"{s} {b}")
+s, b = prof2.call("PUT", f"/atividades/{A}", {"nome": "x", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=3))})
+check("RF11", "professor de outra turma nao edita (403)", s == 403, f"{s} {b}")
+s, b = prof.call("PUT", f"/atividades/{A}", {"nome": "x", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=-30))})
+check("RF11", "prazo antes da disponibilidade recusado (422)", s == 422, f"{s} {b}")
+s, b = prof.call("PUT", f"/atividades/{A}", {"nome": "", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=3))})
+check("RF11", "nome vazio recusado (422)", s == 422, f"{s} {b}")
+s, b = prof.call("PUT", f"/atividades/{uuid.uuid4()}", {"nome": "x", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=3))})
+check("RF11", "atividade inexistente (404)", s == 404, f"{s} {b}")
+
+s, sem = prof.call("GET", f"/atividades/{A}/sem-entrega")
+nomes = [x.get("nome") for x in sem] if s == 200 else []
+check("RF16", "lista de quem nao entregou traz o inscrito sem entrega", s == 200 and "Teste intruso" in nomes and "Saidor" in nomes, f"{s} {sem}")
+check("RF16", "lista de quem nao entregou nao traz quem entregou", s == 200 and "Teste aluno" not in nomes, nomes)
+s, b = aluno.call("GET", f"/atividades/{A}/sem-entrega")
+check("RF16", "aluno nao ve quem nao entregou (403)", s == 403, f"{s} {b}")
+
+s, ents = prof.call("GET", f"/atividades/{A}/entregas")
+_, corpo = prof.call("GET", f"/entregas/{ents[0]['id']}/arquivo")
+check("RNF02", "a entrega guarda o SHA-256 do arquivo e ele confere com o download", s == 200 and isinstance(corpo, bytes) and ents[0].get("hashSha256") == hashlib.sha256(corpo).hexdigest(), f"{s} {ents[:1]}")
+
+s, pai = prof.call("POST", f"/avisos/{aid}/comentarios", {"texto": "Pergunta de debate"})
+s, r1 = aluno.call("POST", f"/avisos/{aid}/comentarios", {"texto": "Resposta 1", "comentarioPaiId": pai.get("id")})
+check("RF14b", "aluno responde a um comentario (201, com o pai)", s == 201 and r1.get("comentarioPaiId") == pai.get("id"), f"{s} {r1}")
+s, r2 = prof.call("POST", f"/avisos/{aid}/comentarios", {"texto": "Resposta a resposta", "comentarioPaiId": r1.get("id")})
+check("RF14b", "resposta a uma resposta fica sob o comentario original", s == 201 and r2.get("comentarioPaiId") == pai.get("id"), f"{s} {r2}")
+s, b = aluno.call("POST", f"/avisos/{aid}/comentarios", {"texto": "x", "comentarioPaiId": str(uuid.uuid4())})
+check("RF14b", "comentario pai inexistente recusado (422)", s == 422, f"{s} {b}")
+s, lst = aluno.call("GET", f"/turmas/{tid}/avisos")
+com = next((a["comentarios"] for a in lst if a["id"] == aid), [])
+check("RF14b", "o mural devolve o vinculo das respostas", any(c.get("comentarioPaiId") == pai.get("id") for c in com), com)
 
 # ---------------- integridade: envios simultaneos do mesmo aluno
 print("Integridade das entregas (RNF02): envios simultaneos")

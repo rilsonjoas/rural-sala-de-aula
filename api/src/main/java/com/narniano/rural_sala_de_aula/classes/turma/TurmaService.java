@@ -96,6 +96,21 @@ public class TurmaService {
         return mapearParaDTO(turma, aluno);
     }
 
+    /** Sai da turma. As entregas e notas ficam com a turma (o professor segue vendo o historico). */
+    @Transactional
+    public void sairDaTurma(UUID turmaId, Usuario aluno) {
+        Turma turma = turmaRepository.findById(turmaId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+
+        if (turma.getProfessor().getId().equals(aluno.getId())) {
+            throw new AppException(HttpStatus.CONFLICT, "O professor não sai da própria turma.");
+        }
+
+        Inscricao inscricao = inscricaoRepository.findByTurmaIdAndAlunoId(turmaId, aluno.getId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+        inscricaoRepository.delete(inscricao);
+    }
+
     private ResponseTurmaDTO mapearParaDTO(Turma turma, Usuario usuario) {
         boolean isProfessor = turma.getProfessor().getId().equals(usuario.getId());
 

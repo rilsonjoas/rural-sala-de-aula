@@ -139,6 +139,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/turmas/{turmaId}/inscricao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** O aluno sai da turma. Entregas e notas ficam com a turma. O professor não sai da própria turma (409). */
+        delete: operations["leaveTurma"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/avisos/{avisoId}/comentarios": {
         parameters: {
             query?: never;
@@ -220,6 +237,24 @@ export interface paths {
         };
         /** Detalhe da atividade com estado e, para aluno, a própria entrega. */
         get: operations["getAtividade"];
+        /** Edita a atividade (só o professor da turma). Mesmas regras do cadastro. */
+        put: operations["updateAtividade"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/atividades/{atividadeId}/sem-entrega": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Alunos inscritos que ainda não entregaram (só o professor da turma). */
+        get: operations["listSemEntrega"];
         put?: never;
         post?: never;
         delete?: never;
@@ -391,6 +426,8 @@ export interface components {
             alunoNome: string;
             nomeOriginal: string;
             tamanhoBytes: number;
+            /** @description SHA-256 (hex) do arquivo no envio; nulo nas entregas anteriores ao RNF02 */
+            hashSha256?: string | null;
             /** Format: date-time */
             enviadaEm: string;
             atrasada: boolean;
@@ -415,11 +452,20 @@ export interface components {
             horario: string;
             comentarios?: components["schemas"]["Comentario"][];
         };
+        AlunoResumo: {
+            /** Format: uuid */
+            id: string;
+            nome: string;
+            /** Format: email */
+            email: string;
+        };
         Comentario: {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
             avisoId: string;
+            /** Format: uuid */
+            comentarioPaiId?: string | null;
             /** Format: uuid */
             autorId: string;
             autorNome: string;
@@ -687,6 +733,11 @@ export interface operations {
             content: {
                 "application/json": {
                     texto: string;
+                    /**
+                     * Format: uuid
+                     * @description Comentário que está sendo respondido. Resposta a uma resposta fica sob o comentário original (um nível).
+                     */
+                    comentarioPaiId?: string;
                 };
             };
         };
@@ -701,6 +752,28 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
+        };
+    };
+    leaveTurma: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saiu da turma */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
         };
     };
     listComentarios: {
@@ -883,6 +956,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AtividadeDetalhe"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateAtividade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtividadeInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Atividade"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listSemEntrega: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlunoResumo"][];
                 };
             };
             403: components["responses"]["Problem"];

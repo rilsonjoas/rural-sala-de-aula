@@ -21,9 +21,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -92,12 +95,14 @@ public class EntregaService {
 
         String nomeArmazenado = salva.getId() + "_" + UUID.randomUUID() + "." + extensao;
         String caminhoRelativo = salvarArquivoNoDisco(file, nomeArmazenado);
+        String hash = calcularSha256(Paths.get(caminhoRelativo).toAbsolutePath());
 
         Arquivo arquivo = new Arquivo();
         arquivo.setEntrega(salva);
         arquivo.setNomeOriginal(nomeOriginal);
         arquivo.setNomeArmazenado(nomeArmazenado);
         arquivo.setCaminho(caminhoRelativo);
+        arquivo.setHashSha256(hash);
         arquivo.setTipoConteudo(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
         arquivo.setTamanho(file.getSize());
         arquivo.setDataEnvio(agora);
@@ -163,6 +168,9 @@ public class EntregaService {
 
         Arquivo arquivo = arquivos.get(0);
         byte[] conteudo = lerArquivoDoDisco(arquivo.getCaminho());
+        if (arquivo.getHashSha256() != null && !arquivo.getHashSha256().equals(sha256(conteudo))) {
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "O arquivo guardado não confere com o hash do envio. Avise o suporte.");
+        }
 
         return Map.entry(arquivo, conteudo);
     }
@@ -198,6 +206,30 @@ public class EntregaService {
             return destino.toString();
         } catch (IOException e) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao gravar arquivo em disco: " + e.getMessage());
+        }
+    }
+
+    private String calcularSha256(Path arquivo) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (InputStream in = Files.newInputStream(arquivo)) {
+                byte[] buffer = new byte[8192];
+                int lidos;
+                while ((lidos = in.read(buffer)) != -1) {
+                    digest.update(buffer, 0, lidos);
+                }
+            }
+            return HexFormat.of().formatHex(digest.digest());
+        } catch (IOException | NoSuchAlgorithmException e) {
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao calcular o hash do arquivo: " + e.getMessage());
+        }
+    }
+
+    private String sha256(byte[] conteudo) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(conteudo));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
         }
     }
 

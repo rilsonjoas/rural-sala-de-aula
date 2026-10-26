@@ -38,13 +38,7 @@ public class AtividadeService {
         }
 
         LocalDateTime disponivelEm = dto.disponivelEm() != null ? dto.disponivelEm() : LocalDateTime.now();
-        if (dto.prazoFinal().isBefore(disponivelEm)) {
-            throw new AppException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
-                    "O prazo final não pode ser antes de quando a atividade fica disponível.",
-                    List.of(new ErrorResponseDTO.CampoErroDTO("prazoFinal", "O prazo final não pode ser antes de quando a atividade fica disponível."))
-            );
-        }
+        validarPrazo(dto.prazoFinal(), disponivelEm);
 
         Atividade atividade = new Atividade();
         atividade.setTurma(turma);
@@ -57,6 +51,61 @@ public class AtividadeService {
 
         Atividade salva = atividadeRepository.save(atividade);
         return mapearParaDTO(salva, null, null);
+    }
+
+    @Transactional
+    public ResponseAtividadeDTO atualizar(UUID atividadeId, RequestAtividadeDTO dto, Usuario usuario) {
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Atividade não encontrada."));
+
+        if (!atividade.getTurma().getProfessor().getId().equals(usuario.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Somente o professor da turma pode editar atividades.");
+        }
+
+        LocalDateTime disponivelEm = dto.disponivelEm() != null ? dto.disponivelEm() : atividade.getDisponivelEm();
+        validarPrazo(dto.prazoFinal(), disponivelEm);
+
+        atividade.setNome(dto.nome().trim());
+        atividade.setDescricao(dto.descricao() != null ? dto.descricao().trim() : null);
+        atividade.setTipo(dto.tipo());
+        atividade.setDisponivelEm(disponivelEm);
+        atividade.setPrazoFinal(dto.prazoFinal());
+        if (dto.aceitaAtraso() != null) {
+            atividade.setAceitaAtraso(dto.aceitaAtraso());
+        }
+
+        return mapearParaDTO(atividadeRepository.save(atividade), null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AlunoResumoDTO> listarSemEntrega(UUID atividadeId, Usuario professor) {
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Atividade não encontrada."));
+
+        if (!atividade.getTurma().getProfessor().getId().equals(professor.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Acesso restrito ao professor da turma.");
+        }
+
+        Set<UUID> jaEntregaram = new HashSet<>();
+        entregaRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId)
+                .forEach(e -> jaEntregaram.add(e.getAluno().getId()));
+
+        return inscricaoRepository.findByTurmaId(atividade.getTurma().getId()).stream()
+                .map(i -> i.getAluno())
+                .filter(aluno -> !jaEntregaram.contains(aluno.getId()))
+                .map(aluno -> new AlunoResumoDTO(aluno.getId(), aluno.getNome(), aluno.getEmail()))
+                .sorted(Comparator.comparing(AlunoResumoDTO::nome, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private void validarPrazo(LocalDateTime prazoFinal, LocalDateTime disponivelEm) {
+        if (prazoFinal.isBefore(disponivelEm)) {
+            throw new AppException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "O prazo final não pode ser antes de quando a atividade fica disponível.",
+                    List.of(new ErrorResponseDTO.CampoErroDTO("prazoFinal", "O prazo final não pode ser antes de quando a atividade fica disponível."))
+            );
+        }
     }
 
     @Transactional(readOnly = true)
@@ -244,6 +293,7 @@ public class AtividadeService {
         Arquivo arq = e.getArquivos().isEmpty() ? null : e.getArquivos().get(0);
         String nomeOriginal = arq != null ? arq.getNomeOriginal() : "arquivo.pdf";
         Long tamanhoBytes = arq != null ? arq.getTamanhoBytes() : 0L;
+        String hashSha256 = arq != null ? arq.getHashSha256() : null;
 
         return new ResponseEntregaIndividualDTO(
                 e.getId(),
@@ -252,6 +302,7 @@ public class AtividadeService {
                 e.getAluno().getNome(),
                 nomeOriginal,
                 tamanhoBytes,
+                hashSha256,
                 e.getEnviadaEm(),
                 e.isAtrasada(),
                 e.getNota(),

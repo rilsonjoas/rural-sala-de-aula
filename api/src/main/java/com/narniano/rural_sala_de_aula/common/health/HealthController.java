@@ -13,8 +13,11 @@ public class HealthController {
 
     private final String service;
     private final String version;
+    private final String commit;
 
-    public HealthController(@Value("${spring.application.name}") String applicationName) {
+    public HealthController(@Value("${spring.application.name}") String applicationName,
+                            @Value("${app.commit:dev}") String commit) {
+        this.commit = commit;
         this.service = applicationName + "-api";
         String implementationVersion = HealthController.class.getPackage().getImplementationVersion();
         this.version = implementationVersion != null ? implementationVersion : "dev";
@@ -22,8 +25,8 @@ public class HealthController {
 
     @GetMapping
     public HealthResponse health() {
-        return new HealthResponse("ok", service, version, Instant.now());
+        return new HealthResponse("ok", service, version, commit, Instant.now());
     }
 
-    public record HealthResponse(String status, String service, String version, Instant timestamp) {}
+    public record HealthResponse(String status, String service, String version, String commit, Instant timestamp) {}
 }

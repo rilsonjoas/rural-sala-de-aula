@@ -26,7 +26,7 @@ Produção roda o commit `434cdfe` (o rate limit de 22/10 ainda não foi publica
 | # | Item | Pilar do padrão | Por quê | Onde mexer |
 |---|---|---|---|---|
 | 1 | ~~Rate limit em `/auth/login` e `/auth/register`~~ **feito em 22/10 (no código; falta publicar)** | P0 Segurança | login: 5 falhas por e-mail e 30 por IP em 15 min; cadastro: 30 por IP por hora; acima disso 429 com `Retry-After` (ADR-0004) | `LimitadorDeTentativas`, `AuthService` |
-| 2 | **Versão no ar e caminho de volta** | P1 Infra | `/api/v1/health` devolve `0.0.1-SNAPSHOT`; não dá para saber qual commit está no ar nem voltar sem adivinhar | `pom.xml`/build com o commit, tag no git, `/health` com a versão, passo de rollback no runbook |
+| 2 | ~~Versão no ar e caminho de volta~~ **feito em 25/10 (no código; falta publicar; PR #5 do `hetzner-infra`)**: `/health` devolve `commit`, `make sala-versao`, `make sala-rollback SHA=` | P1 Infra | `/api/v1/health` devolve `0.0.1-SNAPSHOT`; não dá para saber qual commit está no ar nem voltar sem adivinhar | `pom.xml`/build com o commit, tag no git, `/health` com a versão, passo de rollback no runbook |
 | 3 | **Desligamento gracioso e sessão persistente** | P2 Saúde | cada deploy derruba as sessões e pode cortar um envio no meio | `server.shutdown=graceful`; `spring-session-jdbc` (tabela nova via Flyway V2) |
 | 4 | **CI no GitHub Actions** | P3/P4 | nada roda antes do deploy; a lição do padrão é aplicar a migration **do zero** | build da API, `mvn test`, testes do front, Flyway num Postgres limpo, `smoke-p1` contra o stack do compose |
 | 5 | **Restore dos uploads com arquivo real** | P6 Backups | o teste automático só confere que o tarball está íntegro | enviar uma entrega, `make backup`, restaurar e comparar o conteúdo |

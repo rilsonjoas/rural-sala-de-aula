@@ -223,7 +223,7 @@ components:
       description: Erro
       content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}
   schemas:
-    Health: {type: object, required: [status, service, version, timestamp], properties: {status: {type: string}, service: {type: string}, version: {type: string}, timestamp: {type: string, format: date-time}}}
+    Health: {type: object, required: [status, service, version, timestamp], properties: {status: {type: string}, service: {type: string}, version: {type: string}, commit: {type: string, description: SHA curto do commit da imagem no ar ("dev" fora do deploy)}, timestamp: {type: string, format: date-time}}}
     Problem: {type: object, required: [status, message], properties: {status: {type: integer}, message: {type: string}, campos: {type: array, items: {type: object, required: [campo, mensagem], properties: {campo: {type: string}, mensagem: {type: string}}}}}}
     Papel: {type: string, enum: [ALUNO, PROFESSOR]}
     Usuario: {type: object, required: [id, nome, email], properties: {id: {type: string, format: uuid}, nome: {type: string}, email: {type: string, format: email}, dataNascimento: {type: string, format: date}, papel: {$ref: '#/components/schemas/Papel'}}}

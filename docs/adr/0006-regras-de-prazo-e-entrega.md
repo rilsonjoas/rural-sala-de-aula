@@ -10,6 +10,7 @@ O RF10 do documento de origem lista "data de entrega" e "prazo final" entre os a
 
 - A atividade tem **um só prazo, o `prazo_final`**, definido pelo professor. O campo "data de entrega" não existe na atividade.
 - A **data de entrega é a do aluno**: `entrega.enviada_em`.
+- **Editar o prazo muda o atraso das entregas já feitas (RF11, 26/10/2026):** `Entrega.atrasada` é calculada na hora (envio depois do `prazo_final` atual), não gravada. Se o professor adiantar o prazo, entregas que estavam no prazo passam a "entregue com atraso"; se adiar, o inverso. Aceito por ser o comportamento mais simples e previsível (o prazo vigente é a única verdade); se virar problema, gravar `atrasada` no envio.
 - Atraso = depois do `prazo_final`: sem entrega vira ATRASADA; entrega depois dele vira ENTREGUE_COM_ATRASO (`Entrega.atrasada`).
 - Por padrão o envio **não é bloqueado por prazo**. A atividade tem a opção `aceita_atraso` (ligada por padrão): se o professor a desliga, o envio depois do `prazo_final` é recusado (403).
 - Depois que o professor **avalia** a entrega, o reenvio é bloqueado (409), para não trocar o trabalho que já recebeu nota.

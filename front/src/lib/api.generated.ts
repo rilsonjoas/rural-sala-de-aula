@@ -502,6 +502,15 @@ export interface components {
             progressoAtual: number;
             progressoTotal: number;
         };
+        PerfilDocente: {
+            nivelDocente: number;
+            tituloNivel: string;
+            avaliacoesRealizadas: number;
+            turmasLecionadas: number;
+            feedbacksComComentario: number;
+            respostasNoMural: number;
+            conquistas: components["schemas"]["Conquista"][];
+        };
         PerfilGamificacao: {
             nivel: number;
             xpTotal: number;
@@ -512,6 +521,7 @@ export interface components {
             streakSemanas: number;
             recordeStreakSemanas: number;
             conquistas: components["schemas"]["Conquista"][];
+            docente?: components["schemas"]["PerfilDocente"] | null;
         };
     };
     responses: {

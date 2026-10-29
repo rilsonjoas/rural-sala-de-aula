@@ -38,7 +38,7 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 
 ## Produto e interface
 
-- **Gamificação derivada e ética (ADR-0009):** Nível, XP, consistência semanal e 6 conquistas acadêmicas (com Lucide React, sem emojis), calculadas a partir das atividades do aluno sem exigir novas tabelas no banco de dados. Implementada como aba dedicada na navegação (`/conquistas`).
+- **Gamificação derivada e ética para estudantes e professores (ADR-0009):** Nível, XP, consistência semanal e 6 medalhas para estudantes; Níveis de tutoria, indicadores de zelo pedagógico e 5 medalhas docentes para professores (com Lucide React, sem emojis). Implementada na aba `/conquistas`.
 - **Logo própria**, inspirada nos conceitos da UFRPE e não no desenho (o manual veda alterar o símbolo). Troca o capelo provisório do cabeçalho.
 - **Contador de entregas a avaliar no card de turma** do professor (hoje só aparece em cada atividade; somar por turma pede um campo na API ou várias requisições).
 - Recuperação de senha, edição de perfil e tema escuro.

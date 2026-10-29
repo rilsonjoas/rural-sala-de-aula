@@ -50,7 +50,7 @@ export function ConquistasPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-primary">Conquistas</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Acompanhe seu nível acadêmico, consistência de entregas e medalhas conquistadas.
+          Acompanhe seu nível acadêmico, consistência de entregas e medalhas nas turmas em que você estuda.
         </p>
       </div>
 
@@ -67,7 +67,7 @@ export function ConquistasPage() {
               </h3>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {perfil.entregasConcluidas} atividade{perfil.entregasConcluidas === 1 ? '' : 's'} entregue{perfil.entregasConcluidas === 1 ? '' : 's'} no total.
+              {perfil.entregasConcluidas} atividade{perfil.entregasConcluidas === 1 ? '' : 's'} entregue{perfil.entregasConcluidas === 1 ? '' : 's'} nas turmas que você cursa.
             </p>
           </div>
 

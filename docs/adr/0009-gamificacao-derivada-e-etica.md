@@ -12,9 +12,10 @@ Com o P1 entregue e em produção (Hetzner VPS, CI verde, 120 verificações) e 
 
 A gamificação é **100% derivada, ética e sem tabelas adicionais no banco de dados**.
 
-### 1. Estado derivado (Zero migrations)
-Nível, XP, sequência e conquistas são funções puras dos dados que o aluno já consulta em suas turmas (`Atividade`, `Entrega`, `Avaliacao`).
-* Não há tabela de saldo de pontos nem eventos de XP persistidos.
+### 1. Estado derivado e papel de estudante (Zero migrations)
+Nível, XP, sequência e conquistas são funções puras dos dados que o usuário consulta nas turmas em que cursa (`Atividade`, `Entrega`, `Avaliacao`).
+* **Papel contextual (ADR-0008):** a gamificação se aplica exclusivamente ao usuário no papel de estudante. O cálculo consome `GET /atividades`, que retorna unicamente as atividades das turmas nas quais o usuário está matriculado como aluno. Turmas que o usuário administra como professor não interferem no seu XP, nível ou conquistas.
+* **Sem replicação de estado:** não há tabela de saldo de pontos nem eventos de XP persistidos.
 * Se uma atividade é entregue ou avaliada, o progresso recalcula automaticamente.
 
 ### 2. Regras de pontuação (XP)

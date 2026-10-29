@@ -43,8 +43,10 @@ $$\text{Nível} = \lfloor \text{entregasConcluídas} / 3 \rfloor + 1$$
 6. **Espírito de Equipe:** realizou entrega em atividade do tipo `PROJETO_EM_GRUPO`.
 
 ### 6. Interface
-* **Pílula no Header:** ao lado do avatar do usuário (`Nv. X · Y XP`), com contraste acessível nos tokens da UFRPE.
-* **Modal de Conquistas:** acionado ao clicar na pílula, exibindo nível, barra de progresso, streak e a grade das 6 conquistas (com indicação visual clara de bloqueada vs conquistada).
+* **Aba dedicada na navegação (`/conquistas`):** terceira aba ao lado de "Turmas" e "Atividades", presente de forma balanceada tanto na barra inferior do mobile quanto no cabeçalho do desktop (MainNav).
+* **Cabeçalho limpo:** sem pílulas comprimidas no header mobile, preservando o layout limpo ao lado do avatar.
+* **Ícones do Lucide React:** sem emojis; toda a iconografia de medalhas e consistência usa ícones SVG consistentes da biblioteca Lucide (`Target`, `Clock`, `Zap`, `Award`, `BookOpen`, `Users`, `Flame`, `Check`).
+* **Tela de Conquistas (`ConquistasPage`):** exibe card de nível, barra de progresso para a próxima subida, consistência semanal e a grade das 6 conquistas acadêmicas com estado claro de "Conquistada" vs "Em progresso".
 * **Feedback não invasivo:** sem popups bloqueantes ou modais interruptivos no fluxo de entrega.
 
 ## Consequências

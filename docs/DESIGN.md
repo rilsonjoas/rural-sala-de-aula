@@ -59,7 +59,7 @@ O papel é contextual por turma (ADR-0008): a mesma conta leciona umas turmas e 
 | | Todos |
 |---|---|
 | Cai em | **Turmas** |
-| Mobile (barra inferior) e desktop (links no cabeçalho) | Turmas · Atividades |
+| Mobile (barra inferior) e desktop (links no cabeçalho) | Turmas · Atividades · Conquistas (ADR-0009) |
 | Ações em Turmas | Entrar em turma · Cadastrar turma |
 | Menu do avatar | nome, e-mail, **Sair** |
 

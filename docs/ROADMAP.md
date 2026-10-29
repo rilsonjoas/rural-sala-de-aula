@@ -11,7 +11,7 @@ Estado em **20/10/2026**. O escopo P1 está entregue e em produção; o que segu
 | Banco | pronto, em produção | Flyway V1 aplicado do zero com `ddl-auto=validate`; backup e restore automático testados; 13 tabelas |
 | Produção | `https://rural-sala-de-aula.narniano.com` | HTTPS, domínio único (a API fica em `/api/`), volume de uploads no backup, monitor no Uptime Kuma |
 
-Produção roda o commit `8c96f84` desde 29/10 (gamificação derivada e ética com nível, XP e conquistas no front; rate limit, `commit` no `/health`, sessão no Postgres, RF03b, RF11, RF14b, sem-entrega e hash); smoke de produção 120/120 e jornada pela interface 5/5. Publicar: `make sala-deploy` na VPS; conferir: `make sala-versao`.
+Produção roda o commit `c8d15f1` desde 29/10 (gamificação derivada e ética com nível, XP e conquistas em aba dedicada no front; rate limit, `commit` no `/health`, sessão no Postgres, RF03b, RF11, RF14b, sem-entrega e hash); smoke de produção 120/120 e jornada pela interface 5/5. Publicar: `make sala-deploy` na VPS; conferir: `make sala-versao`.
 
 ## Decisões de escopo (não voltar a discutir sem motivo novo)
 

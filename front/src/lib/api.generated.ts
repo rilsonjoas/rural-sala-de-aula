@@ -317,6 +317,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/gamificacao/perfil": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Perfil de gamificação do aluno autenticado (ADR-0009).
+         * @description Retorna nível, XP total, consistência e conquistas desbloqueadas a partir das entregas.
+         */
+        get: operations["getPerfilGamificacao"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -472,6 +492,26 @@ export interface components {
             texto: string;
             /** Format: date-time */
             horario: string;
+        };
+        Conquista: {
+            id: string;
+            titulo: string;
+            descricao: string;
+            icone: string;
+            desbloqueada: boolean;
+            progressoAtual: number;
+            progressoTotal: number;
+        };
+        PerfilGamificacao: {
+            nivel: number;
+            xpTotal: number;
+            xpParaProximoNivel: number;
+            entregasConcluidas: number;
+            entregasNoNivelAtual: number;
+            entregasParaSubirNivel: number;
+            streakSemanas: number;
+            recordeStreakSemanas: number;
+            conquistas: components["schemas"]["Conquista"][];
         };
     };
     responses: {
@@ -1146,6 +1186,27 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getPerfilGamificacao: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilGamificacao"];
+                };
+            };
+            401: components["responses"]["Problem"];
         };
     };
 }

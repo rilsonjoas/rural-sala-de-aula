@@ -8,7 +8,7 @@ servers:
   - url: /api/v1
 security:
   - cookieAuth: []
-tags: [{name: System}, {name: Auth}, {name: Turmas}, {name: Atividades}, {name: Entregas}, {name: Avisos}]
+tags: [{name: System}, {name: Auth}, {name: Turmas}, {name: Atividades}, {name: Entregas}, {name: Avisos}, {name: Gamificacao}]
 paths:
   /health:
     get:
@@ -239,6 +239,21 @@ paths:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Entrega'}}}}
         '403': {$ref: '#/components/responses/Problem'}
         '422': {$ref: '#/components/responses/Problem'}
+  /gamificacao/perfil:
+    get:
+      tags: [Gamificacao]
+      operationId: getPerfilGamificacao
+      summary: Perfil de gamificação do aluno autenticado (ADR-0009).
+      description: Retorna nível, XP total, consistência e conquistas desbloqueadas a partir das entregas.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerfilGamificacao'
+        '401':
+          $ref: '#/components/responses/Problem'
 components:
   securitySchemes:
     cookieAuth: {type: apiKey, in: cookie, name: JSESSIONID, description: 'Cookie httpOnly, SameSite=Lax, Secure em produção (ADR-0004)'}
@@ -272,3 +287,5 @@ components:
     Aviso: {type: object, required: [id, turmaId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}, comentarios: {type: array, items: {$ref: '#/components/schemas/Comentario'}}}}
     AlunoResumo: {type: object, required: [id, nome, email], properties: {id: {type: string, format: uuid}, nome: {type: string}, email: {type: string, format: email}}}
     Comentario: {type: object, required: [id, avisoId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, avisoId: {type: string, format: uuid}, comentarioPaiId: {type: string, format: uuid, nullable: true}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}}}
+    Conquista: {type: object, required: [id, titulo, descricao, icone, desbloqueada, progressoAtual, progressoTotal], properties: {id: {type: string}, titulo: {type: string}, descricao: {type: string}, icone: {type: string}, desbloqueada: {type: boolean}, progressoAtual: {type: integer}, progressoTotal: {type: integer}}}
+    PerfilGamificacao: {type: object, required: [nivel, xpTotal, xpParaProximoNivel, entregasConcluidas, entregasNoNivelAtual, entregasParaSubirNivel, streakSemanas, recordeStreakSemanas, conquistas], properties: {nivel: {type: integer, minimum: 1}, xpTotal: {type: integer, minimum: 0}, xpParaProximoNivel: {type: integer, minimum: 0}, entregasConcluidas: {type: integer, minimum: 0}, entregasNoNivelAtual: {type: integer, minimum: 0}, entregasParaSubirNivel: {type: integer, minimum: 0}, streakSemanas: {type: integer, minimum: 0}, recordeStreakSemanas: {type: integer, minimum: 0}, conquistas: {type: array, items: {$ref: '#/components/schemas/Conquista'}}}}

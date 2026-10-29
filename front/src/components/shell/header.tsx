@@ -4,7 +4,6 @@ import { messages as copy } from '@/i18n/messages';
 import type { Usuario } from '@/features/session/use-session';
 import { AvatarMenu } from './avatar-menu';
 import { MainNav } from './main-nav';
-import { PilulaGamificacao } from '@/features/gamificacao/pilula-gamificacao';
 
 export function Header({ usuario, onSair }: { usuario: Usuario; onSair: () => void }) {
   return (
@@ -22,10 +21,7 @@ export function Header({ usuario, onSair }: { usuario: Usuario; onSair: () => vo
           </h1>
           <MainNav />
         </div>
-        <div className="flex items-center gap-3">
-          <PilulaGamificacao />
-          <AvatarMenu usuario={usuario} onSair={onSair} />
-        </div>
+        <AvatarMenu usuario={usuario} onSair={onSair} />
       </div>
     </header>
   );

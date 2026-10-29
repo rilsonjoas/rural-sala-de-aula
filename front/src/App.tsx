@@ -11,6 +11,7 @@ import { EntregasPage } from './features/entregas/entregas-page';
 import { MinhasAtividadesPage } from './features/atividades/minhas-page';
 import { TurmaPage } from './features/atividades/turma-page';
 import { TurmasPage } from './features/turmas/turmas-page';
+import { ConquistasPage } from './features/gamificacao/conquistas-page';
 
 export default function App() {
   return (
@@ -34,6 +35,8 @@ export default function App() {
             <Route path="/atividades" element={<MinhasAtividadesPage />} />
             <Route path="/atividades/:atividadeId" element={<DetalheAtividadePage />} />
             <Route path="/atividades/:atividadeId/entregas" element={<EntregasPage />} />
+
+            <Route path="/conquistas" element={<ConquistasPage />} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Route>

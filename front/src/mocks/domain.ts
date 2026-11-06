@@ -51,6 +51,19 @@ export type AvisoDb = {
   comentarios?: ComentarioDb[];
 };
 
+export type GrupoDb = {
+  id: string;
+  turmaId: string;
+  nome: string;
+  status: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
+  criadoPorId: string;
+  integrantesIds: string[];
+};
+
+export type ConfiguracaoDeGruposDb = { minimoIntegrantes: number; maximoIntegrantes: number; maximoGrupos: number | null };
+
+export const CONFIGURACAO_PADRAO_DE_GRUPOS: ConfiguracaoDeGruposDb = { minimoIntegrantes: 2, maximoIntegrantes: 5, maximoGrupos: null };
+
 export type NotificacaoDb = {
   id: string;
   usuarioId: string;

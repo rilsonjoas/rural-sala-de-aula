@@ -1,5 +1,6 @@
 package com.narniano.rural_sala_de_aula.classes.comentario;
 
+import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
 import com.narniano.rural_sala_de_aula.classes.aviso.Aviso;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import jakarta.persistence.*;
@@ -19,9 +20,13 @@ public class Comentario {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "aviso_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "aviso_id")
     private Aviso aviso;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "atividade_id")
+    private Atividade atividade;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comentario_pai_id")

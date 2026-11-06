@@ -1,5 +1,8 @@
 package com.narniano.rural_sala_de_aula.classes.atividade;
 
+import com.narniano.rural_sala_de_aula.classes.comentario.ComentarioService;
+import com.narniano.rural_sala_de_aula.classes.comentario.RequestComentarioDTO;
+import com.narniano.rural_sala_de_aula.classes.comentario.ResponseComentarioDTO;
 import com.narniano.rural_sala_de_aula.classes.usuario.AuthService;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import jakarta.servlet.http.HttpSession;
@@ -18,6 +21,7 @@ public class AtividadeController {
 
     private final AtividadeService atividadeService;
     private final AuthService authService;
+    private final ComentarioService comentarioService;
 
     @GetMapping("/api/v1/atividades")
     public ResponseEntity<List<ResponseAtividadeDTO>> listarMinhasAtividades(
@@ -85,5 +89,24 @@ public class AtividadeController {
         Usuario usuario = authService.getUsuarioAutenticado(session);
         ResponseAtividadeDetalheDTO detalhe = atividadeService.obterDetalhe(atividadeId, usuario);
         return ResponseEntity.ok(detalhe);
+    }
+
+    @GetMapping("/api/v1/atividades/{atividadeId}/comentarios")
+    public ResponseEntity<List<ResponseComentarioDTO>> listarComentarios(
+            @PathVariable UUID atividadeId,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.ok(comentarioService.listarDaAtividade(atividadeId, usuario));
+    }
+
+    @PostMapping("/api/v1/atividades/{atividadeId}/comentarios")
+    public ResponseEntity<ResponseComentarioDTO> criarComentario(
+            @PathVariable UUID atividadeId,
+            @RequestBody @Valid RequestComentarioDTO dto,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.status(HttpStatus.CREATED).body(comentarioService.criarNaAtividade(atividadeId, dto, usuario));
     }
 }

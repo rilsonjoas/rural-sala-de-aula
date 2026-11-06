@@ -1,6 +1,6 @@
 import { ArrowLeft, ClipboardList, Clock, Megaphone, Users } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { ApiError } from '@/lib/api-error';
 import { formatDias } from '@/lib/format';
 import { usePageTitle } from '@/lib/use-page-title';
 import { cn } from '@/lib/utils';
+import { GruposAba } from '@/features/grupos/grupos-aba';
 import { MuralAba } from '@/features/avisos/mural-aba';
 import { useAtividadesDaTurma } from './api';
 import { AtividadeCard } from './atividade-card';
@@ -52,7 +53,14 @@ export function TurmaPage() {
   const turma = useTurma(turmaId);
   const professor = Boolean(turma.data && usuario && turma.data.professorId === usuario.id);
   usePageTitle(turma.data?.nome ?? 'Turma');
-  const [abaAtiva, setAbaAtiva] = useState<'mural' | 'atividades'>('mural');
+  const [abaAtiva, setAbaAtiva] = useState<'mural' | 'atividades' | 'grupos'>('mural');
+  const [searchParams] = useSearchParams();
+  const abaDaUrl = searchParams.get('aba');
+
+  // as notificações de aviso levam a ?aba=mural, mesmo com a turma já aberta na aba Atividades
+  useEffect(() => {
+    if (abaDaUrl === 'mural' || abaDaUrl === 'grupos') setAbaAtiva(abaDaUrl);
+  }, [abaDaUrl]);
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [folhaAberta, setFolhaAberta] = useState(false);
   const [editando, setEditando] = useState<Atividade | null>(null);
@@ -174,10 +182,25 @@ export function TurmaPage() {
             <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold">{lista.length}</span>
           ) : null}
         </button>
+        <button
+          type="button"
+          onClick={() => setAbaAtiva('grupos')}
+          className={cn(
+            'px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px flex items-center gap-2',
+            abaAtiva === 'grupos'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Users className="size-4" aria-hidden="true" />
+          <span>Grupos</span>
+        </button>
       </div>
 
       {abaAtiva === 'mural' ? (
         <MuralAba turmaId={turmaId} podePublicar={professor} />
+      ) : abaAtiva === 'grupos' ? (
+        <GruposAba turmaId={turmaId} professor={professor} />
       ) : (
         <div className="space-y-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

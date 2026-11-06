@@ -1,4 +1,4 @@
-import { Award, ClipboardList, Users, type LucideIcon } from 'lucide-react';
+import { Award, CalendarDays, ClipboardList, Users, type LucideIcon } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { messages as copy } from '@/i18n/messages';
 import { cn } from '@/lib/utils';
@@ -7,9 +7,10 @@ type Item = { para: string; rotulo: string; Icone: LucideIcon };
 
 const TURMAS: Item = { para: '/turmas', rotulo: copy.classes, Icone: Users };
 const ATIVIDADES: Item = { para: '/atividades', rotulo: copy.activities, Icone: ClipboardList };
+const CALENDARIO: Item = { para: '/calendario', rotulo: 'Calendário', Icone: CalendarDays };
 const CONQUISTAS: Item = { para: '/conquistas', rotulo: 'Conquistas', Icone: Award };
 
-const ITENS: Item[] = [TURMAS, ATIVIDADES, CONQUISTAS];
+const ITENS: Item[] = [TURMAS, ATIVIDADES, CALENDARIO, CONQUISTAS];
 
 /**
  * Navegação única que se adapta: barra inferior no mobile e links no cabeçalho a partir de 1024 px.

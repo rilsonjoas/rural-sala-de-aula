@@ -16,6 +16,18 @@ export function formatDataHora(iso: string, agora: Date = new Date()): string {
   return `${doisDigitos(data.getDate())}/${doisDigitos(data.getMonth() + 1)}${ano} às ${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}`;
 }
 
+/** "agora", "há 5 min", "há 2 h", "há 3 dias"; depois de uma semana, a data e a hora. */
+export function formatHa(iso: string, agora: Date = new Date()): string {
+  const minutos = Math.floor((agora.getTime() - new Date(iso).getTime()) / 60_000);
+  if (minutos < 1) return 'agora';
+  if (minutos < 60) return `há ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `há ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias < 7) return `há ${dias} ${dias === 1 ? 'dia' : 'dias'}`;
+  return formatDataHora(iso, agora);
+}
+
 /** Nota de 0 a 10 com vírgula e uma casa decimal: "9,5", "8,0". */
 export function formatNota(nota: number): string {
   return nota.toFixed(1).replace('.', ',');

@@ -246,6 +246,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/atividades/{atividadeId}/comentarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista os comentários de uma atividade (professor da turma ou aluno inscrito com a atividade já disponível). */
+        get: operations["listComentariosAtividade"];
+        put?: never;
+        /** Comenta ou responde em uma atividade. Professor e alunos podem responder; só um nível de resposta. */
+        post: operations["createComentarioAtividade"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/atividades/{atividadeId}/sem-entrega": {
         parameters: {
             query?: never;
@@ -311,6 +329,145 @@ export interface paths {
         /** Somente PROFESSOR dono da turma. Nota de 0 a 10 e comentário. */
         put: operations["evaluateEntrega"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/turmas/{turmaId}/alunos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** PROPOSTA (ainda sem back-end). Alunos inscritos na turma, em ordem alfabética, para montar um grupo. Professor ou aluno da turma. */
+        get: operations["listAlunosDaTurma"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/turmas/{turmaId}/grupos/configuracao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** PROPOSTA (ainda sem back-end). Regras de formação de grupos da turma (padrão 2 a 5 integrantes, sem limite de grupos). Professor ou aluno da turma. */
+        get: operations["getConfiguracaoDeGrupos"];
+        /** Somente o PROFESSOR dono da turma (RF12). Mudar as regras não desfaz grupos já aprovados. */
+        put: operations["putConfiguracaoDeGrupos"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/turmas/{turmaId}/grupos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** PROPOSTA (ainda sem back-end). O professor vê todos os grupos; o aluno vê os aprovados e os próprios (qualquer estado). */
+        get: operations["listGrupos"];
+        put?: never;
+        /** O aluno solicita um grupo (RF06). Ele entra como integrante; nasce PENDENTE. 422 se faltar ou sobrar integrante em relação à configuração, se algum aluno não for da turma ou já estiver em grupo, ou se o limite de grupos da turma já foi atingido. */
+        post: operations["solicitarGrupo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/grupos/{grupoId}/aprovacao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Somente o PROFESSOR dono da turma (RF12). Só decide grupo PENDENTE (409 nos demais). Reprovado deixa de ocupar vaga dos alunos. */
+        post: operations["decidirGrupo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/grupos/{grupoId}/integrantes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** O aluno entra em grupo APROVADO da turma (RF06). 422 se o grupo está cheio ou se ele já está em outro grupo. */
+        post: operations["entrarNoGrupo"];
+        /** O próprio aluno sai (RF07). Grupo PENDENTE: sai sem restrição e, sem integrantes, o grupo é descartado. Grupo APROVADO: 422 se ficaria abaixo do mínimo da configuração. */
+        delete: operations["sairDoGrupo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Central de notificações do usuário (sino). Gera as "atividade nova" pendentes na leitura. Até 50 itens gravados, mais os prazos próximos (48 h, atividade aberta e não entregue), que são calculados e não contam como não lidas. */
+        get: operations["listNotificacoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes/{notificacaoId}/lida": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marca uma notificação como lida (idempotente). Notificação de outro usuário é 404. */
+        post: operations["marcarNotificacaoLida"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes/lidas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marca todas as notificações do usuário como lidas. */
+        post: operations["marcarTodasNotificacoesLidas"];
         delete?: never;
         options?: never;
         head?: never;
@@ -479,11 +636,14 @@ export interface components {
             /** Format: email */
             email: string;
         };
+        /** @description Pertence a um aviso (avisoId) ou a uma atividade (atividadeId); o outro vem nulo. */
         Comentario: {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
-            avisoId: string;
+            avisoId?: string | null;
+            /** Format: uuid */
+            atividadeId?: string | null;
             /** Format: uuid */
             comentarioPaiId?: string | null;
             /** Format: uuid */
@@ -501,6 +661,60 @@ export interface components {
             desbloqueada: boolean;
             progressoAtual: number;
             progressoTotal: number;
+        };
+        IntegranteDeGrupo: {
+            /** Format: uuid */
+            id: string;
+            nome: string;
+        };
+        /** @description maximoGrupos nulo = sem limite. */
+        ConfiguracaoDeGrupos: {
+            minimoIntegrantes: number;
+            /** @description Não pode ser menor que o mínimo. */
+            maximoIntegrantes: number;
+            maximoGrupos?: number | null;
+        };
+        /** @enum {string} */
+        GrupoStatus: "PENDENTE" | "APROVADO" | "REPROVADO";
+        /** @description integrantesIds são os colegas; quem solicita entra sozinho no grupo. */
+        GrupoInput: {
+            nome: string;
+            integrantesIds: string[];
+        };
+        Grupo: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            turmaId: string;
+            nome: string;
+            status: components["schemas"]["GrupoStatus"];
+            /** Format: uuid */
+            criadoPorId: string;
+            integrantes: components["schemas"]["IntegranteDeGrupo"][];
+        };
+        /** @description Nos prazos próximos (tipo PRAZO_PROXIMO) o id é "prazo-<atividadeId>", criadaEm é o prazo final e lida é sempre true. */
+        Notificacao: {
+            id: string;
+            /** @enum {string} */
+            tipo: "AVISO_NOVO" | "ATIVIDADE_NOVA" | "ATIVIDADE_ALTERADA" | "COMENTARIO_NOVO" | "RESPOSTA_NOVA" | "NOTA_PUBLICADA" | "PRAZO_PROXIMO";
+            texto: string;
+            /** Format: uuid */
+            turmaId: string;
+            /** Format: uuid */
+            atividadeId?: string | null;
+            /** Format: uuid */
+            avisoId?: string | null;
+            /** Format: date-time */
+            criadaEm: string;
+            lida: boolean;
+            /** @description O destinatário é o professor da turma (o front usa para escolher o link). */
+            paraProfessor: boolean;
+        };
+        Notificacoes: {
+            /** @description Todas as não lidas, mesmo as que passam do limite de 50 itens. */
+            naoLidas: number;
+            itens: components["schemas"]["Notificacao"][];
+            prazosProximos: components["schemas"]["Notificacao"][];
         };
         PerfilDocente: {
             nivelDocente: number;
@@ -1041,6 +1255,61 @@ export interface operations {
             422: components["responses"]["Problem"];
         };
     };
+    listComentariosAtividade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comentario"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createComentarioAtividade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    texto: string;
+                    /** Format: uuid */
+                    comentarioPaiId?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comentario"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
     listSemEntrega: {
         parameters: {
             query?: never;
@@ -1196,6 +1465,269 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listAlunosDaTurma: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegranteDeGrupo"][];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getConfiguracaoDeGrupos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfiguracaoDeGrupos"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    putConfiguracaoDeGrupos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfiguracaoDeGrupos"];
+            };
+        };
+        responses: {
+            /** @description Salva */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfiguracaoDeGrupos"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listGrupos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Grupo"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    solicitarGrupo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrupoInput"];
+            };
+        };
+        responses: {
+            /** @description Solicitado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Grupo"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    decidirGrupo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                grupoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    aprovado: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Decidido */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Grupo"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    entrarNoGrupo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                grupoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Entrou */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Grupo"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    sairDoGrupo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                grupoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saiu */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listNotificacoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notificacoes"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    marcarNotificacaoLida: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificacaoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Marcada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    marcarTodasNotificacoesLidas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Marcadas */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     getPerfilGamificacao: {

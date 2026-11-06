@@ -27,11 +27,12 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 | 8 | RF04 | Entregar atividade (upload de arquivo) — **por último** | quem estuda |
 | 9 | RF16 | Acessar e baixar entregas — **por último** | quem leciona |
 | 10 | RF13 | Postar avisos no mural da turma | quem leciona |
-| 11 | RF14 | Comentar nos avisos | todos da turma |
+| 11 | RF14 | Comentar e responder nos avisos e nas atividades | todos da turma |
+| 12 | RF17 | Notificações no app (sino): aviso, atividade nova ou alterada, nota, comentário e resposta, prazo próximo | todos |
 
 **Fora do escopo por decisão (RF10 e RF05):** a atividade **não tem complexidade nem modalidade**. A modalidade é o próprio tipo (`PROJETO_EM_GRUPO` é em grupo), então o filtro por tipo a cobre; a complexidade não foi implementada, e portanto não há filtro nem ordenação por ela. Decisão confirmada com o Luiz Felipe; o texto original está em [`docs/requisitos.md`](docs/requisitos.md) com o registro.
 
-RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
+RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). O comentário em atividade (RF14) e as notificações (RF17) entraram em 05/11/2026. RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
 
 **Estado (19/10/2026):** os nove requisitos P1 estão implementados no front, no back-end e no banco, e **em produção** em `https://rural-sala-de-aula.narniano.com`. Verificado de ponta a ponta contra a API real:
 
@@ -40,6 +41,8 @@ RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). RF0
 - `npm test` (276 testes do front contra a API simulada), `npm run typecheck`, `npm run lint` e `npm run build`.
 
 Tudo isso roda no GitHub Actions (`.github/workflows/ci.yml`) em cada push na `main` e em cada PR, com a migration do Flyway aplicada num Postgres vazio.
+
+**Depois da P1 (05/11/2026, ainda sem deploy):** comentários e respostas na página da atividade, e a central de notificações (sino no cabeçalho; só dentro do app, sem e-mail nem push). Verificado localmente: `scripts/smoke-p1.py` com 173 verificações, `npm test` com 321 testes do front, jornada pela interface com 6 testes e 5 testes de unidade da API (`NotificacaoServiceTest` e `LimitadorDeTentativasTest`; o `contextLoads` precisa de um Postgres em `localhost:5432`).
 
 Os dois primeiros também rodam contra produção (`python3 -I scripts/smoke-p1.py https://rural-sala-de-aula.narniano.com/api/v1` e `E2E_BASE_URL=https://rural-sala-de-aula.narniano.com npm run test:e2e:real`). Eles criam usuários `@teste.rural`; a limpeza fica no repositório de infraestrutura (`hetzner-infra`, passo de limpeza dos testes).
 
@@ -51,7 +54,7 @@ O que falta para endurecer o que já está no ar (restore dos uploads com arquiv
 
 ## Backlog (sem data)
 
-Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF06, RF07, RF08, RF12, RF17, os RNF, a logo própria e as pendências do back-end.
+Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF06, RF07, RF08, RF12, os RNF, a logo própria e as pendências do back-end.
 
 > O documento de requisitos numera duas vezes o RF03. Aqui, "Consultar turma" é RF03 e "Sair da turma" é RF03b (já feito, junto com RF11, RF14b, a lista de quem não entregou e o hash SHA-256, entre as entregas 1 e 2).
 

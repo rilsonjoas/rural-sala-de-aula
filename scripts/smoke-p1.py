@@ -340,6 +340,171 @@ s, lst = aluno.call("GET", f"/turmas/{tid}/avisos")
 com = next((a["comentarios"] for a in lst if a["id"] == aid), [])
 check("RF14b", "o mural devolve o vinculo das respostas", any(c.get("comentarioPaiId") == pai.get("id") for c in com), com)
 
+# ---------------- RF14a comentarios em atividade
+print("RF14a Comentarios em atividade")
+s, lst = aluno.call("GET", f"/atividades/{A}/comentarios")
+check("RF14a", "lista de comentarios da atividade comeca vazia (200)", s == 200 and lst == [], f"{s} {lst}")
+s, ca = aluno.call("POST", f"/atividades/{A}/comentarios", {"texto": "Duvida sobre a atividade"})
+check("RF14a", "aluno comenta na atividade (201, com atividadeId)", s == 201 and ca.get("atividadeId") == A and ca.get("avisoId") is None, f"{s} {ca}")
+s, cb = prof.call("POST", f"/atividades/{A}/comentarios", {"texto": "Resposta do professor", "comentarioPaiId": ca.get("id")})
+check("RF14a", "professor responde na atividade (201, com o pai)", s == 201 and cb.get("comentarioPaiId") == ca.get("id"), f"{s} {cb}")
+s, cc = aluno.call("POST", f"/atividades/{A}/comentarios", {"texto": "Aluno responde ao professor", "comentarioPaiId": cb.get("id")})
+check("RF14a", "resposta a uma resposta fica sob o comentario original", s == 201 and cc.get("comentarioPaiId") == ca.get("id"), f"{s} {cc}")
+s, cd = prof.call("POST", f"/atividades/{A}/comentarios", {"texto": "Comentario do professor"})
+check("RF14a", "professor comenta sem pai (201)", s == 201 and cd.get("comentarioPaiId") is None, f"{s} {cd}")
+s, lst = prof.call("GET", f"/atividades/{A}/comentarios")
+check("RF14a", "lista os quatro comentarios em ordem", s == 200 and [c.get("id") for c in lst] == [ca["id"], cb["id"], cc["id"], cd["id"]], f"{s} {lst}")
+s, b = prof2.call("GET", f"/atividades/{A}/comentarios")
+check("RF14a", "quem nao e da turma nao lista (404)", s == 404, f"{s} {b}")
+s, b = prof2.call("POST", f"/atividades/{A}/comentarios", {"texto": "intruso"})
+check("RF14a", "quem nao e da turma nao comenta (404)", s == 404, f"{s} {b}")
+s, b = aluno.call("POST", f"/atividades/{A}/comentarios", {"texto": "  "})
+check("RF14a", "comentario vazio recusado (422)", s == 422, f"{s} {b}")
+s, b = aluno.call("POST", f"/atividades/{A}/comentarios", {"texto": "x", "comentarioPaiId": str(uuid.uuid4())})
+check("RF14a", "pai inexistente recusado (422)", s == 422, f"{s} {b}")
+s, b = aluno.call("POST", f"/atividades/{A}/comentarios", {"texto": "x", "comentarioPaiId": pai.get("id")})
+check("RF14a", "pai de um aviso nao vale na atividade (422)", s == 422, f"{s} {b}")
+outra = ativ["PROVA"]
+s, b = aluno.call("POST", f"/atividades/{outra}/comentarios", {"texto": "x", "comentarioPaiId": ca.get("id")})
+check("RF14a", "pai de outra atividade recusado (422)", s == 422, f"{s} {b}")
+s, futura = prof.call("POST", f"/turmas/{tid}/atividades", {"nome": f"Futura {tag}", "tipo": "PROVA", "prazoFinal": iso(timedelta(days=9)), "disponivelEm": iso(timedelta(days=2))})
+FUT = futura.get("id") if isinstance(futura, dict) else None
+s, b = prof.call("POST", f"/atividades/{FUT}/comentarios", {"texto": "Professor comenta antes de abrir"})
+check("RF14a", "professor comenta em atividade ainda fechada (201)", s == 201, f"{s} {b}")
+s, b = aluno.call("GET", f"/atividades/{FUT}/comentarios")
+check("RF14a", "aluno nao lista comentarios de atividade fechada (404)", s == 404, f"{s} {b}")
+s, b = aluno.call("POST", f"/atividades/{FUT}/comentarios", {"texto": "x"})
+check("RF14a", "aluno nao comenta em atividade fechada (404)", s == 404, f"{s} {b}")
+s, b = aluno.call("POST", f"/avisos/{aid}/comentarios", {"texto": "x", "comentarioPaiId": ca.get("id")})
+check("RF14a", "pai de uma atividade nao vale no aviso (422)", s == 422, f"{s} {b}")
+s, lst = aluno.call("GET", f"/turmas/{tid}/avisos")
+com = next((a["comentarios"] for a in lst if a["id"] == aid), [])
+check("RF14a", "o mural nao mistura comentarios de atividade", all(c.get("atividadeId") is None and c.get("avisoId") == aid for c in com), com)
+
+# ---------------- RF17 notificacoes: leitura, atividade nova, prazo proximo
+print("RF17 Notificacoes")
+
+
+def notif(c):
+    s_, b_ = c.call("GET", "/notificacoes")
+    return s_, (b_ if s_ == 200 and isinstance(b_, dict) else {"naoLidas": -1, "itens": [], "prazosProximos": []})
+
+
+def do_tipo(b_, tipo, atividade_id):
+    return [i for i in b_["itens"] if i.get("tipo") == tipo and i.get("atividadeId") == atividade_id]
+
+
+s, b = Client("anon").call("GET", "/notificacoes")
+check("RF17", "sem sessao nao le notificacoes (401)", s == 401, f"{s} {b}")
+leaver = Client("leaver")
+leaver.call("POST", "/auth/register", {"nome": "Leaver", "email": email("leaver"), "senha": SENHA})
+leaver.call("POST", "/inscricoes", {"codigo": codigo})
+s, N = prof.call("POST", f"/turmas/{tid}/atividades", {"nome": f"Notif prazo curto {tag}", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(hours=24))})
+s, L = prof.call("POST", f"/turmas/{tid}/atividades", {"nome": f"Notif prazo longo {tag}", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=5))})
+s, F2 = prof.call("POST", f"/turmas/{tid}/atividades", {"nome": f"Notif ainda fechada {tag}", "tipo": "PROVA", "prazoFinal": iso(timedelta(hours=20)), "disponivelEm": iso(timedelta(hours=1))})
+N, L, F2 = N.get("id"), L.get("id"), F2.get("id")
+
+# varias chamadas simultaneas de um aluno que ainda nao abriu o sino: nada de duplicata
+with ThreadPoolExecutor(max_workers=4) as pool:
+    resp = list(pool.map(lambda _: intruso.call("GET", "/notificacoes"), range(4)))
+check("RF17", "chamadas simultaneas respondem 200", all(r[0] == 200 for r in resp), [r[0] for r in resp])
+s, bi = notif(intruso)
+check("RF17", "chamadas simultaneas nao duplicam a atividade nova", len(do_tipo(bi, "ATIVIDADE_NOVA", N)) == 1, bi["itens"])
+
+s, ba = notif(aluno)
+check("RF17", "aluno recebe uma atividade nova quando ela abre (200)", s == 200 and len(do_tipo(ba, "ATIVIDADE_NOVA", N)) == 1 and len(do_tipo(ba, "ATIVIDADE_NOVA", L)) == 1, f"{s} {ba}")
+check("RF17", "atividade ainda fechada nao gera atividade nova", not do_tipo(ba, "ATIVIDADE_NOVA", F2) and not do_tipo(ba, "ATIVIDADE_NOVA", FUT), ba["itens"])
+novo = do_tipo(ba, "ATIVIDADE_NOVA", N)[0] if do_tipo(ba, "ATIVIDADE_NOVA", N) else {}
+check("RF17", "a notificacao traz turma, atividade e texto, nao lida", novo.get("turmaId") == tid and novo.get("lida") is False and novo.get("texto") and novo.get("paraProfessor") is False, novo)
+s, bp = notif(prof)
+check("RF17", "professor nao recebe atividade nova", s == 200 and not [i for i in bp["itens"] if i.get("tipo") == "ATIVIDADE_NOVA"], bp["itens"])
+check("RF17", "o contador conta as nao lidas", ba["naoLidas"] == sum(1 for i in ba["itens"] if not i["lida"]) and ba["naoLidas"] >= 2, ba["naoLidas"])
+
+ids_prazo = [i["id"] for i in ba["prazosProximos"]]
+check("RF17", "prazo em 24 h aparece como prazo proximo", f"prazo-{N}" in ids_prazo, ba["prazosProximos"])
+check("RF17", "prazo em 5 dias e atividade fechada nao aparecem", f"prazo-{L}" not in ids_prazo and f"prazo-{F2}" not in ids_prazo, ids_prazo)
+check("RF17", "prazo proximo nao conta como nao lida", all(i["id"].startswith("prazo-") and i["tipo"] == "PRAZO_PROXIMO" for i in ba["prazosProximos"]) and ba["naoLidas"] == sum(1 for i in ba["itens"] if not i["lida"]), ba["prazosProximos"])
+s, e = aluno.upload(f"/atividades/{N}/entregas", "entrega.pdf", pdf, "application/pdf")
+s, ba2 = notif(aluno)
+check("RF17", "entregou: o prazo proximo some", s == 200 and f"prazo-{N}" not in [i["id"] for i in ba2["prazosProximos"]], ba2["prazosProximos"])
+
+nao_lidas = [i for i in ba["itens"] if not i["lida"]]
+alvo = nao_lidas[0]["id"]
+s, _ = aluno.call("POST", f"/notificacoes/{alvo}/lida")
+s2, bl = notif(aluno)
+check("RF17", "marcar como lida (204) baixa o contador em 1", s == 204 and bl["naoLidas"] == ba["naoLidas"] - 1, f"{s} {bl['naoLidas']} {ba['naoLidas']}")
+s, _ = aluno.call("POST", f"/notificacoes/{alvo}/lida")
+check("RF17", "marcar de novo e idempotente (204)", s == 204, s)
+outro = nao_lidas[1]["id"]
+s, b = prof2.call("POST", f"/notificacoes/{outro}/lida")
+s2, bl2 = notif(aluno)
+check("RF17", "marcar a notificacao de outro usuario da 404 e nao a altera", s == 404 and bl2["naoLidas"] == bl["naoLidas"], f"{s} {bl2['naoLidas']} {bl['naoLidas']}")
+s, b = aluno.call("POST", f"/notificacoes/{uuid.uuid4()}/lida")
+check("RF17", "notificacao inexistente da 404", s == 404, f"{s} {b}")
+s, _ = aluno.call("POST", "/notificacoes/lidas")
+s2, bl3 = notif(aluno)
+check("RF17", "marcar todas como lidas (204) zera o contador", s == 204 and bl3["naoLidas"] == 0, f"{s} {bl3['naoLidas']}")
+
+s, bv = notif(leaver)
+check("RF17", "quem entrou na turma recebe as atividades abertas depois da inscricao", len(do_tipo(bv, "ATIVIDADE_NOVA", N)) == 1 and bv["naoLidas"] >= 2, bv)
+leaver.call("DELETE", f"/turmas/{tid}/inscricao")
+s, bv2 = notif(leaver)
+check("RF17", "quem saiu da turma nao ve mais notificacoes nem prazos dela", s == 200 and not [i for i in bv2["itens"] if i.get("turmaId") == tid] and not bv2["prazosProximos"] and bv2["naoLidas"] == 0, bv2)
+
+# ---------------- RF17 notificacoes geradas pelos eventos
+print("RF17 Notificacoes dos eventos")
+EN = e.get("id") if isinstance(e, dict) else None
+
+
+def tipos(c, tipo, **campos):
+    _, b_ = notif(c)
+    return [i for i in b_["itens"] if i.get("tipo") == tipo and all(i.get(k) == v for k, v in campos.items())]
+
+
+s, av2 = prof.call("POST", f"/turmas/{tid}/avisos", {"texto": f"Aviso das notificacoes {tag}"})
+AV2 = av2.get("id")
+check("RF17", "aviso novo notifica os alunos da turma", len(tipos(aluno, "AVISO_NOVO", avisoId=AV2)) == 1 and len(tipos(intruso, "AVISO_NOVO", avisoId=AV2)) == 1, notif(aluno)[1]["itens"][:2])
+check("RF17", "aviso novo nao notifica o proprio professor", not tipos(prof, "AVISO_NOVO", avisoId=AV2), notif(prof)[1]["itens"][:2])
+check("RF17", "quem saiu da turma nao e notificado do aviso", not tipos(leaver, "AVISO_NOVO", avisoId=AV2), notif(leaver)[1]["itens"])
+
+edicao = {"nome": f"Notif longo editado {tag}", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=6))}
+s, b = prof.call("PUT", f"/atividades/{L}", edicao)
+check("RF17", "editar atividade aberta notifica os alunos (ATIVIDADE_ALTERADA)", s == 200 and len(tipos(aluno, "ATIVIDADE_ALTERADA", atividadeId=L)) == 1, f"{s} {b}")
+prof.call("PUT", f"/atividades/{L}", edicao)
+check("RF17", "salvar de novo sem mudar nada nao notifica outra vez", len(tipos(aluno, "ATIVIDADE_ALTERADA", atividadeId=L)) == 1, tipos(aluno, "ATIVIDADE_ALTERADA", atividadeId=L))
+check("RF17", "o professor nao e notificado da propria edicao", not tipos(prof, "ATIVIDADE_ALTERADA"), notif(prof)[1]["itens"][:2])
+prof.call("PUT", f"/atividades/{F2}", {"nome": f"Notif fechada editada {tag}", "tipo": "PROVA", "prazoFinal": iso(timedelta(hours=21)), "disponivelEm": iso(timedelta(hours=1))})
+check("RF17", "editar atividade ainda fechada nao notifica", not tipos(aluno, "ATIVIDADE_ALTERADA", atividadeId=F2), notif(aluno)[1]["itens"][:3])
+
+s, b = prof.call("PUT", f"/entregas/{EN}/avaliacao", {"nota": 7})
+check("RF17", "publicar nota notifica o aluno da entrega", s == 200 and len(tipos(aluno, "NOTA_PUBLICADA", atividadeId=N)) == 1, f"{s} {b}")
+check("RF17", "so o aluno da entrega e notificado da nota", not tipos(intruso, "NOTA_PUBLICADA") and not tipos(prof, "NOTA_PUBLICADA"), "")
+prof.call("PUT", f"/entregas/{EN}/avaliacao", {"nota": 8})
+check("RF17", "reavaliar notifica de novo", len(tipos(aluno, "NOTA_PUBLICADA", atividadeId=N)) == 2, tipos(aluno, "NOTA_PUBLICADA", atividadeId=N))
+
+s, ra = aluno.call("POST", f"/atividades/{L}/comentarios", {"texto": "Duvida que notifica"})
+t_prof = tipos(prof, "COMENTARIO_NOVO", atividadeId=L)
+check("RF17", "aluno comenta na atividade: o professor e notificado (paraProfessor)", len(t_prof) == 1 and t_prof[0].get("paraProfessor") is True and t_prof[0].get("avisoId") is None, t_prof)
+check("RF17", "o autor do comentario nao e notificado", not tipos(aluno, "COMENTARIO_NOVO") and not tipos(aluno, "RESPOSTA_NOVA", atividadeId=L), "")
+s, rb = prof.call("POST", f"/atividades/{L}/comentarios", {"texto": "Resposta que notifica", "comentarioPaiId": ra.get("id")})
+check("RF17", "professor responde: o autor do comentario e notificado", len(tipos(aluno, "RESPOSTA_NOVA", atividadeId=L)) == 1 and not tipos(prof, "RESPOSTA_NOVA", atividadeId=L), tipos(aluno, "RESPOSTA_NOVA", atividadeId=L))
+n_antes = len(notif(aluno)[1]["itens"]), len(notif(intruso)[1]["itens"])
+prof.call("POST", f"/atividades/{L}/comentarios", {"texto": "Comentario solto do professor"})
+check("RF17", "comentario do professor sem pai nao notifica ninguem", (len(notif(aluno)[1]["itens"]), len(notif(intruso)[1]["itens"])) == n_antes, n_antes)
+s, rc = prof.call("POST", f"/atividades/{L}/comentarios", {"texto": "Pergunta do professor"})
+s, rd = aluno.call("POST", f"/atividades/{L}/comentarios", {"texto": "Aluno responde ao professor", "comentarioPaiId": rc.get("id")})
+t_resp = tipos(prof, "RESPOSTA_NOVA", atividadeId=L)
+check("RF17", "aluno responde ao professor: o professor e notificado (paraProfessor)", len(t_resp) == 1 and t_resp[0].get("paraProfessor") is True, t_resp)
+s, rv = aluno.call("POST", f"/avisos/{AV2}/comentarios", {"texto": "Duvida no mural"})
+t_av = tipos(prof, "COMENTARIO_NOVO", avisoId=AV2)
+check("RF17", "comentario de aluno no mural notifica o professor (com avisoId)", len(t_av) == 1 and t_av[0].get("atividadeId") is None, t_av)
+
+# mais de 50 notificacoes: a lista corta em 50, o contador conta todas as nao lidas
+for k in range(52):
+    prof.call("POST", f"/turmas/{tid}/avisos", {"texto": f"Aviso em massa {k} {tag}"})
+s, bm = notif(intruso)
+check("RF17", "a lista corta em 50 itens e o contador conta todas as nao lidas", s == 200 and len(bm["itens"]) == 50 and bm["naoLidas"] > 50, f"{s} itens={len(bm['itens'])} naoLidas={bm['naoLidas']}")
+
 # ---------------- integridade: envios simultaneos do mesmo aluno
 print("Integridade das entregas (RNF02): envios simultaneos")
 s, conc = prof.call("POST", f"/turmas/{tid}/atividades", {"nome": f"Concorrencia {tag}", "tipo": "LISTA_DE_EXERCICIO", "prazoFinal": iso(timedelta(days=2)), "disponivelEm": iso(timedelta(hours=-1))})

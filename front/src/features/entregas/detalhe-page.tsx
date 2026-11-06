@@ -10,6 +10,7 @@ import { ROTULO_TIPO } from '@/features/atividades/filtros';
 import { ApiError } from '@/lib/api-error';
 import { formatDataHora } from '@/lib/format';
 import { usePageTitle } from '@/lib/use-page-title';
+import { ComentariosAtividade } from '@/features/comentarios/comentarios-atividade';
 import { SuaEntrega } from './sua-entrega';
 
 const chip = 'inline-flex min-h-6 items-center rounded-full bg-secondary px-2.5 text-xs font-semibold text-primary';
@@ -102,6 +103,8 @@ export function DetalheAtividadePage() {
       ) : null}
 
       <SuaEntrega atividade={a} />
+
+      <ComentariosAtividade atividadeId={a.id} />
     </section>
   );
 }

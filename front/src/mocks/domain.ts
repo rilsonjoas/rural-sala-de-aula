@@ -51,9 +51,35 @@ export type AvisoDb = {
   comentarios?: ComentarioDb[];
 };
 
+export type GrupoDb = {
+  id: string;
+  turmaId: string;
+  nome: string;
+  status: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
+  criadoPorId: string;
+  integrantesIds: string[];
+};
+
+export type ConfiguracaoDeGruposDb = { minimoIntegrantes: number; maximoIntegrantes: number; maximoGrupos: number | null };
+
+export const CONFIGURACAO_PADRAO_DE_GRUPOS: ConfiguracaoDeGruposDb = { minimoIntegrantes: 2, maximoIntegrantes: 5, maximoGrupos: null };
+
+export type NotificacaoDb = {
+  id: string;
+  usuarioId: string;
+  tipo: 'AVISO_NOVO' | 'ATIVIDADE_NOVA' | 'ATIVIDADE_ALTERADA' | 'COMENTARIO_NOVO' | 'RESPOSTA_NOVA' | 'NOTA_PUBLICADA';
+  texto: string;
+  turmaId: string;
+  atividadeId: string | null;
+  avisoId: string | null;
+  criadaEm: string;
+  lida: boolean;
+};
+
 export type ComentarioDb = {
   id: string;
-  avisoId: string;
+  avisoId: string | null;
+  atividadeId?: string | null;
   comentarioPaiId?: string | null;
   autorId: string;
   autorNome: string;

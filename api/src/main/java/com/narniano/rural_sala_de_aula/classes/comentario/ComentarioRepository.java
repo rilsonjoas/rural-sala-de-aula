@@ -9,4 +9,6 @@ import java.util.UUID;
 @Repository
 public interface ComentarioRepository extends JpaRepository<Comentario, UUID> {
     List<Comentario> findByAvisoIdOrderByHorarioAsc(UUID avisoId);
+
+    List<Comentario> findByAtividadeIdOrderByHorarioAsc(UUID atividadeId);
 }

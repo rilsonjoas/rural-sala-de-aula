@@ -1,3 +1,4 @@
+import { notificarNoMock } from './notificacoes';
 import { HttpResponse, http } from 'msw';
 import { db, usuarioDaSessao } from '../db';
 import { dadosInvalidos, naoAutenticado, naoEncontrado, problem, proibido } from './problem';
@@ -107,6 +108,11 @@ export const entregasHandlers = [
       existente.comentarioPrivado = comentario;
     } else {
       db.avaliacoes.push({ entregaId: entrega.id, nota: arredondada, comentarioPrivado: comentario });
+    }
+
+    const atividade = db.atividades.find((a) => a.id === entrega.atividadeId);
+    if (atividade) {
+      notificarNoMock(entrega.alunoId, 'NOTA_PUBLICADA', `Sua entrega de ${atividade.nome} foi avaliada.`, atividade.turmaId, atividade.id, null);
     }
 
     return HttpResponse.json(paraEntregaApi(entrega));

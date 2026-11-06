@@ -1,5 +1,7 @@
 package com.narniano.rural_sala_de_aula.classes.entrega;
 
+import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
+import com.narniano.rural_sala_de_aula.classes.notificacao.TipoNotificacao;
 import com.narniano.rural_sala_de_aula.classes.arquivo.Arquivo;
 import com.narniano.rural_sala_de_aula.classes.arquivo.ArquivoRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
@@ -44,6 +46,7 @@ public class EntregaService {
     private final InscricaoRepository inscricaoRepository;
     private final ArquivoRepository arquivoRepository;
     private final AtividadeService atividadeService;
+    private final NotificacaoService notificacaoService;
 
     @Transactional
     public ResponseEntregaIndividualDTO enviar(UUID atividadeId, MultipartFile file, Usuario aluno) {
@@ -146,6 +149,9 @@ public class EntregaService {
         entrega.setComentarioPrivado(dto.comentarioPrivado() != null ? dto.comentarioPrivado().trim() : null);
 
         EntregaIndividual salva = entregaRepository.save(entrega);
+        notificacaoService.notificar(salva.getAluno(), TipoNotificacao.NOTA_PUBLICADA,
+                "Sua entrega de " + salva.getAtividade().getNome() + " foi avaliada.",
+                salva.getAtividade().getTurma(), salva.getAtividade(), null);
         return atividadeService.mapearEntregaParaDTO(salva);
     }
 

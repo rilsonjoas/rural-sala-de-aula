@@ -13,6 +13,8 @@ Estado em **20/10/2026**. O escopo P1 está entregue e em produção; o que segu
 
 Produção roda o commit `c8d15f1` desde 29/10 (gamificação derivada e ética com nível, XP e conquistas em aba dedicada no front; rate limit, `commit` no `/health`, sessão no Postgres, RF03b, RF11, RF14b, sem-entrega e hash); smoke de produção 120/120 e jornada pela interface 5/5. Publicar: `make sala-deploy` na VPS; conferir: `make sala-versao`.
 
+Na branch `feat/comentarios-atividade-e-notificacoes` (05/11/2026, **sem deploy**): comentário em atividade (migration V4, `GET/POST /atividades/{id}/comentarios`) e central de notificações (migration V5, `GET /notificacoes`, marcar como lida). Local: smoke 173/173, front 321/321 (`tsc`, ESLint e build limpos), jornada pela interface 6/6, JUnit 5/5 (o `contextLoads` precisa de Postgres local). Para publicar: merge, `make sala-deploy` e rodar o smoke e a jornada contra produção.
+
 ## Decisões de escopo (não voltar a discutir sem motivo novo)
 
 - **Complexidade e modalidade da atividade: não serão implementadas** (confirmado com o Luiz Felipe). A modalidade é o próprio tipo (`PROJETO_EM_GRUPO`). Detalhes em `requisitos.md` ("Onde o projeto decidiu diferente").

@@ -5,6 +5,8 @@ import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.Entreg
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.ResponseEntregaIndividualDTO;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
+import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
+import com.narniano.rural_sala_de_aula.classes.notificacao.TipoNotificacao;
 import com.narniano.rural_sala_de_aula.classes.turma.Turma;
 import com.narniano.rural_sala_de_aula.classes.turma.TurmaRepository;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
@@ -27,6 +29,7 @@ public class AtividadeService {
     private final TurmaRepository turmaRepository;
     private final InscricaoRepository inscricaoRepository;
     private final EntregaIndividualRepository entregaRepository;
+    private final NotificacaoService notificacaoService;
 
     @Transactional
     public ResponseAtividadeDTO cadastrar(UUID turmaId, RequestAtividadeDTO dto, Usuario usuario) {
@@ -65,16 +68,30 @@ public class AtividadeService {
         LocalDateTime disponivelEm = dto.disponivelEm() != null ? dto.disponivelEm() : atividade.getDisponivelEm();
         validarPrazo(dto.prazoFinal(), disponivelEm);
 
-        atividade.setNome(dto.nome().trim());
-        atividade.setDescricao(dto.descricao() != null ? dto.descricao().trim() : null);
+        // so avisa os alunos se a atividade ja estava visivel para eles e algo relevante mudou
+        boolean jaVisivel = !atividade.getDisponivelEm().isAfter(LocalDateTime.now());
+        String novoNome = dto.nome().trim();
+        String novaDescricao = dto.descricao() != null ? dto.descricao().trim() : null;
+        boolean novoAceitaAtraso = dto.aceitaAtraso() != null ? dto.aceitaAtraso() : atividade.isAceitaAtraso();
+        boolean mudou = !novoNome.equals(atividade.getNome())
+                || !Objects.equals(novaDescricao, atividade.getDescricao())
+                || dto.tipo() != atividade.getTipo()
+                || !disponivelEm.equals(atividade.getDisponivelEm())
+                || !dto.prazoFinal().equals(atividade.getPrazoFinal())
+                || novoAceitaAtraso != atividade.isAceitaAtraso();
+
+        atividade.setNome(novoNome);
+        atividade.setDescricao(novaDescricao);
         atividade.setTipo(dto.tipo());
         atividade.setDisponivelEm(disponivelEm);
         atividade.setPrazoFinal(dto.prazoFinal());
-        if (dto.aceitaAtraso() != null) {
-            atividade.setAceitaAtraso(dto.aceitaAtraso());
+        atividade.setAceitaAtraso(novoAceitaAtraso);
+        Atividade salva = atividadeRepository.save(atividade);
+        if (jaVisivel && mudou) {
+            notificacaoService.notificarAlunosDaTurma(salva.getTurma(), usuario, TipoNotificacao.ATIVIDADE_ALTERADA,
+                    "A atividade " + salva.getNome() + " foi alterada.", salva, null);
         }
-
-        return mapearParaDTO(atividadeRepository.save(atividade), null, null);
+        return mapearParaDTO(salva, null, null);
     }
 
     @Transactional(readOnly = true)

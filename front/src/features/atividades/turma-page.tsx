@@ -1,6 +1,6 @@
 import { ArrowLeft, ClipboardList, Clock, Megaphone, Users } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '@/components/empty-state';
 import { ErrorState } from '@/components/error-state';
 import { Button } from '@/components/ui/button';
@@ -53,6 +53,13 @@ export function TurmaPage() {
   const professor = Boolean(turma.data && usuario && turma.data.professorId === usuario.id);
   usePageTitle(turma.data?.nome ?? 'Turma');
   const [abaAtiva, setAbaAtiva] = useState<'mural' | 'atividades'>('mural');
+  const [searchParams] = useSearchParams();
+  const abaDaUrl = searchParams.get('aba');
+
+  // as notificações de aviso levam a ?aba=mural, mesmo com a turma já aberta na aba Atividades
+  useEffect(() => {
+    if (abaDaUrl === 'mural') setAbaAtiva('mural');
+  }, [abaDaUrl]);
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [folhaAberta, setFolhaAberta] = useState(false);
   const [editando, setEditando] = useState<Atividade | null>(null);

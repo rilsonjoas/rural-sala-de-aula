@@ -51,9 +51,22 @@ export type AvisoDb = {
   comentarios?: ComentarioDb[];
 };
 
+export type NotificacaoDb = {
+  id: string;
+  usuarioId: string;
+  tipo: 'AVISO_NOVO' | 'ATIVIDADE_NOVA' | 'ATIVIDADE_ALTERADA' | 'COMENTARIO_NOVO' | 'RESPOSTA_NOVA' | 'NOTA_PUBLICADA';
+  texto: string;
+  turmaId: string;
+  atividadeId: string | null;
+  avisoId: string | null;
+  criadaEm: string;
+  lida: boolean;
+};
+
 export type ComentarioDb = {
   id: string;
-  avisoId: string;
+  avisoId: string | null;
+  atividadeId?: string | null;
   comentarioPaiId?: string | null;
   autorId: string;
   autorNome: string;

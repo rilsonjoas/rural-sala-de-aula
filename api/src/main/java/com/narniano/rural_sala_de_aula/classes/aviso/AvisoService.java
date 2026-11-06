@@ -1,10 +1,11 @@
 package com.narniano.rural_sala_de_aula.classes.aviso;
 
-import com.narniano.rural_sala_de_aula.classes.comentario.Comentario;
-import com.narniano.rural_sala_de_aula.classes.comentario.ComentarioRepository;
+import com.narniano.rural_sala_de_aula.classes.comentario.ComentarioService;
 import com.narniano.rural_sala_de_aula.classes.comentario.RequestComentarioDTO;
 import com.narniano.rural_sala_de_aula.classes.comentario.ResponseComentarioDTO;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
+import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
+import com.narniano.rural_sala_de_aula.classes.notificacao.TipoNotificacao;
 import com.narniano.rural_sala_de_aula.classes.turma.Turma;
 import com.narniano.rural_sala_de_aula.classes.turma.TurmaRepository;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
@@ -24,9 +25,10 @@ import java.util.UUID;
 public class AvisoService {
 
     private final AvisoRepository avisoRepository;
-    private final ComentarioRepository comentarioRepository;
+    private final ComentarioService comentarioService;
     private final TurmaRepository turmaRepository;
     private final InscricaoRepository inscricaoRepository;
+    private final NotificacaoService notificacaoService;
 
     @Transactional
     public ResponseAvisoDTO criarAviso(UUID turmaId, RequestAvisoDTO dto, Usuario autor) {
@@ -45,6 +47,8 @@ public class AvisoService {
         aviso.setHorario(LocalDateTime.now());
 
         Aviso salvo = avisoRepository.save(aviso);
+        notificacaoService.notificarAlunosDaTurma(turma, autor, TipoNotificacao.AVISO_NOVO,
+                "Novo aviso em " + turma.getNome() + ".", null, salvo);
         return new ResponseAvisoDTO(
                 salvo.getId(),
                 turma.getId(),
@@ -66,10 +70,7 @@ public class AvisoService {
         List<Aviso> avisos = avisoRepository.findByTurmaIdOrderByHorarioDesc(turmaId);
         return avisos.stream()
                 .map(a -> {
-                    List<ResponseComentarioDTO> comentarios = comentarioRepository.findByAvisoIdOrderByHorarioAsc(a.getId())
-                            .stream()
-                            .map(this::paraDTO)
-                            .toList();
+                    List<ResponseComentarioDTO> comentarios = comentarioService.listarDoAviso(a.getId());
 
                     return new ResponseAvisoDTO(
                             a.getId(),
@@ -91,21 +92,7 @@ public class AvisoService {
 
         validarMembroDaTurma(aviso.getTurma(), autor);
 
-        Comentario comentario = new Comentario();
-        if (dto.comentarioPaiId() != null) {
-            Comentario pai = comentarioRepository.findById(dto.comentarioPaiId())
-                    .filter(c -> c.getAviso().getId().equals(avisoId))
-                    .orElseThrow(() -> new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "O comentário respondido não existe neste aviso."));
-            // so um nivel de resposta: responder a uma resposta vira resposta ao comentario original
-            comentario.setComentarioPai(pai.getComentarioPai() != null ? pai.getComentarioPai() : pai);
-        }
-        comentario.setAviso(aviso);
-        comentario.setUsuario(autor);
-        comentario.setTexto(dto.texto().trim());
-        comentario.setHorario(LocalDateTime.now());
-
-        Comentario salvo = comentarioRepository.save(comentario);
-        return paraDTO(salvo);
+        return comentarioService.criarNoAviso(aviso, dto, autor);
     }
 
     @Transactional(readOnly = true)
@@ -115,21 +102,7 @@ public class AvisoService {
 
         validarMembroDaTurma(aviso.getTurma(), usuario);
 
-        return comentarioRepository.findByAvisoIdOrderByHorarioAsc(avisoId).stream()
-                .map(this::paraDTO)
-                .toList();
-    }
-
-    private ResponseComentarioDTO paraDTO(Comentario c) {
-        return new ResponseComentarioDTO(
-                c.getId(),
-                c.getAviso().getId(),
-                c.getComentarioPai() != null ? c.getComentarioPai().getId() : null,
-                c.getUsuario().getId(),
-                c.getUsuario().getNome(),
-                c.getTexto(),
-                c.getHorario()
-        );
+        return comentarioService.listarDoAviso(avisoId);
     }
 
     private void validarMembroDaTurma(Turma turma, Usuario usuario) {

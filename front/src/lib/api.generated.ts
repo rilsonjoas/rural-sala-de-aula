@@ -246,6 +246,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/atividades/{atividadeId}/comentarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lista os comentários de uma atividade (professor da turma ou aluno inscrito com a atividade já disponível). */
+        get: operations["listComentariosAtividade"];
+        put?: never;
+        /** Comenta ou responde em uma atividade. Professor e alunos podem responder; só um nível de resposta. */
+        post: operations["createComentarioAtividade"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/atividades/{atividadeId}/sem-entrega": {
         parameters: {
             query?: never;
@@ -311,6 +329,57 @@ export interface paths {
         /** Somente PROFESSOR dono da turma. Nota de 0 a 10 e comentário. */
         put: operations["evaluateEntrega"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Central de notificações do usuário (sino). Gera as "atividade nova" pendentes na leitura. Até 50 itens gravados, mais os prazos próximos (48 h, atividade aberta e não entregue), que são calculados e não contam como não lidas. */
+        get: operations["listNotificacoes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes/{notificacaoId}/lida": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marca uma notificação como lida (idempotente). Notificação de outro usuário é 404. */
+        post: operations["marcarNotificacaoLida"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notificacoes/lidas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Marca todas as notificações do usuário como lidas. */
+        post: operations["marcarTodasNotificacoesLidas"];
         delete?: never;
         options?: never;
         head?: never;
@@ -479,11 +548,14 @@ export interface components {
             /** Format: email */
             email: string;
         };
+        /** @description Pertence a um aviso (avisoId) ou a uma atividade (atividadeId); o outro vem nulo. */
         Comentario: {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
-            avisoId: string;
+            avisoId?: string | null;
+            /** Format: uuid */
+            atividadeId?: string | null;
             /** Format: uuid */
             comentarioPaiId?: string | null;
             /** Format: uuid */
@@ -501,6 +573,30 @@ export interface components {
             desbloqueada: boolean;
             progressoAtual: number;
             progressoTotal: number;
+        };
+        /** @description Nos prazos próximos (tipo PRAZO_PROXIMO) o id é "prazo-<atividadeId>", criadaEm é o prazo final e lida é sempre true. */
+        Notificacao: {
+            id: string;
+            /** @enum {string} */
+            tipo: "AVISO_NOVO" | "ATIVIDADE_NOVA" | "ATIVIDADE_ALTERADA" | "COMENTARIO_NOVO" | "RESPOSTA_NOVA" | "NOTA_PUBLICADA" | "PRAZO_PROXIMO";
+            texto: string;
+            /** Format: uuid */
+            turmaId: string;
+            /** Format: uuid */
+            atividadeId?: string | null;
+            /** Format: uuid */
+            avisoId?: string | null;
+            /** Format: date-time */
+            criadaEm: string;
+            lida: boolean;
+            /** @description O destinatário é o professor da turma (o front usa para escolher o link). */
+            paraProfessor: boolean;
+        };
+        Notificacoes: {
+            /** @description Todas as não lidas, mesmo as que passam do limite de 50 itens. */
+            naoLidas: number;
+            itens: components["schemas"]["Notificacao"][];
+            prazosProximos: components["schemas"]["Notificacao"][];
         };
         PerfilDocente: {
             nivelDocente: number;
@@ -1041,6 +1137,61 @@ export interface operations {
             422: components["responses"]["Problem"];
         };
     };
+    listComentariosAtividade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comentario"][];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createComentarioAtividade: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                atividadeId: components["parameters"]["AtividadeId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    texto: string;
+                    /** Format: uuid */
+                    comentarioPaiId?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Comentario"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
     listSemEntrega: {
         parameters: {
             query?: never;
@@ -1196,6 +1347,66 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listNotificacoes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notificacoes"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    marcarNotificacaoLida: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                notificacaoId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Marcada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    marcarTodasNotificacoesLidas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Marcadas */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     getPerfilGamificacao: {

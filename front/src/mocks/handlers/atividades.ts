@@ -7,8 +7,10 @@ import {
   type AtividadeTipo,
   type EstadoAtividade,
 } from '../domain';
+import type { ComentarioDb } from '../domain';
 import type { UsuarioComSenha } from '../fixtures';
-import { dadosInvalidos, naoAutenticado, naoEncontrado, proibido } from './problem';
+import { notificarAlunosNoMock, notificarComentarioNoMock } from './notificacoes';
+import { dadosInvalidos, naoAutenticado, naoEncontrado, problem, proibido } from './problem';
 import {
   agora,
   atividadesDisponiveis,
@@ -119,12 +121,30 @@ export const atividadesHandlers = [
     }
     if (campos.length > 0) return dadosInvalidos(campos);
 
-    atividade.nome = corpo.nome!.trim();
-    atividade.descricao = corpo.descricao?.trim() || undefined;
+    // avisa os alunos só se a atividade já estava visível para eles e algo relevante mudou
+    const jaVisivel = new Date(atividade.disponivelEm).getTime() <= agora().getTime();
+    const novoNome = corpo.nome!.trim();
+    const novaDescricao = corpo.descricao?.trim() || undefined;
+    const novoPrazo = new Date(prazo).toISOString();
+    const novaDisponibilidade = new Date(disponivel).toISOString();
+    const novoAceitaAtraso = corpo.aceitaAtraso ?? atividade.aceitaAtraso;
+    const mudou =
+      novoNome !== atividade.nome ||
+      novaDescricao !== atividade.descricao ||
+      corpo.tipo !== atividade.tipo ||
+      novoPrazo !== atividade.prazoFinal ||
+      novaDisponibilidade !== atividade.disponivelEm ||
+      novoAceitaAtraso !== atividade.aceitaAtraso;
+
+    atividade.nome = novoNome;
+    atividade.descricao = novaDescricao;
     atividade.tipo = corpo.tipo!;
-    atividade.prazoFinal = new Date(prazo).toISOString();
-    atividade.disponivelEm = new Date(disponivel).toISOString();
-    if (corpo.aceitaAtraso !== undefined) atividade.aceitaAtraso = corpo.aceitaAtraso;
+    atividade.prazoFinal = novoPrazo;
+    atividade.disponivelEm = novaDisponibilidade;
+    atividade.aceitaAtraso = novoAceitaAtraso;
+    if (jaVisivel && mudou) {
+      notificarAlunosNoMock(turma.id, usuario.id, 'ATIVIDADE_ALTERADA', `A atividade ${atividade.nome} foi alterada.`, atividade.id, null);
+    }
     return HttpResponse.json(paraAtividadeApi(atividade, usuario));
   }),
 
@@ -171,5 +191,53 @@ export const atividadesHandlers = [
       professorNome: nomeDoUsuario(turma.professorId),
       minhaEntrega: entrega ? paraEntregaApi(entrega) : null,
     });
+  }),
+
+  http.get(`${API}/atividades/:atividadeId/comentarios`, ({ params }) => {
+    const usuario = usuarioDaSessao();
+    if (!usuario) return naoAutenticado();
+    const atividade = db.atividades.find((a) => a.id === params.atividadeId);
+    if (!atividadeVisivel(atividade, usuario)) return naoEncontrado('Atividade não encontrada.');
+    return HttpResponse.json(db.comentariosAtividade.filter((c) => c.atividadeId === atividade!.id));
+  }),
+
+  http.post(`${API}/atividades/:atividadeId/comentarios`, async ({ params, request }) => {
+    const usuario = usuarioDaSessao();
+    if (!usuario) return naoAutenticado();
+    const atividade = db.atividades.find((a) => a.id === params.atividadeId);
+    if (!atividadeVisivel(atividade, usuario)) return naoEncontrado('Atividade não encontrada.');
+
+    const { texto, comentarioPaiId } = (await request.json()) as { texto?: string; comentarioPaiId?: string };
+    if (!texto?.trim()) return problem(422, 'O comentário não pode ser vazio.');
+    let paiRaiz: string | null = null;
+    let respondidoAutorId: string | undefined;
+    if (comentarioPaiId) {
+      const pai = db.comentariosAtividade.find((c) => c.id === comentarioPaiId && c.atividadeId === atividade!.id);
+      if (!pai) return problem(422, 'O comentário respondido não existe nesta atividade.');
+      respondidoAutorId = pai.autorId;
+      // um nível só: responder a uma resposta vira resposta ao comentário original
+      paiRaiz = pai.comentarioPaiId ?? pai.id;
+    }
+    const novo: ComentarioDb = {
+      id: crypto.randomUUID(),
+      avisoId: null,
+      atividadeId: atividade!.id,
+      comentarioPaiId: paiRaiz,
+      autorId: usuario.id,
+      autorNome: usuario.nome,
+      texto: texto.trim(),
+      horario: new Date().toISOString(),
+    };
+    db.comentariosAtividade.push(novo);
+    notificarComentarioNoMock({
+      autorId: usuario.id,
+      autorNome: usuario.nome,
+      turmaId: atividade!.turmaId,
+      atividadeId: atividade!.id,
+      avisoId: null,
+      respondidoAutorId,
+      alvo: `na atividade ${atividade!.nome}`,
+    });
+    return HttpResponse.json(novo, { status: 201 });
   }),
 ];

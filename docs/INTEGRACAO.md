@@ -55,7 +55,9 @@ Refletido no `openapi.yaml` e **implementado e verificado em 19/10/2026** (detal
 - `GET /atividades` com filtros de estado, tipo e turma, ordenados por prazo.
 - Papel contextual por turma (ADR-0008): `RegisterRequest` sem `papel`; `GET /turmas` devolve as turmas que a pessoa leciona (com `codigo`) e as que cursa (com contadores); `GET /atividades` só das turmas em que é aluna; criar turma é aberto a qualquer conta.
 - `submitEntrega` responde 403 para o professor da própria turma e para atividade que não aceita atraso com o prazo vencido.
-- Mural: `GET/POST /turmas/{id}/avisos` e `POST /avisos/{id}/comentarios` (RF13 e RF14).
+- Mural: `GET/POST /turmas/{id}/avisos` e `GET/POST /avisos/{id}/comentarios` (RF13 e RF14).
+- Comentários em atividade: `GET/POST /atividades/{id}/comentarios`; `Comentario` ganha `atividadeId` e `avisoId` passa a ser opcional (um dos dois vem preenchido). Professor e alunos respondem, em um nível.
+- Notificações (RF17): `GET /notificacoes` (`{naoLidas, itens, prazosProximos}`; até 50 itens), `POST /notificacoes/{id}/lida` e `POST /notificacoes/lidas`. Prazos próximos vêm com `tipo: PRAZO_PROXIMO`, `lida: true` e id `prazo-<atividadeId>`.
 - `submitEntrega` responde 413 (tamanho), 415 (tipo) e 409 (já avaliada).
 
 ## O que estava em aberto e como ficou

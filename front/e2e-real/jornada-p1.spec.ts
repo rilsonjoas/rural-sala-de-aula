@@ -126,3 +126,48 @@ test('RF15 aluno vê a nota e a atividade concluída', async ({ page }) => {
   const secao = page.getByRole('region', { name: 'Sua entrega' });
   await expect(secao.getByText(/9,5/)).toBeVisible();
 });
+
+async function entrarComo(page: Page, pessoa: { email: string }) {
+  await page.goto('/entrar');
+  await page.getByLabel('E-mail', { exact: true }).fill(pessoa.email);
+  await page.getByLabel('Senha', { exact: true }).fill(SENHA);
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Minhas turmas' })).toBeVisible();
+}
+
+test('RF14a e RF17 aluno comenta, professor responde e o sino avisa', async ({ page, browser }) => {
+  // o aluno comenta na atividade
+  await entrarComo(page, aluno);
+  await page.getByRole('navigation', { name: 'Navegação principal' }).getByRole('link', { name: 'Atividades' }).click();
+  await page.getByRole('group', { name: 'Estado' }).getByRole('button', { name: 'Concluída', exact: true }).click();
+  await page.getByRole('link', { name: new RegExp(atividade) }).first().click();
+  const duvidas = page.getByRole('region', { name: 'Dúvidas e comentários' });
+  await duvidas.getByLabel('Novo comentário').fill('Posso entregar em PDF? e2e');
+  await duvidas.getByRole('button', { name: 'Enviar comentário' }).click();
+  await expect(duvidas.getByText('Posso entregar em PDF? e2e')).toBeVisible();
+
+  // o professor vê o sino, abre a notificação e responde
+  const contextoDoProfessor = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+  const professor = await contextoDoProfessor.newPage();
+  await entrarComo(professor, prof);
+  await professor.getByRole('button', { name: 'Notificações, 1 não lidas' }).click();
+  const lista = professor.getByRole('dialog', { name: 'Notificações' });
+  await lista.getByRole('button', { name: new RegExp(`${aluno.nome} comentou na atividade ${atividade}`) }).click();
+  await expect(professor).toHaveURL(/\/atividades\/[0-9a-f-]+\/entregas$/);
+  const duvidasDoProfessor = professor.getByRole('region', { name: 'Dúvidas e comentários' });
+  await expect(duvidasDoProfessor.getByText('Posso entregar em PDF? e2e')).toBeVisible();
+  await duvidasDoProfessor.getByRole('button', { name: `Responder a ${aluno.nome}` }).click();
+  await duvidasDoProfessor.getByLabel(`Resposta a ${aluno.nome}`).fill('Pode sim, e2e');
+  await duvidasDoProfessor.getByRole('button', { name: 'Responder', exact: true }).click();
+  await expect(duvidasDoProfessor.getByText('Pode sim, e2e')).toBeVisible();
+  await expect(professor.getByRole('button', { name: 'Notificações', exact: true })).toBeVisible(); // lida: sem contador
+  await contextoDoProfessor.close();
+
+  // o aluno recebe o aviso da resposta e marca tudo como lido
+  await page.reload();
+  await page.getByRole('button', { name: /^Notificações, \d+ não lidas$/ }).click();
+  const listaDoAluno = page.getByRole('dialog', { name: 'Notificações' });
+  await expect(listaDoAluno.getByText(/respondeu ao seu comentário/)).toBeVisible();
+  await listaDoAluno.getByRole('button', { name: 'Marcar todas como lidas' }).click();
+  await expect(page.getByRole('button', { name: 'Notificações', exact: true })).toBeVisible();
+});

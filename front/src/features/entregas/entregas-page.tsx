@@ -1,3 +1,4 @@
+import { ComentariosAtividade } from '@/features/comentarios/comentarios-atividade';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -95,6 +96,8 @@ export function EntregasPage() {
       ) : null}
 
       {atividadeId ? <SemEntrega atividadeId={atividadeId} /> : null}
+
+      {atividadeId ? <ComentariosAtividade atividadeId={atividadeId} /> : null}
 
       <AvaliarSheet entrega={avaliando} onOpenChange={(aberto) => !aberto && setAvaliando(null)} />
     </section>

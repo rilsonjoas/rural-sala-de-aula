@@ -140,15 +140,16 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 
 ## 3. Quem fez o quê
 
-Preencher com os nomes do grupo. A regra do trabalho: cada integrante escolhe **um** RF para automatizar (pelo menos 4 casos, foco em teste de unidade) e escreve os casos de dois outros RFs.
+Regra do trabalho: cada integrante automatiza **um** RF (pelo menos 4 casos, foco em teste de unidade) e escreve os casos de **dois** outros RFs. A divisão abaixo é proposta e vale depois da conversa entre os dois.
 
 | Integrante | RF automatizado (4+ casos) | RFs com casos escritos | Quem testa (cruzado) |
 |---|---|---|---|
-| _nome 1_ | _a definir_ | _a definir_ | _colega que não implementou_ |
-| _nome 2_ | _a definir_ | _a definir_ | _colega que não implementou_ |
-| _nome 3_ | _a definir_ | _a definir_ | _colega que não implementou_ |
+| Rilson Joás | RF14 Comentários em atividade: `ComentarioServiceTest` (JUnit, 6 testes) | RF08 Calendário e RF17 Notificações | Luiz Felipe executa os CT do RF08, RF14 e RF17 |
+| Luiz Felipe | RF06 ou RF07 Grupos: JUnit no `GrupoService` (ver seção 6) | RF04 Entregar atividade e RF15 Avaliar entrega | Rilson executa os CT do RF06, RF07, RF04 e RF15 |
 
-Sugestão para quem implementou o calendário: RF08, pois `carga.test.ts` já tem a lógica pura e cabe ampliar com mais casos de borda (mudança de mês e de ano, semana sem prazo).
+Os demais RFs (RF01, RF02, RF03, RF05, RF09, RF10, RF11, RF12, RF13, RF16) ficam com os casos já escritos na seção 2. Dividam a revisão deles ao meio na seção 5.
+
+Observação de autoria: os testes de front e de back existentes foram escritos quase todos pelo Rilson. Para a nota individual, cada um cita **só os testes que escreveu** (o `git log` por arquivo comprova).
 
 ## 4. Teste cruzado
 
@@ -159,3 +160,41 @@ Antes de executar, subir o ambiente: `docker compose up -d --build` (app em `htt
 ## 5. Revisão dos critérios (passo 1 do trabalho)
 
 Antes de escrever mais testes, o grupo percorre a seção 2 e marca, em cada CA: **ok**, **ajustar** ou **faltando**. Pontos que merecem decisão do grupo: o que fazer com CA-13.3 (direcionamento de aviso, não implementado), o limiar da carga do calendário (0 / 1–2 / 3+) e as regras de saída de grupo.
+
+## 6. Guia de testes de unidade em JUnit (para o Luiz Felipe)
+
+### Ideia geral
+Teste de unidade no back-end verifica **um serviço isolado**, sem banco e sem subir o Spring. As dependências (repositórios) viram *mocks* do Mockito: você diz o que cada repositório devolve, chama o método do serviço e confere o resultado ou o que foi salvo. Um teste é rápido (milissegundos) e não precisa de Postgres. Por isso é o tipo pedido pela professora, ao contrário do `contextLoads`, que precisa de banco.
+
+### Passo a passo
+1. Crie a classe em `api/src/test/java/com/narniano/rural_sala_de_aula/classes/<dominio>/<Servico>Test.java`, no mesmo pacote do serviço.
+2. Anote com `@ExtendWith(MockitoExtension.class)`. Declare cada dependência do serviço com `@Mock` e o serviço com `@InjectMocks`.
+3. Monte as entidades com `new` e setters (`Usuario`, `Turma`, `Grupo`), sem banco. Um helper `usuario(String nome)` evita repetição.
+4. Cada teste segue **Dado, Quando, Então**: `when(repo.findById(id)).thenReturn(Optional.of(x))` prepara; chama o método; `assertEquals`, `assertTrue` ou `assertThrows` conferem.
+5. Para regra que **recusa**, use `assertThrows(AppException.class, () -> service.metodo(...))` e confira o status: `assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, ex.getStatus())`. Veja o nome do getter em `common/exception/AppException.java`.
+6. Para conferir o que foi gravado, use `ArgumentCaptor<Grupo>` com `verify(grupoRepository).save(captor.capture())`.
+7. Rode só a sua classe: `cd api && ./mvnw test -Dtest=GrupoServiceTest`. Rode tudo com `./mvnw test` (o `contextLoads` falha sem Postgres local e pode ser ignorado com `-Dtest='!RuralSalaDeAulaApplicationTests'`).
+8. Escreva o teste junto do código, no mesmo commit. Rode, veja falhar, implemente, veja passar.
+
+### Modelo
+O arquivo `NotificacaoServiceTest.java` já usa exatamente esse padrão (mocks, `ArgumentCaptor`, `@InjectMocks`) e serve de molde. Para o lançamento de exceção, copie a ideia de `LimitadorDeTentativasTest`.
+
+### Sugestões de casos para os grupos (RF06 e RF07)
+Quatro casos mínimos para escolher; as regras estão em `front/src/mocks/grupos.test.ts`, que funciona como especificação.
+- **Solicitar com poucos integrantes:** 1 integrante, mínimo 2, deve recusar (422).
+- **Solicitar com integrantes demais:** acima do máximo configurado, deve recusar (422).
+- **Aluno já em grupo:** um integrante já pertence a outro grupo ativo, deve recusar (422).
+- **Pedido válido nasce pendente:** o grupo salvo tem status `PENDENTE` e inclui quem pediu como integrante.
+- **Aluno de fora da turma:** integrante sem inscrição na turma, deve recusar (422).
+- **Sair deixando o grupo aprovado abaixo do mínimo:** deve recusar (422), grupo intacto.
+- **Sair de grupo pendente que fica vazio:** o grupo é removido (`verify(grupoRepository).delete(...)`).
+- **Entrar em grupo cheio ou pendente:** deve recusar (422).
+- **Aprovar duas vezes:** a segunda decisão devolve 409.
+
+### Se o back de grupos ainda não existir
+O `GrupoService` atual só tem `cadastrar`, `listarPorTurma`, `buscarPorId` e `remover`. Se os grupos novos atrasarem, o Luiz pode automatizar outro RF já implementado, também com 4 casos de unidade. Boas opções:
+- **RF03b Sair da turma** (`TurmaService.sairDaTurma`): aluno inscrito sai (a inscrição é apagada); quem não está inscrito recebe 404; o professor da turma recebe 409; turma inexistente dá 404.
+- **RF02 Inscrição por código** (`TurmaService.inscreverPorCodigo`): código válido inscreve, código inválido dá 404, aluno já inscrito é recusado.
+- **RF04 Entrega** (`EntregaService.enviar`): atividade indisponível, prazo vencido sem aceitar atraso, arquivo vazio ou inválido.
+
+Combinando um RF automatizado de teste com uma execução manual por colega, o Luiz cumpre as duas partes da regra do trabalho.

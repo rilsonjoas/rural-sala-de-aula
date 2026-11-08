@@ -35,6 +35,41 @@ function textoDaCarga({ carga, atividades }: Semana): string {
   return carga === 'LIVRE' ? 'Semana livre' : `Semana ${ROTULO_CARGA[carga]} · ${plural(atividades.length, 'prazo')}`;
 }
 
+const DIAS_CURTOS = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'];
+const mesmoDia = (a: Date, b: Date) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+/** Faixa visual de segunda a domingo; a lista abaixo continua sendo a fonte acessível. */
+function FaixaDaSemana({ semana }: { semana: Semana }) {
+  const hoje = new Date();
+  return (
+    <div aria-hidden="true" className="grid grid-cols-7 gap-1 sm:gap-2">
+      {DIAS_CURTOS.map((nome, i) => {
+        const dia = new Date(semana.inicio.getFullYear(), semana.inicio.getMonth(), semana.inicio.getDate() + i);
+        const prazos = semana.atividades.filter((a) => mesmoDia(new Date(a.prazoFinal), dia)).length;
+        const ehHoje = mesmoDia(dia, hoje);
+        return (
+          <div
+            key={nome}
+            className={cn(
+              'flex min-h-14 flex-col items-center justify-between rounded-lg border p-1 text-center sm:min-h-16',
+              prazos > 0 ? 'border-primary bg-primary/5' : 'border-border bg-background',
+              ehHoje && 'ring-2 ring-ring',
+            )}
+          >
+            <span className="text-[10px] uppercase text-muted-foreground sm:text-xs">{nome}</span>
+            <span className={cn('text-sm font-semibold sm:text-base', prazos > 0 ? 'text-primary' : 'text-muted-foreground')}>
+              {dia.getDate()}
+            </span>
+            <span className={cn('min-h-4 rounded-full px-1.5 text-[10px] font-semibold sm:text-xs', prazos > 0 && 'bg-primary text-primary-foreground')}>
+              {prazos > 0 ? prazos : ''}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function SemanaSecao({ semana }: { semana: Semana }) {
   const idTitulo = useId();
   return (
@@ -47,6 +82,7 @@ function SemanaSecao({ semana }: { semana: Semana }) {
           {textoDaCarga(semana)}
         </span>
       </div>
+      <FaixaDaSemana semana={semana} />
       {semana.atividades.length > 0 ? (
         <ul className="divide-y divide-border">
           {semana.atividades.map((a) => (

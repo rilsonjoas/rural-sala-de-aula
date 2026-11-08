@@ -70,7 +70,6 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 | CA-08.1 A carga da semana é livre com 0 prazos, média com 1 ou 2, pesada com 3 ou mais | CT-08.1 | 0, 1, 2, 3 e 7 prazos | classificar | livre, média, média, pesada, pesada | Auto (`carga.test.ts`) |
 | CA-08.2 Semana vai de segunda a domingo | CT-08.2 | prazo no domingo 23:59 e na segunda 00:00 | agrupar | cada um na sua semana | Auto (`carga.test.ts`) |
 | CA-08.3 Mostra 4 semanas e navega para antes e depois | CT-08.3 | clicar "Semanas seguintes/anteriores" | navegar | janela se desloca; "Voltar para esta semana" volta | Auto (`calendario-page.test.tsx`) |
-| CA-08.4 Erro de carregamento permite tentar de novo | CT-08.4 | API falha | abrir `/calendario` | alerta com "Tentar de novo" | Auto (`calendario-page.test.tsx`) |
 
 ### RF09 Cadastrar turmas
 
@@ -139,8 +138,7 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 | CA-17.1 O sino mostra o número de não lidas | CT-17.1 | 3 não lidas | abrir o app | contador "3" com texto para leitor de tela | Auto (`notificacoes.test.tsx`) |
 | CA-17.2 Aviso novo, atividade alterada, nota e comentário geram notificação ao destinatário certo, nunca ao autor | CT-17.2 | professor publica aviso | aluno consulta | uma notificação ao aluno; nenhuma ao professor | Auto (`mocks/notificacoes.test.ts`, smoke) |
 | CA-17.3 Clicar marca como lida e leva ao destino | CT-17.3 | notificação de aviso | clicar | marcada como lida; abre a aba Mural da turma | Auto (`notificacoes.test.tsx`, `destino.test.ts`) |
-| CA-17.4 Prazo próximo (48 h, não entregue) aparece sem contar como não lida | CT-17.4 | atividade que vence em 1 dia | abrir o sino | seção "Prazos próximos"; contador inalterado | Auto (`mocks/notificacoes.test.ts`) |
-| CA-17.5 Comentário de aluno em atividade avisa o professor, e a resposta avisa o aluno | CT-17.5 | aluno comenta na atividade; professor responde | abrir o sino de cada um | professor: "fulano comentou na atividade…"; aluno: "fulano respondeu ao seu comentário"; clicar abre a atividade | Manual (vídeo) e Auto (`ComentarioServiceTest`) |
+| CA-17.4 Comentário de aluno em atividade avisa o professor, e a resposta avisa o aluno | CT-17.4 | aluno comenta na atividade; professor responde | abrir o sino de cada um | professor: "fulano comentou na atividade…"; aluno: "fulano respondeu ao seu comentário"; clicar abre a atividade | Manual (vídeo) e Auto (`ComentarioServiceTest`) |
 
 ## 3. Quem fez o quê
 

@@ -1,5 +1,7 @@
 package com.narniano.rural_sala_de_aula.classes.entrega;
 
+import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
+import com.narniano.rural_sala_de_aula.classes.notificacao.TipoNotificacao;
 import com.narniano.rural_sala_de_aula.classes.arquivo.Arquivo;
 import com.narniano.rural_sala_de_aula.classes.arquivo.ArquivoRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
@@ -15,13 +17,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -39,6 +46,7 @@ public class EntregaService {
     private final InscricaoRepository inscricaoRepository;
     private final ArquivoRepository arquivoRepository;
     private final AtividadeService atividadeService;
+    private final NotificacaoService notificacaoService;
 
     @Transactional
     public ResponseEntregaIndividualDTO enviar(UUID atividadeId, MultipartFile file, Usuario aluno) {
@@ -66,9 +74,10 @@ public class EntregaService {
         LocalDateTime agora = LocalDateTime.now();
         boolean atrasada = agora.isAfter(atividade.getPrazoFinal());
         if (atrasada && !atividade.isAceitaAtraso()) {
-            throw new AppException(HttpStatus.CONFLICT, "Esta atividade não aceita envios após o prazo final.");
+            throw new AppException(HttpStatus.FORBIDDEN, "O prazo encerrou e esta atividade não aceita entregas com atraso.");
         }
 
+        entregaRepository.travarEnvio(atividadeId + ":" + aluno.getId());
         Optional<EntregaIndividual> existenteOpt = entregaRepository.findByAtividadeIdAndAlunoId(atividadeId, aluno.getId());
         EntregaIndividual entrega;
 
@@ -89,19 +98,26 @@ public class EntregaService {
 
         String nomeArmazenado = salva.getId() + "_" + UUID.randomUUID() + "." + extensao;
         String caminhoRelativo = salvarArquivoNoDisco(file, nomeArmazenado);
+        String hash = calcularSha256(Paths.get(caminhoRelativo).toAbsolutePath());
 
         Arquivo arquivo = new Arquivo();
         arquivo.setEntrega(salva);
         arquivo.setNomeOriginal(nomeOriginal);
         arquivo.setNomeArmazenado(nomeArmazenado);
         arquivo.setCaminho(caminhoRelativo);
+        arquivo.setHashSha256(hash);
         arquivo.setTipoConteudo(file.getContentType() != null ? file.getContentType() : "application/octet-stream");
         arquivo.setTamanho(file.getSize());
         arquivo.setDataEnvio(agora);
 
         arquivoRepository.save(arquivo);
+        List<String> caminhosSubstituidos = salva.getArquivos().stream()
+                .map(Arquivo::getCaminho)
+                .filter(caminho -> !caminho.equals(caminhoRelativo))
+                .toList();
         salva.getArquivos().clear();
         salva.getArquivos().add(arquivo);
+        apagarDoDiscoAposCommit(caminhosSubstituidos);
 
         return atividadeService.mapearEntregaParaDTO(salva);
     }
@@ -133,6 +149,9 @@ public class EntregaService {
         entrega.setComentarioPrivado(dto.comentarioPrivado() != null ? dto.comentarioPrivado().trim() : null);
 
         EntregaIndividual salva = entregaRepository.save(entrega);
+        notificacaoService.notificar(salva.getAluno(), TipoNotificacao.NOTA_PUBLICADA,
+                "Sua entrega de " + salva.getAtividade().getNome() + " foi avaliada.",
+                salva.getAtividade().getTurma(), salva.getAtividade(), null);
         return atividadeService.mapearEntregaParaDTO(salva);
     }
 
@@ -155,8 +174,30 @@ public class EntregaService {
 
         Arquivo arquivo = arquivos.get(0);
         byte[] conteudo = lerArquivoDoDisco(arquivo.getCaminho());
+        if (arquivo.getHashSha256() != null && !arquivo.getHashSha256().equals(sha256(conteudo))) {
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "O arquivo guardado não confere com o hash do envio. Avise o suporte.");
+        }
 
         return Map.entry(arquivo, conteudo);
+    }
+
+    /** O reenvio troca a linha de arquivo no banco; o arquivo antigo so sai do disco se a troca for confirmada. */
+    private void apagarDoDiscoAposCommit(List<String> caminhos) {
+        if (caminhos.isEmpty() || !TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                for (String caminho : caminhos) {
+                    try {
+                        Files.deleteIfExists(Paths.get(caminho).toAbsolutePath());
+                    } catch (IOException e) {
+                        // arquivo orfao nao deve derrubar um envio ja confirmado
+                    }
+                }
+            }
+        });
     }
 
     private String salvarArquivoNoDisco(MultipartFile file, String nomeArmazenado) {
@@ -166,10 +207,35 @@ public class EntregaService {
                 Files.createDirectories(pastaUploads);
             }
             Path destino = pastaUploads.resolve(nomeArmazenado);
-            file.transferTo(destino.toFile());
+            // caminho absoluto: com caminho relativo o Tomcat grava no diretorio temporario dele
+            file.transferTo(destino.toAbsolutePath());
             return destino.toString();
         } catch (IOException e) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao gravar arquivo em disco: " + e.getMessage());
+        }
+    }
+
+    private String calcularSha256(Path arquivo) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            try (InputStream in = Files.newInputStream(arquivo)) {
+                byte[] buffer = new byte[8192];
+                int lidos;
+                while ((lidos = in.read(buffer)) != -1) {
+                    digest.update(buffer, 0, lidos);
+                }
+            }
+            return HexFormat.of().formatHex(digest.digest());
+        } catch (IOException | NoSuchAlgorithmException e) {
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Falha ao calcular o hash do arquivo: " + e.getMessage());
+        }
+    }
+
+    private String sha256(byte[] conteudo) {
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(conteudo));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
         }
     }
 

@@ -2,6 +2,7 @@ import { GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { messages as copy } from '@/i18n/messages';
 import type { Usuario } from '@/features/session/use-session';
+import { Sino } from '@/features/notificacoes/sino';
 import { AvatarMenu } from './avatar-menu';
 import { MainNav } from './main-nav';
 
@@ -19,9 +20,12 @@ export function Header({ usuario, onSair }: { usuario: Usuario; onSair: () => vo
               {copy.appName}
             </Link>
           </h1>
-          <MainNav papel={usuario.papel} />
+          <MainNav />
         </div>
-        <AvatarMenu usuario={usuario} onSair={onSair} />
+        <div className="flex items-center gap-1">
+          <Sino />
+          <AvatarMenu usuario={usuario} onSair={onSair} />
+        </div>
       </div>
     </header>
   );

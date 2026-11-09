@@ -30,6 +30,20 @@ export function useEntrarNaTurma() {
   });
 }
 
+export function useSairDaTurma(turmaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await api.DELETE('/turmas/{turmaId}/inscricao', { params: { path: { turmaId } } });
+    },
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['turma', turmaId] });
+      void queryClient.invalidateQueries({ queryKey: TURMAS_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['atividades'] });
+    },
+  });
+}
+
 export function useTurma(turmaId: string) {
   return useQuery({
     queryKey: ['turma', turmaId],

@@ -10,9 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { aplicarErroDaApi } from '@/lib/form-errors';
 import { formatDataHora, paraInputDataHora } from '@/lib/format';
-import { useCriarAtividade } from './api';
+import { useAtualizarAtividade, useCriarAtividade } from './api';
 import { GrupoDeOpcoes } from './grupo-de-opcoes';
-import { ROTULO_TIPO } from './filtros';
+import { ROTULO_TIPO, type Atividade } from './filtros';
 
 const MSG_PRAZO = 'O prazo final não pode ser antes de quando a atividade fica disponível.';
 
@@ -31,31 +31,55 @@ const schema = z
   });
 type Valores = z.infer<typeof schema>;
 
-type Props = { turmaId: string; turmaNome: string; open: boolean; onOpenChange: (aberto: boolean) => void };
+type Props = {
+  turmaId: string;
+  turmaNome: string;
+  open: boolean;
+  onOpenChange: (aberto: boolean) => void;
+  /** Quando vem preenchida, a folha edita essa atividade (RF11) em vez de cadastrar uma nova. */
+  atividade?: Atividade | null;
+};
 
-export function NovaAtividadeSheet({ turmaId, turmaNome, open, onOpenChange }: Props) {
+export function NovaAtividadeSheet({ turmaId, turmaNome, open, onOpenChange, atividade }: Props) {
   return (
-    <ResponsiveSheet open={open} onOpenChange={onOpenChange} titulo="Nova atividade" descricao={turmaNome}>
-      <Conteudo turmaId={turmaId} aoConcluir={() => onOpenChange(false)} />
+    <ResponsiveSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      titulo={atividade ? 'Editar atividade' : 'Nova atividade'}
+      descricao={turmaNome}
+    >
+      <Conteudo turmaId={turmaId} atividade={atividade ?? undefined} aoConcluir={() => onOpenChange(false)} />
     </ResponsiveSheet>
   );
 }
 
-function Conteudo({ turmaId, aoConcluir }: { turmaId: string; aoConcluir: () => void }) {
+function Conteudo({ turmaId, atividade, aoConcluir }: { turmaId: string; atividade?: Atividade; aoConcluir: () => void }) {
+  const edicao = Boolean(atividade);
   const criar = useCriarAtividade(turmaId);
+  const atualizar = useAtualizarAtividade(atividade?.id ?? '');
+  const mutacao = edicao ? atualizar : criar;
   const [passo, setPasso] = useState<'formulario' | 'confirmar'>('formulario');
   const [erroGeral, setErroGeral] = useState<string>();
   const form = useForm<Valores>({
     resolver: zodResolver(schema),
     mode: 'onBlur',
-    defaultValues: {
-      nome: '',
-      descricao: '',
-      tipo: 'LISTA_DE_EXERCICIO',
-      disponivelEm: paraInputDataHora(new Date()),
-      prazoFinal: '',
-      aceitaAtraso: true,
-    },
+    defaultValues: atividade
+      ? {
+          nome: atividade.nome,
+          descricao: atividade.descricao ?? '',
+          tipo: atividade.tipo,
+          disponivelEm: paraInputDataHora(new Date(atividade.disponivelEm)),
+          prazoFinal: paraInputDataHora(new Date(atividade.prazoFinal)),
+          aceitaAtraso: atividade.aceitaAtraso ?? true,
+        }
+      : {
+          nome: '',
+          descricao: '',
+          tipo: 'LISTA_DE_EXERCICIO',
+          disponivelEm: paraInputDataHora(new Date()),
+          prazoFinal: '',
+          aceitaAtraso: true,
+        },
   });
   const { errors } = form.formState;
 
@@ -68,7 +92,7 @@ function Conteudo({ turmaId, aoConcluir }: { turmaId: string; aoConcluir: () => 
     const v = form.getValues();
     setErroGeral(undefined);
     try {
-      await criar.mutateAsync({
+      await mutacao.mutateAsync({
         nome: v.nome.trim(),
         ...(v.descricao?.trim() ? { descricao: v.descricao.trim() } : {}),
         tipo: v.tipo,
@@ -76,7 +100,7 @@ function Conteudo({ turmaId, aoConcluir }: { turmaId: string; aoConcluir: () => 
         prazoFinal: new Date(v.prazoFinal).toISOString(),
         aceitaAtraso: v.aceitaAtraso,
       });
-      toast.success('Atividade cadastrada');
+      toast.success(edicao ? 'Atividade atualizada' : 'Atividade cadastrada');
       aoConcluir();
     } catch (erro) {
       const geral = aplicarErroDaApi(form, erro);
@@ -90,7 +114,9 @@ function Conteudo({ turmaId, aoConcluir }: { turmaId: string; aoConcluir: () => 
     return (
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          Confira antes de cadastrar. Nesta versão, depois de cadastrada a atividade não pode ser editada.
+          {edicao
+            ? 'Confira as mudanças. Os alunos veem a atividade atualizada assim que você salvar.'
+            : 'Confira antes de cadastrar. Você pode editar a atividade depois.'}
         </p>
         <div className="space-y-3 rounded-lg bg-secondary p-4">
           <p className="font-semibold text-primary">{v.nome}</p>
@@ -112,10 +138,10 @@ function Conteudo({ turmaId, aoConcluir }: { turmaId: string; aoConcluir: () => 
         ) : null}
 
         <div className="flex flex-col gap-2.5 sm:flex-row-reverse">
-          <Button type="button" onClick={() => void confirmar()} disabled={criar.isPending} className="sm:flex-1 min-h-10 text-sm font-semibold">
-            {criar.isPending ? 'Cadastrando…' : 'Confirmar e cadastrar'}
+          <Button type="button" onClick={() => void confirmar()} disabled={mutacao.isPending} className="sm:flex-1 min-h-10 text-sm font-semibold">
+            {mutacao.isPending ? 'Salvando…' : edicao ? 'Confirmar e salvar' : 'Confirmar e cadastrar'}
           </Button>
-          <Button type="button" variant="outline" onClick={() => setPasso('formulario')} disabled={criar.isPending} className="sm:flex-1 min-h-10 text-sm">
+          <Button type="button" variant="outline" onClick={() => setPasso('formulario')} disabled={mutacao.isPending} className="sm:flex-1 min-h-10 text-sm">
             Voltar e editar
           </Button>
         </div>
@@ -168,7 +194,7 @@ function Conteudo({ turmaId, aoConcluir }: { turmaId: string; aoConcluir: () => 
       ) : null}
 
       <Button type="submit" className="w-full min-h-10 text-sm font-semibold">
-        Cadastrar atividade
+        {edicao ? 'Revisar alterações' : 'Cadastrar atividade'}
       </Button>
     </form>
   );

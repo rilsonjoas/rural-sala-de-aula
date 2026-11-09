@@ -12,9 +12,7 @@ import { AtividadesTabela } from './atividades-tabela';
 import { FilterChips, type GrupoDeChips } from './filter-chips';
 import {
   limparFiltros,
-  ROTULO_COMPLEXIDADE,
   ROTULO_ESTADO,
-  ROTULO_MODALIDADE,
   ROTULO_TIPO,
   temFiltroAtivo,
 } from './filtros';

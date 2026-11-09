@@ -76,6 +76,11 @@ function Conteudo({ entrega, aoConcluir }: { entrega: Entrega; aoConcluir: () =>
           <FileText aria-hidden="true" className="size-4 shrink-0" />
           {entrega.nomeOriginal}
         </p>
+        {entrega.hashSha256 ? (
+          <p className="break-all text-xs text-muted-foreground" title="Impressão digital do arquivo no momento do envio">
+            {`SHA-256: ${entrega.hashSha256}`}
+          </p>
+        ) : null}
       </div>
 
       <Campo rotulo="Nota (0 a 10)" obrigatorio erro={errors.nota?.message}>

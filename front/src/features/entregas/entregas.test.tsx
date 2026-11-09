@@ -29,14 +29,17 @@ describe('Entregas da atividade (professor)', () => {
     expect(await screen.findByRole('heading', { name: 'Lista 2 — Balanceamento AVL', level: 2 })).toBeInTheDocument();
     expect(screen.getByText('Turma A — Algoritmos')).toBeInTheDocument();
     expect(await screen.findByText('4 entregas · 3 com atraso · 2 avaliadas')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Atividades/ })).toHaveAttribute('href', expect.stringMatching(/^\/turmas\//));
+    expect(screen.getByRole('link', { name: 'Atividades', current: false })).toHaveAttribute('href', expect.stringMatching(/^\/turmas\//));
   });
 
   it('lista só quem entregou, da entrega mais antiga para a mais recente', async () => {
     await abrirEntregas();
     await screen.findByText('4 entregas · 3 com atraso · 2 avaliadas');
 
-    const nomes = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    const nomes = screen
+      .getAllByRole('heading', { level: 3 })
+      .map((h) => h.textContent)
+      .filter((t) => t !== 'Dúvidas e comentários');
     expect(nomes).toEqual(['Beatriz Oliveira Santos', 'Lucas Mendes', 'Maria Clara Albuquerque', 'Gabriel Henrique Ribeiro']);
   });
 

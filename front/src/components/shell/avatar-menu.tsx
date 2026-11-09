@@ -11,11 +11,6 @@ import { messages as copy } from '@/i18n/messages';
 import { iniciais } from '@/lib/format';
 import type { Usuario } from '@/features/session/use-session';
 
-const ROTULO_PAPEL: Record<Usuario['papel'], string> = {
-  ALUNO: copy.roleStudent,
-  PROFESSOR: copy.roleTeacher,
-};
-
 export function AvatarMenu({ usuario, onSair }: { usuario: Usuario; onSair: () => void }) {
   return (
     <DropdownMenu>
@@ -31,7 +26,7 @@ export function AvatarMenu({ usuario, onSair }: { usuario: Usuario; onSair: () =
       <DropdownMenuContent align="end" className="min-w-56">
         <DropdownMenuLabel className="font-normal">
           <span className="block font-semibold text-foreground">{usuario.nome}</span>
-          <span className="block text-sm text-muted-foreground">{usuario.papel && usuario.papel in ROTULO_PAPEL ? ROTULO_PAPEL[usuario.papel] : usuario.email}</span>
+          <span className="block text-sm text-muted-foreground">{usuario.email}</span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onSair} className="min-h-11">

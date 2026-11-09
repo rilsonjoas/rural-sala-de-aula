@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight, ClipboardCheck } from 'lucide-react';
+import { ArrowRight, ChevronRight, ClipboardCheck, Pencil } from 'lucide-react';
 import { useId } from 'react';
 import { Link } from 'react-router-dom';
 import { PrazoBadge, StatusBadge } from '@/components/status-badge';
@@ -7,7 +7,7 @@ import { useEntregas } from '@/features/entregas/api';
 import { formatData, formatDataHora } from '@/lib/format';
 import { alunoComPressa, urgenciaDoPrazo } from '@/lib/urgencia';
 import { apoioAoEstado } from './apoio';
-import { ROTULO_MODALIDADE, ROTULO_TIPO, type Atividade } from './filtros';
+import { ROTULO_TIPO, type Atividade } from './filtros';
 
 const ACAO_DO_ALUNO: Record<NonNullable<Atividade['estado']>, { rotulo: string; primaria: boolean }> = {
   PENDENTE: { rotulo: 'Enviar entrega', primaria: true },
@@ -41,9 +41,11 @@ type Props = {
   variante: 'turma-aluno' | 'turma-professor' | 'minhas';
   /** Nível do título (h3 sob o título da página; h4 quando há um subtítulo h3 antes). */
   nivelTitulo?: 3 | 4;
+  /** Só na variante do professor: abre a edição da atividade (RF11). */
+  onEditar?: (atividade: Atividade) => void;
 };
 
-export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
+export function AtividadeCard({ atividade, variante, nivelTitulo = 3, onEditar }: Props) {
   const Titulo = `h${nivelTitulo}` as 'h3' | 'h4';
   const idTitulo = useId();
   const apoio = apoioAoEstado(atividade);
@@ -70,9 +72,6 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
         <div className="flex flex-wrap items-center gap-1.5">
           {variante === 'minhas' ? <span className={chipNeutro}>{atividade.turmaNome}</span> : null}
           <span className={chipNeutro}>{ROTULO_TIPO[atividade.tipo]}</span>
-          {atividade.modalidade && atividade.modalidade === 'GRUPO' ? (
-            <span className={chipNeutro}>{ROTULO_MODALIDADE[atividade.modalidade]}</span>
-          ) : null}
           {aindaIndisponivel ? (
             <span className={chipNeutro}>A partir de {formatData(atividade.disponivelEm)}</span>
           ) : null}
@@ -105,9 +104,23 @@ export function AtividadeCard({ atividade, variante, nivelTitulo = 3 }: Props) {
       ) : null}
 
       {variante === 'turma-professor' ? (
-        <Button asChild variant="outline" className="w-full min-h-9 sm:min-h-10 text-xs sm:text-sm">
-          <Link to={`${urlDetalhe}/entregas`}>Ver entregas</Link>
-        </Button>
+        <div className="flex gap-2">
+          <Button asChild variant="outline" className="flex-1 min-h-9 sm:min-h-10 text-xs sm:text-sm">
+            <Link to={`${urlDetalhe}/entregas`}>Ver entregas</Link>
+          </Button>
+          {onEditar ? (
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-9 sm:min-h-10 text-xs sm:text-sm"
+              aria-label={`Editar ${atividade.nome}`}
+              onClick={() => onEditar(atividade)}
+            >
+              <Pencil aria-hidden="true" className="size-4" />
+              Editar
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       {variante === 'minhas' && atividade.estado ? (

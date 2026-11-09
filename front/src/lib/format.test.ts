@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatData, formatDataHora, formatDias, formatNota, formatPrazoRelativo, formatTamanho, iniciais, paraInputDataHora, plural } from './format';
+import { formatData, formatDataHora, formatHa, formatDias, formatNota, formatPrazoRelativo, formatTamanho, iniciais, paraInputDataHora, plural } from './format';
 
 // Datas locais (e não UTC) para o teste valer em qualquer fuso do computador.
 const local = (ano: number, mes: number, dia: number, h = 12, min = 0) => new Date(ano, mes - 1, dia, h, min);
@@ -115,5 +115,31 @@ describe('formatTamanho', () => {
     expect(formatTamanho(950 * 1024)).toBe('950 KB');
     expect(formatTamanho(1800 * 1024)).toBe('1,8 MB');
     expect(formatTamanho(25 * 1024 * 1024)).toBe('25,0 MB');
+  });
+});
+
+describe('formatHa', () => {
+  const agora = local(2026, 11, 5, 12, 0);
+  const atras = (min: number) => new Date(agora.getTime() - min * 60_000).toISOString();
+
+  it('diz "agora" no primeiro minuto', () => {
+    expect(formatHa(atras(0), agora)).toBe('agora');
+    expect(formatHa(atras(0.5), agora)).toBe('agora');
+  });
+
+  it('usa minutos, horas e dias', () => {
+    expect(formatHa(atras(5), agora)).toBe('há 5 min');
+    expect(formatHa(atras(120), agora)).toBe('há 2 h');
+    expect(formatHa(atras(24 * 60), agora)).toBe('há 1 dia');
+    expect(formatHa(atras(3 * 24 * 60), agora)).toBe('há 3 dias');
+  });
+
+  it('depois de uma semana volta à data e hora', () => {
+    const iso = local(2026, 10, 20, 9, 30).toISOString();
+    expect(formatHa(iso, agora)).toBe('20/10 às 09:30');
+  });
+
+  it('um horário no futuro (relógio desencontrado) conta como agora', () => {
+    expect(formatHa(atras(-10), agora)).toBe('agora');
   });
 });

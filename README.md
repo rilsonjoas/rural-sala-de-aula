@@ -1,6 +1,6 @@
 # Rural Sala de Aula
 
-Alternativa ao Google Classroom focada em organizar as atividades de quem está em várias turmas: professores administram turmas, atividades e avaliações; alunos entram nas turmas, acompanham e entregam.
+Alternativa ao Google Classroom focada em organizar as atividades de quem está em várias turmas: quem cria uma turma a administra (atividades e avaliações) e quem entra nela pelo código acompanha e entrega. O papel é contextual por turma: a mesma pessoa pode ser professora numa e aluna em outra (ADR-0008).
 
 > **Dupla:** Luiz Felipe (back-end) · Rilson Joás (front-end) · **Entrega dos requisitos P1: 19/10/2026**
 
@@ -17,25 +17,46 @@ Alternativa ao Google Classroom focada em organizar as atividades de quem está 
 
 | # | RF | O que faz | Quem |
 |---|---|---|---|
-| 1 | RF01 | Cadastro e login (nome, e-mail, senha) | todos |
-| 2 | RF09 | Cadastrar turmas (nome, disciplina, semestre, dias de aula) | professor |
-| 3 | RF02 | Inscrever-se em turma pelo código | aluno |
-| 4 | RF03 | Consultar as turmas em que está inscrito | aluno |
-| 5 | RF10 | Cadastrar atividades (prazo final, complexidade, tipo, modalidade, disponibilidade) | professor |
-| 6 | RF05 | Acessar e organizar atividades (filtros e ordenação) | aluno |
-| 7 | RF15 | Avaliar entrega (nota e comentário privado) | professor |
-| 8 | RF04 | Entregar atividade (upload de arquivo) — **por último** | aluno |
-| 9 | RF16 | Acessar e baixar entregas — **por último** | professor |
+| 1 | RF01 | Cadastro e login (nome, e-mail, senha, data de nascimento opcional) | todos |
+| 2 | RF09 | Cadastrar turmas (nome, disciplina, semestre, dias de aula) | quem leciona |
+| 3 | RF02 | Inscrever-se em turma pelo código | quem estuda |
+| 4 | RF03 | Consultar as turmas em que leciona ou está inscrito | todos |
+| 5 | RF10 | Cadastrar atividades (nome, descrição, tipo, prazo final, disponibilidade, envio com atraso) | quem leciona |
+| 6 | RF05 | Acessar e organizar atividades (filtros por estado, tipo e turma; ordenação por prazo) | quem estuda |
+| 7 | RF15 | Avaliar entrega (nota e comentário privado) | quem leciona |
+| 8 | RF04 | Entregar atividade (upload de arquivo) — **por último** | quem estuda |
+| 9 | RF16 | Acessar e baixar entregas — **por último** | quem leciona |
+| 10 | RF13 | Postar avisos no mural da turma | quem leciona |
+| 11 | RF14 | Comentar e responder nos avisos e nas atividades | todos da turma |
+| 12 | RF17 | Notificações no app (sino): aviso, atividade nova ou alterada, nota, comentário e resposta, prazo próximo | todos |
 
-RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
+**Fora do escopo por decisão (RF10 e RF05):** a atividade **não tem complexidade nem modalidade**. A modalidade é o próprio tipo (`PROJETO_EM_GRUPO` é em grupo), então o filtro por tipo a cobre; a complexidade não foi implementada, e portanto não há filtro nem ordenação por ela. Decisão confirmada com o Luiz Felipe; o texto original está em [`docs/requisitos.md`](docs/requisitos.md) com o registro.
 
-**Estado (09/10/2026):** o front dos nove P1 está pronto e testado contra uma API simulada (`front/src/mocks/`, ligada com `VITE_API_MOCK=true`); o contrato (`docs/openapi.yaml`) e o schema estão fechados. Falta o back-end implementar os endpoints e integrarmos tela por tela. Ver `docs/design/plano-de-design.md` §8. Guia para o back-end: [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).
+RF13 e RF14 entraram no front depois da lista original (aba Mural da turma). O comentário em atividade (RF14) e as notificações (RF17) entraram em 05/11/2026. RF04 e RF16 continuam P1, mas só entram depois dos demais (reunião de 08/10/2026).
+
+**Estado (19/10/2026):** os nove requisitos P1 estão implementados no front, no back-end e no banco, e **em produção** em `https://rural-sala-de-aula.narniano.com`. Verificado de ponta a ponta contra a API real:
+
+- `scripts/smoke-p1.py` (API, 120 verificações: casos felizes, permissões entre usuários, validações, limites de upload, avisos e comentários, envios simultâneos, bloqueio de outra origem e limite de tentativas de login);
+- `npm run test:e2e:real` em `front/` (jornada pela interface: cadastro, turma, atividade, entrada por código, filtro, entrega, download, avaliação e nota);
+- `npm test` (276 testes do front contra a API simulada), `npm run typecheck`, `npm run lint` e `npm run build`.
+
+Tudo isso roda no GitHub Actions (`.github/workflows/ci.yml`) em cada push na `main` e em cada PR, com a migration do Flyway aplicada num Postgres vazio.
+
+**Depois da P1 (05/11/2026, ainda sem deploy):** comentários e respostas na página da atividade, e a central de notificações (sino no cabeçalho; só dentro do app, sem e-mail nem push). Verificado localmente: `scripts/smoke-p1.py` com 173 verificações, `npm test` com 321 testes do front, jornada pela interface com 6 testes e 5 testes de unidade da API (`NotificacaoServiceTest` e `LimitadorDeTentativasTest`; o `contextLoads` precisa de um Postgres em `localhost:5432`).
+
+Os dois primeiros também rodam contra produção (`python3 -I scripts/smoke-p1.py https://rural-sala-de-aula.narniano.com/api/v1` e `E2E_BASE_URL=https://rural-sala-de-aula.narniano.com npm run test:e2e:real`). Eles criam usuários `@teste.rural`; a limpeza fica no repositório de infraestrutura (`hetzner-infra`, passo de limpeza dos testes).
+
+A API simulada (`front/src/mocks/`, `VITE_API_MOCK=true`) continua servindo para desenvolver o front sem o back. O guia de integração original está em [`docs/INTEGRACAO.md`](docs/INTEGRACAO.md).
+
+## Roadmap
+
+O que falta para endurecer o que já está no ar (restore dos uploads com arquivo real e o que depende de gente), as decisões de escopo e o que depende de gente: [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Backlog (sem data)
 
-Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF03b, RF06, RF07, RF08, RF11, RF12, RF13, RF14, RF17, os RNF, a logo própria e as pendências do back-end.
+Tudo o que não é P1 está em [`docs/BACKLOG.md`](docs/BACKLOG.md): RF06, RF07, RF08, RF12, os RNF, a logo própria e as pendências do back-end.
 
-> O documento de requisitos numera duas vezes o RF03. Aqui, "Consultar turma" é RF03 e "Sair da turma" é RF03b.
+> O documento de requisitos numera duas vezes o RF03. Aqui, "Consultar turma" é RF03 e "Sair da turma" é RF03b (já feito, junto com RF11, RF14b, a lista de quem não entregou e o hash SHA-256, entre as entregas 1 e 2).
 
 ## Como rodar
 

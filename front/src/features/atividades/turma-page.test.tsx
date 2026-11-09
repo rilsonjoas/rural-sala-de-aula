@@ -22,6 +22,11 @@ async function abrirTurma(usuario: { email: string; senha: string }, turmaId = T
   return user;
 }
 
+/** A turma abre na aba Mural; as atividades ficam na aba Atividades. */
+async function abrirAbaAtividades(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(await screen.findByRole('button', { name: /^Atividades/ }));
+}
+
 const card = (nome: RegExp | string) => screen.getByRole('article', { name: nome });
 
 describe('Atividades da turma (aluno)', () => {
@@ -30,14 +35,17 @@ describe('Atividades da turma (aluno)', () => {
 
     expect(await screen.findByRole('heading', { name: 'Turma A — Algoritmos', level: 2 })).toBeInTheDocument();
     expect(within(screen.getByRole('main')).getByRole('link', { name: /Turmas/ })).toHaveAttribute('href', '/turmas');
-    expect(screen.getByText('Algoritmos e Estruturas de Dados II · 2026.2')).toBeInTheDocument();
+    expect(screen.getByText('Você está inscrito nesta turma')).toBeInTheDocument();
+    expect(screen.getByText('Algoritmos e Estruturas de Dados II')).toBeInTheDocument();
+    expect(screen.getByText('2026.2')).toBeInTheDocument();
     expect(screen.getByText('Prof. Paulo Silva')).toBeInTheDocument();
     expect(screen.getByText('Seg · Qua')).toBeInTheDocument();
   });
 
   it('lista as atividades disponíveis, cada uma com o selo do estado, e não mostra as indisponíveis', async () => {
-    await abrirTurma(ALUNA);
+    const user = await abrirTurma(ALUNA);
     await screen.findByRole('heading', { name: 'Turma A — Algoritmos', level: 2 });
+    await abrirAbaAtividades(user);
 
     expect(await screen.findAllByRole('article')).toHaveLength(5);
     expect(screen.queryByRole('article', { name: /Projeto Final/ })).not.toBeInTheDocument();
@@ -49,7 +57,8 @@ describe('Atividades da turma (aluno)', () => {
   });
 
   it('cada card mostra tipo, um só prazo (o prazo final) e o apoio ao estado', async () => {
-    await abrirTurma(ALUNA);
+    const user = await abrirTurma(ALUNA);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     const lista1 = within(card(/Lista 1/));
@@ -63,14 +72,16 @@ describe('Atividades da turma (aluno)', () => {
   });
 
   it('o card inteiro leva ao detalhe da atividade', async () => {
-    await abrirTurma(ALUNA);
+    const user = await abrirTurma(ALUNA);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     expect(within(card(/Lista 1/)).getByRole('link', { name: /Lista 1/ })).toHaveAttribute('href', `/atividades/${A_LISTA_1}`);
   });
 
   it('o aluno não vê Nova atividade nem Ver entregas', async () => {
-    await abrirTurma(ALUNA);
+    const user = await abrirTurma(ALUNA);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     expect(screen.queryByRole('button', { name: 'Cadastrar atividade' })).not.toBeInTheDocument();
@@ -79,6 +90,7 @@ describe('Atividades da turma (aluno)', () => {
 
   it('filtra por estado com os chips e limpa os filtros', async () => {
     const user = await abrirTurma(ALUNA);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     await user.click(screen.getByRole('button', { name: 'Atrasada' }));
@@ -94,16 +106,18 @@ describe('Atividades da turma (aluno)', () => {
 
   it('um filtro sem resultado ensina a limpar', async () => {
     const user = await abrirTurma(ALUNA);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
-    await user.click(screen.getByRole('button', { name: 'Em grupo' }));
+    await user.click(screen.getByRole('button', { name: 'Projeto em Grupo' }));
 
     expect(await screen.findByText('Nenhuma atividade com esses filtros.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Limpar filtros' }).length).toBeGreaterThan(0);
   });
 
   it('o seletor de ordenação tem rótulo visível', async () => {
-    await abrirTurma(ALUNA);
+    const user = await abrirTurma(ALUNA);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     expect(screen.getByText('Ordenar por')).toBeVisible();
@@ -112,10 +126,11 @@ describe('Atividades da turma (aluno)', () => {
 
   it('ordena por prazo mais distante primeiro', async () => {
     const user = await abrirTurma(ALUNA);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     await user.click(screen.getByRole('combobox', { name: 'Ordenar por' }));
-    await user.click(await screen.findByRole('option', { name: 'Prazo mais distante primeiro' }));
+    await user.click(await screen.findByRole('option', { name: 'Prazo (mais distante primeiro)' }));
 
     const titulos = (await screen.findAllByRole('heading', { level: 4 })).map((h) => h.textContent);
     expect(titulos.length).toBeGreaterThan(0);
@@ -131,7 +146,8 @@ describe('Atividades da turma (aluno)', () => {
 
 describe('Atividades da turma (professor)', () => {
   it('cada card mostra quantas entregas esperam avaliação e o prazo (Lista 2: duas sem nota, prazo encerrado)', async () => {
-    await abrirTurma(PROFESSOR);
+    const user = await abrirTurma(PROFESSOR);
+    await abrirAbaAtividades(user);
 
     const lista2 = within(await screen.findByRole('article', { name: /Lista 2/ }));
     expect(await lista2.findByText('2 a avaliar')).toBeInTheDocument();
@@ -141,18 +157,21 @@ describe('Atividades da turma (professor)', () => {
   });
 
   it('mostra o código de inscrição, Nova atividade e todas as atividades, até as ainda não disponíveis', async () => {
-    await abrirTurma(PROFESSOR);
+    const user = await abrirTurma(PROFESSOR);
 
     expect(await screen.findByRole('heading', { name: 'Turma A — Algoritmos', level: 2 })).toBeInTheDocument();
+    expect(screen.getByText('Você leciona esta turma')).toBeInTheDocument();
+    await abrirAbaAtividades(user);
     expect(await screen.findAllByRole('article')).toHaveLength(6);
     expect(screen.getByText('ALG202')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Copiar código' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cadastrar atividade' })).toBeInTheDocument();
-    expect(within(card(/Projeto Final/)).getByText(/^Disponível a partir de \d{2}\/\d{2}/)).toBeInTheDocument();
+    expect(within(card(/Projeto Final/)).getByText(/^A partir de \d{2}\/\d{2}/)).toBeInTheDocument();
   });
 
   it('cada card leva às entregas, sem selo de estado do aluno', async () => {
-    await abrirTurma(PROFESSOR);
+    const user = await abrirTurma(PROFESSOR);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     const lista0 = within(card(/Lista 0/));
@@ -165,11 +184,12 @@ describe('Atividades da turma (professor)', () => {
   });
 
   it('os filtros do professor não têm o grupo Estado', async () => {
-    await abrirTurma(PROFESSOR);
+    const user = await abrirTurma(PROFESSOR);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
 
     expect(screen.queryByRole('button', { name: 'Pendente' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Trabalho' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Projeto Individual' })).toBeInTheDocument();
   });
 
   it('turma sem atividades ensina o próximo passo', async () => {
@@ -177,16 +197,17 @@ describe('Atividades da turma (professor)', () => {
     await entrarComo(PROFESSOR);
     const nova = await api.POST('/turmas', { body: { nome: 'Turma D', disciplina: 'Redes', semestre: '2026.2', diasAula: [2] } });
     renderApp(`/turmas/${nova.data!.id}`);
+    await abrirAbaAtividades(user);
 
     expect(await screen.findByText('Nenhuma atividade por aqui ainda.')).toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: 'Cadastrar atividade' })).toHaveLength(1);
-    void user;
   });
 });
 
 describe('Nova atividade', () => {
   async function abrirFolha() {
     const user = await abrirTurma(PROFESSOR);
+    await abrirAbaAtividades(user);
     await screen.findAllByRole('article');
     await user.click(screen.getByRole('button', { name: 'Cadastrar atividade' }));
     const folha = await screen.findByRole('dialog', { name: 'Nova atividade' });
@@ -228,8 +249,7 @@ describe('Nova atividade', () => {
 
     await user.type(within(folha).getByLabelText('Nome da atividade'), 'Lista 3 — Árvores AVL');
     await user.type(within(folha).getByLabelText('Descrição'), 'Rotações simples e duplas.');
-    await user.click(within(folha).getByRole('radio', { name: 'Trabalho' }));
-    await user.click(within(folha).getByRole('radio', { name: /Alta/ }));
+    await user.click(within(folha).getByRole('radio', { name: 'Projeto Individual' }));
     fireEvent.change(within(folha).getByLabelText('Disponível em'), { target: { value: '2030-05-01T08:00' } });
     fireEvent.change(within(folha).getByLabelText('Prazo final'), { target: { value: '2030-05-20T23:59' } });
     await user.click(within(folha).getByRole('button', { name: 'Cadastrar atividade' }));
@@ -238,7 +258,7 @@ describe('Nova atividade', () => {
     expect(within(folha).getByText('Lista 3 — Árvores AVL')).toBeInTheDocument();
     expect(within(folha).getByText('01/05/2030 às 08:00')).toBeInTheDocument();
     expect(within(folha).getByText('20/05/2030 às 23:59')).toBeInTheDocument();
-    expect(within(folha).getByText('Trabalho · Complexidade alta · Individual')).toBeInTheDocument();
+    expect(within(folha).getByText('Projeto Individual')).toBeInTheDocument();
 
     await user.click(within(folha).getByRole('button', { name: 'Confirmar e cadastrar' }));
 

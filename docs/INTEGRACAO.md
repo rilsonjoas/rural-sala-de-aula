@@ -1,5 +1,7 @@
 # Integração front–back (guia para o back-end)
 
+> **Estado em 19/10/2026: a integração foi concluída.** Todos os endpoints do contrato estão implementados, o front roda contra a API real e o conjunto está em produção. A verificação está descrita no [README](../README.md) (`scripts/smoke-p1.py` e `npm run test:e2e:real`). Este guia fica como histórico do que o back precisava entregar; a API simulada continua útil para desenvolver o front sem o back.
+
 Escrito em 12/10/2026 para o Luiz. O front dos nove requisitos P1 está no `main` (PR #1) e roda contra uma **API simulada**. Este guia diz onde está o que o back precisa e em que ordem integrar.
 
 ## Como ver o front funcionando
@@ -10,7 +12,7 @@ npm install
 VITE_API_MOCK=true VITE_API_MOCK_USER=aluna npm run dev   # ou professor
 ```
 
-Usuários de teste: `maria@ufrpe.br` (aluna) e `paulo@ufrpe.br` (professor), senha `senha1234`. Os dados ficam na memória da aba; recarregar volta ao início.
+Usuários de teste: `maria@ufrpe.br` (só aluna), `paulo@ufrpe.br` (professor da Turma A e da C, aluno nas turmas B, D e E) e `carla@ufrpe.br` (professora das demais), senha `senha1234`. Os dados ficam na memória da aba; recarregar volta ao início.
 
 ## Onde está a especificação
 
@@ -44,19 +46,23 @@ Cada etapa troca o mock pelo endpoint real: sem `VITE_API_MOCK=true`, o front fa
 
 ## O contrato mudou durante o front
 
-Refletido no `openapi.yaml`, **ainda não implementado nem confirmado** (detalhe em `docs/design/plano-de-design.md` §4):
+Refletido no `openapi.yaml` e **implementado e verificado em 19/10/2026** (detalhe em `docs/design/plano-de-design.md` §4):
 
 - `Turma`: `professorNome`, `atividadesPendentes`, `atividadesAtrasadas` (só aluno).
-- `Atividade`: `nota` (só aluno, quando avaliada), `estado` e `minhaEntrega` no detalhe; `modalidade` e `disponivelEm` sempre presentes.
+- `Atividade`: `nota` (só aluno, quando avaliada), `estado` e `minhaEntrega` no detalhe; `disponivelEm` sempre presente. `modalidade` e `complexidade` não fazem parte do contrato: o tipo já diz se é em grupo, e a complexidade ficou de fora por decisão de escopo (ver `requisitos.md`, "Onde o projeto decidiu diferente").
 - `EntregaIndividual`: `alunoNome` e `tamanhoBytes`.
 - `TurmaInput.diasAula` com ao menos um dia.
-- `GET /atividades` com filtros de complexidade e turma.
+- `GET /atividades` com filtros de estado, tipo e turma, ordenados por prazo.
+- Papel contextual por turma (ADR-0008): `RegisterRequest` sem `papel`; `GET /turmas` devolve as turmas que a pessoa leciona (com `codigo`) e as que cursa (com contadores); `GET /atividades` só das turmas em que é aluna; criar turma é aberto a qualquer conta.
+- `submitEntrega` responde 403 para o professor da própria turma e para atividade que não aceita atraso com o prazo vencido.
+- Mural: `GET/POST /turmas/{id}/avisos` e `GET/POST /avisos/{id}/comentarios` (RF13 e RF14).
+- Comentários em atividade: `GET/POST /atividades/{id}/comentarios`; `Comentario` ganha `atividadeId` e `avisoId` passa a ser opcional (um dos dois vem preenchido). Professor e alunos respondem, em um nível.
+- Notificações (RF17): `GET /notificacoes` (`{naoLidas, itens, prazosProximos}`; até 50 itens), `POST /notificacoes/{id}/lida` e `POST /notificacoes/lidas`. Prazos próximos vêm com `tipo: PRAZO_PROXIMO`, `lida: true` e id `prazo-<atividadeId>`.
 - `submitEntrega` responde 413 (tamanho), 415 (tipo) e 409 (já avaliada).
 
-## Falta decidir ou implementar
+## O que estava em aberto e como ficou
 
-- Spring Security com sessão em cookie httpOnly (ADR-0004) e proteção contra CSRF.
-- Todos os endpoints do contrato (hoje só o health check).
-- Onde ficam os arquivos (ADR-0003: volume Docker em disco recomendado para 19/10; bucket S3 como alternativa).
-- Confirmar prazo final único no RF10 e entrega individual em atividade "Em grupo".
-- Lista completa do que fica fora do P1: `docs/BACKLOG.md`.
+- Sessão em cookie httpOnly (ADR-0004): implementada com a `HttpSession` do Spring, **sem Spring Security**; CSRF coberto por `SameSite=Lax` e pelo CORS (ADR-0004, "Como ficou").
+- Todos os endpoints do contrato: implementados.
+- Onde ficam os arquivos (ADR-0003): volume Docker em disco.
+- Ainda a confirmar com o Luiz: prazo final único no RF10 e entrega individual em atividade "Em grupo" (itens do BACKLOG).

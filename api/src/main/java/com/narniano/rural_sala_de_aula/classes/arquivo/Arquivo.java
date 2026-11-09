@@ -37,6 +37,10 @@ public class Arquivo {
     @Column(nullable = false)
     private Long tamanho;
 
+    /** SHA-256 do conteudo gravado, em hexadecimal; nulo nos arquivos enviados antes do RNF02. */
+    @Column(name = "hash_sha256", length = 64)
+    private String hashSha256;
+
     @Column(name = "data_envio", nullable = false)
     private LocalDateTime dataEnvio = LocalDateTime.now();
 

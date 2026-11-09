@@ -1,5 +1,8 @@
 package com.narniano.rural_sala_de_aula.classes.atividade;
 
+import com.narniano.rural_sala_de_aula.classes.comentario.ComentarioService;
+import com.narniano.rural_sala_de_aula.classes.comentario.RequestComentarioDTO;
+import com.narniano.rural_sala_de_aula.classes.comentario.ResponseComentarioDTO;
 import com.narniano.rural_sala_de_aula.classes.usuario.AuthService;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import jakarta.servlet.http.HttpSession;
@@ -18,26 +21,33 @@ public class AtividadeController {
 
     private final AtividadeService atividadeService;
     private final AuthService authService;
+    private final ComentarioService comentarioService;
 
     @GetMapping("/api/v1/atividades")
     public ResponseEntity<List<ResponseAtividadeDTO>> listarMinhasAtividades(
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) TipoAtividade tipo,
             @RequestParam(required = false) UUID turmaId,
+            @RequestParam(required = false, defaultValue = "prazo") String ordenar,
+            @RequestParam(required = false, defaultValue = "asc") String direcao,
             HttpSession session
     ) {
         Usuario usuario = authService.getUsuarioAutenticado(session);
-        List<ResponseAtividadeDTO> atividades = atividadeService.listarMinhasAtividades(usuario, estado, tipo, turmaId);
+        List<ResponseAtividadeDTO> atividades = atividadeService.listarMinhasAtividades(usuario, estado, tipo, turmaId, ordenar, direcao);
         return ResponseEntity.ok(atividades);
     }
 
     @GetMapping("/api/v1/turmas/{turmaId}/atividades")
     public ResponseEntity<List<ResponseAtividadeDTO>> listarPorTurma(
             @PathVariable UUID turmaId,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) TipoAtividade tipo,
+            @RequestParam(required = false, defaultValue = "prazo") String ordenar,
+            @RequestParam(required = false, defaultValue = "asc") String direcao,
             HttpSession session
     ) {
         Usuario usuario = authService.getUsuarioAutenticado(session);
-        List<ResponseAtividadeDTO> atividades = atividadeService.listarPorTurma(turmaId, usuario);
+        List<ResponseAtividadeDTO> atividades = atividadeService.listarPorTurma(turmaId, usuario, estado, tipo, ordenar, direcao);
         return ResponseEntity.ok(atividades);
     }
 
@@ -52,6 +62,25 @@ public class AtividadeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(atividade);
     }
 
+    @PutMapping("/api/v1/atividades/{atividadeId}")
+    public ResponseEntity<ResponseAtividadeDTO> atualizar(
+            @PathVariable UUID atividadeId,
+            @RequestBody @Valid RequestAtividadeDTO dto,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.ok(atividadeService.atualizar(atividadeId, dto, usuario));
+    }
+
+    @GetMapping("/api/v1/atividades/{atividadeId}/sem-entrega")
+    public ResponseEntity<List<AlunoResumoDTO>> listarSemEntrega(
+            @PathVariable UUID atividadeId,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.ok(atividadeService.listarSemEntrega(atividadeId, usuario));
+    }
+
     @GetMapping("/api/v1/atividades/{atividadeId}")
     public ResponseEntity<ResponseAtividadeDetalheDTO> obterDetalhe(
             @PathVariable UUID atividadeId,
@@ -60,5 +89,24 @@ public class AtividadeController {
         Usuario usuario = authService.getUsuarioAutenticado(session);
         ResponseAtividadeDetalheDTO detalhe = atividadeService.obterDetalhe(atividadeId, usuario);
         return ResponseEntity.ok(detalhe);
+    }
+
+    @GetMapping("/api/v1/atividades/{atividadeId}/comentarios")
+    public ResponseEntity<List<ResponseComentarioDTO>> listarComentarios(
+            @PathVariable UUID atividadeId,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.ok(comentarioService.listarDaAtividade(atividadeId, usuario));
+    }
+
+    @PostMapping("/api/v1/atividades/{atividadeId}/comentarios")
+    public ResponseEntity<ResponseComentarioDTO> criarComentario(
+            @PathVariable UUID atividadeId,
+            @RequestBody @Valid RequestComentarioDTO dto,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        return ResponseEntity.status(HttpStatus.CREATED).body(comentarioService.criarNaAtividade(atividadeId, dto, usuario));
     }
 }

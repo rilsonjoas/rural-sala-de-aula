@@ -8,7 +8,7 @@ servers:
   - url: /api/v1
 security:
   - cookieAuth: []
-tags: [{name: System}, {name: Auth}, {name: Turmas}, {name: Atividades}, {name: Entregas}, {name: Avisos}]
+tags: [{name: System}, {name: Auth}, {name: Turmas}, {name: Atividades}, {name: Entregas}, {name: Avisos}, {name: Gamificacao}, {name: Notificacoes}, {name: Grupos}]
 paths:
   /health:
     get:
@@ -26,6 +26,7 @@ paths:
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RegisterRequest'}}}}
       responses:
         '201': {description: Criado, content: {application/json: {schema: {$ref: '#/components/schemas/Usuario'}}}}
+        '429': {description: 'Muitas tentativas (limite por IP). Traz o cabeçalho Retry-After, em segundos.', content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}}
         '409': {$ref: '#/components/responses/Problem'}
         '422': {$ref: '#/components/responses/Problem'}
   /auth/login:
@@ -37,6 +38,7 @@ paths:
       responses:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Usuario'}}}}
         '401': {$ref: '#/components/responses/Problem'}
+        '429': {description: 'Muitas falhas para esse e-mail ou IP. Traz o cabeçalho Retry-After, em segundos.', content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}}
   /auth/logout:
     post:
       tags: [Auth]
@@ -87,11 +89,30 @@ paths:
       tags: [Avisos]
       operationId: createAviso
       summary: Posta um aviso no mural da turma.
-      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [texto], properties: {texto: {type: string}}}}}}
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [texto], properties: {texto: {type: string}, comentarioPaiId: {type: string, format: uuid, description: 'Comentário que está sendo respondido. Resposta a uma resposta fica sob o comentário original (um nível).'}}}}}}
       responses:
         '201': {description: Criado, content: {application/json: {schema: {$ref: '#/components/schemas/Aviso'}}}}
         '403': {$ref: '#/components/responses/Problem'}
+  /turmas/{turmaId}/inscricao:
+    delete:
+      tags: [Turmas]
+      operationId: leaveTurma
+      summary: O aluno sai da turma. Entregas e notas ficam com a turma. O professor não sai da própria turma (409).
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      responses:
+        '204': {description: Saiu da turma}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /avisos/{avisoId}/comentarios:
+    get:
+      tags: [Avisos]
+      operationId: listComentarios
+      summary: Lista os comentários de um aviso da turma.
+      parameters: [{name: avisoId, in: path, required: true, schema: {type: string, format: uuid}}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Comentario'}}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
     post:
       tags: [Avisos]
       operationId: createComentario
@@ -146,6 +167,17 @@ paths:
       responses:
         '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Atividade'}}}}}
   /atividades/{atividadeId}:
+    put:
+      tags: [Atividades]
+      operationId: updateAtividade
+      summary: Edita a atividade (só o professor da turma). Mesmas regras do cadastro.
+      parameters: [{$ref: '#/components/parameters/AtividadeId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/AtividadeInput'}}}}
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Atividade'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
     get:
       tags: [Atividades]
       operationId: getAtividade
@@ -153,6 +185,35 @@ paths:
       parameters: [{$ref: '#/components/parameters/AtividadeId'}]
       responses:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/AtividadeDetalhe'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /atividades/{atividadeId}/comentarios:
+    get:
+      tags: [Atividades]
+      operationId: listComentariosAtividade
+      summary: Lista os comentários de uma atividade (professor da turma ou aluno inscrito com a atividade já disponível).
+      parameters: [{$ref: '#/components/parameters/AtividadeId'}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Comentario'}}}}}
+        '404': {$ref: '#/components/responses/Problem'}
+    post:
+      tags: [Atividades]
+      operationId: createComentarioAtividade
+      summary: Comenta ou responde em uma atividade. Professor e alunos podem responder; só um nível de resposta.
+      parameters: [{$ref: '#/components/parameters/AtividadeId'}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [texto], properties: {texto: {type: string, minLength: 1, maxLength: 3000}, comentarioPaiId: {type: string, format: uuid}}}}}}
+      responses:
+        '201': {description: Criado, content: {application/json: {schema: {$ref: '#/components/schemas/Comentario'}}}}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /atividades/{atividadeId}/sem-entrega:
+    get:
+      tags: [Entregas]
+      operationId: listSemEntrega
+      summary: Alunos inscritos que ainda não entregaram (só o professor da turma).
+      parameters: [{$ref: '#/components/parameters/AtividadeId'}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/AlunoResumo'}}}}}
         '403': {$ref: '#/components/responses/Problem'}
         '404': {$ref: '#/components/responses/Problem'}
   /atividades/{atividadeId}/entregas:
@@ -180,7 +241,7 @@ paths:
     get:
       tags: [Entregas]
       operationId: downloadEntrega
-      summary: Somente PROFESSOR dono da turma.
+      summary: Professor dono da turma ou o próprio aluno autor da entrega. Outros alunos recebem 403.
       parameters: [{name: entregaId, in: path, required: true, schema: {type: string, format: uuid}}]
       responses:
         '200': {description: Arquivo, content: {application/octet-stream: {schema: {type: string, format: binary}}}}
@@ -197,9 +258,127 @@ paths:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Entrega'}}}}
         '403': {$ref: '#/components/responses/Problem'}
         '422': {$ref: '#/components/responses/Problem'}
+  /turmas/{turmaId}/alunos:
+    get:
+      tags: [Grupos]
+      operationId: listAlunosDaTurma
+      summary: PROPOSTA (ainda sem back-end). Alunos inscritos na turma, em ordem alfabética, para montar um grupo. Professor ou aluno da turma.
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/IntegranteDeGrupo'}}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+  /turmas/{turmaId}/grupos/configuracao:
+    get:
+      tags: [Grupos]
+      operationId: getConfiguracaoDeGrupos
+      summary: PROPOSTA (ainda sem back-end). Regras de formação de grupos da turma (padrão 2 a 5 integrantes, sem limite de grupos). Professor ou aluno da turma.
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguracaoDeGrupos'}}}}
+        '404': {$ref: '#/components/responses/Problem'}
+    put:
+      tags: [Grupos]
+      operationId: putConfiguracaoDeGrupos
+      summary: Somente o PROFESSOR dono da turma (RF12). Mudar as regras não desfaz grupos já aprovados.
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguracaoDeGrupos'}}}}
+      responses:
+        '200': {description: Salva, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguracaoDeGrupos'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /turmas/{turmaId}/grupos:
+    get:
+      tags: [Grupos]
+      operationId: listGrupos
+      summary: PROPOSTA (ainda sem back-end). O professor vê todos os grupos; o aluno vê os aprovados e os próprios (qualquer estado).
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Grupo'}}}}}
+        '404': {$ref: '#/components/responses/Problem'}
+    post:
+      tags: [Grupos]
+      operationId: solicitarGrupo
+      summary: O aluno solicita um grupo (RF06). Ele entra como integrante; nasce PENDENTE. 422 se faltar ou sobrar integrante em relação à configuração, se algum aluno não for da turma ou já estiver em grupo, ou se o limite de grupos da turma já foi atingido.
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/GrupoInput'}}}}
+      responses:
+        '201': {description: Solicitado, content: {application/json: {schema: {$ref: '#/components/schemas/Grupo'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /grupos/{grupoId}/aprovacao:
+    post:
+      tags: [Grupos]
+      operationId: decidirGrupo
+      summary: Somente o PROFESSOR dono da turma (RF12). Só decide grupo PENDENTE (409 nos demais). Reprovado deixa de ocupar vaga dos alunos.
+      parameters: [{name: grupoId, in: path, required: true, schema: {type: string, format: uuid}}]
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [aprovado], properties: {aprovado: {type: boolean}}}}}}
+      responses:
+        '200': {description: Decidido, content: {application/json: {schema: {$ref: '#/components/schemas/Grupo'}}}}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
+  /grupos/{grupoId}/integrantes:
+    post:
+      tags: [Grupos]
+      operationId: entrarNoGrupo
+      summary: O aluno entra em grupo APROVADO da turma (RF06). 422 se o grupo está cheio ou se ele já está em outro grupo.
+      parameters: [{name: grupoId, in: path, required: true, schema: {type: string, format: uuid}}]
+      responses:
+        '200': {description: Entrou, content: {application/json: {schema: {$ref: '#/components/schemas/Grupo'}}}}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Grupos]
+      operationId: sairDoGrupo
+      summary: 'O próprio aluno sai (RF07). Grupo PENDENTE: sai sem restrição e, sem integrantes, o grupo é descartado. Grupo APROVADO: 422 se ficaria abaixo do mínimo da configuração.'
+      parameters: [{name: grupoId, in: path, required: true, schema: {type: string, format: uuid}}]
+      responses:
+        '204': {description: Saiu}
+        '404': {$ref: '#/components/responses/Problem'}
+        '422': {$ref: '#/components/responses/Problem'}
+  /notificacoes:
+    get:
+      tags: [Notificacoes]
+      operationId: listNotificacoes
+      summary: Central de notificações do usuário (sino). Gera as "atividade nova" pendentes na leitura. Até 50 itens gravados, mais os prazos próximos (48 h, atividade aberta e não entregue), que são calculados e não contam como não lidas.
+      responses:
+        '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Notificacoes'}}}}
+        '401': {$ref: '#/components/responses/Problem'}
+  /notificacoes/{notificacaoId}/lida:
+    post:
+      tags: [Notificacoes]
+      operationId: marcarNotificacaoLida
+      summary: Marca uma notificação como lida (idempotente). Notificação de outro usuário é 404.
+      parameters: [{name: notificacaoId, in: path, required: true, schema: {type: string, format: uuid}}]
+      responses:
+        '204': {description: Marcada}
+        '404': {$ref: '#/components/responses/Problem'}
+  /notificacoes/lidas:
+    post:
+      tags: [Notificacoes]
+      operationId: marcarTodasNotificacoesLidas
+      summary: Marca todas as notificações do usuário como lidas.
+      responses:
+        '204': {description: Marcadas}
+  /gamificacao/perfil:
+    get:
+      tags: [Gamificacao]
+      operationId: getPerfilGamificacao
+      summary: Perfil de gamificação do aluno autenticado (ADR-0009).
+      description: Retorna nível, XP total, consistência e conquistas desbloqueadas a partir das entregas.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerfilGamificacao'
+        '401':
+          $ref: '#/components/responses/Problem'
 components:
   securitySchemes:
-    cookieAuth: {type: apiKey, in: cookie, name: SESSION, description: 'Cookie httpOnly, SameSite=Lax (ADR-0004)'}
+    cookieAuth: {type: apiKey, in: cookie, name: JSESSIONID, description: 'Cookie httpOnly, SameSite=Lax, Secure em produção (ADR-0004)'}
   parameters:
     TurmaId: {name: turmaId, in: path, required: true, schema: {type: string, format: uuid}}
     AtividadeId: {name: atividadeId, in: path, required: true, schema: {type: string, format: uuid}}
@@ -212,7 +391,7 @@ components:
       description: Erro
       content: {application/json: {schema: {$ref: '#/components/schemas/Problem'}}}
   schemas:
-    Health: {type: object, required: [status, service, version, timestamp], properties: {status: {type: string}, service: {type: string}, version: {type: string}, timestamp: {type: string, format: date-time}}}
+    Health: {type: object, required: [status, service, version, timestamp], properties: {status: {type: string}, service: {type: string}, version: {type: string}, commit: {type: string, description: SHA curto do commit da imagem no ar ("dev" fora do deploy)}, timestamp: {type: string, format: date-time}}}
     Problem: {type: object, required: [status, message], properties: {status: {type: integer}, message: {type: string}, campos: {type: array, items: {type: object, required: [campo, mensagem], properties: {campo: {type: string}, mensagem: {type: string}}}}}}
     Papel: {type: string, enum: [ALUNO, PROFESSOR]}
     Usuario: {type: object, required: [id, nome, email], properties: {id: {type: string, format: uuid}, nome: {type: string}, email: {type: string, format: email}, dataNascimento: {type: string, format: date}, papel: {$ref: '#/components/schemas/Papel'}}}
@@ -225,6 +404,18 @@ components:
     Atividade: {allOf: [{$ref: '#/components/schemas/AtividadeInput'}, {type: object, required: [id, turmaId, turmaNome, disponivelEm], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, turmaNome: {type: string}, disponivelEm: {type: string, format: date-time}, aceitaAtraso: {type: boolean}, estado: {allOf: [{$ref: '#/components/schemas/EstadoAtividade'}]}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}}}]}
     AtividadeDetalhe: {allOf: [{$ref: '#/components/schemas/Atividade'}, {type: object, required: [professorNome], properties: {professorNome: {type: string}, minhaEntrega: {allOf: [{$ref: '#/components/schemas/Entrega'}], nullable: true}}}]}
     AvaliacaoInput: {type: object, required: [nota], properties: {nota: {type: number, minimum: 0, maximum: 10, multipleOf: 0.1}, comentarioPrivado: {type: string}}}
-    Entrega: {type: object, required: [id, atividadeId, alunoId, alunoNome, nomeOriginal, tamanhoBytes, enviadaEm, atrasada], properties: {id: {type: string, format: uuid}, atividadeId: {type: string, format: uuid}, alunoId: {type: string, format: uuid}, alunoNome: {type: string}, nomeOriginal: {type: string}, tamanhoBytes: {type: integer, minimum: 0}, enviadaEm: {type: string, format: date-time}, atrasada: {type: boolean}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}, comentarioPrivado: {type: string, nullable: true}}}
+    Entrega: {type: object, required: [id, atividadeId, alunoId, alunoNome, nomeOriginal, tamanhoBytes, enviadaEm, atrasada], properties: {id: {type: string, format: uuid}, atividadeId: {type: string, format: uuid}, alunoId: {type: string, format: uuid}, alunoNome: {type: string}, nomeOriginal: {type: string}, tamanhoBytes: {type: integer, minimum: 0}, hashSha256: {type: string, nullable: true, description: 'SHA-256 (hex) do arquivo no envio; nulo nas entregas anteriores ao RNF02'}, enviadaEm: {type: string, format: date-time}, atrasada: {type: boolean}, nota: {type: number, nullable: true, minimum: 0, maximum: 10}, comentarioPrivado: {type: string, nullable: true}}}
+    LoginRequest: {type: object, required: [email, senha], properties: {email: {type: string, format: email}, senha: {type: string}}}
     Aviso: {type: object, required: [id, turmaId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}, comentarios: {type: array, items: {$ref: '#/components/schemas/Comentario'}}}}
-    Comentario: {type: object, required: [id, avisoId, autorId, autorNome, texto, horario], properties: {id: {type: string, format: uuid}, avisoId: {type: string, format: uuid}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}}}
+    AlunoResumo: {type: object, required: [id, nome, email], properties: {id: {type: string, format: uuid}, nome: {type: string}, email: {type: string, format: email}}}
+    Comentario: {type: object, required: [id, autorId, autorNome, texto, horario], description: 'Pertence a um aviso (avisoId) ou a uma atividade (atividadeId); o outro vem nulo.', properties: {id: {type: string, format: uuid}, avisoId: {type: string, format: uuid, nullable: true}, atividadeId: {type: string, format: uuid, nullable: true}, comentarioPaiId: {type: string, format: uuid, nullable: true}, autorId: {type: string, format: uuid}, autorNome: {type: string}, texto: {type: string}, horario: {type: string, format: date-time}}}
+    Conquista: {type: object, required: [id, titulo, descricao, icone, desbloqueada, progressoAtual, progressoTotal], properties: {id: {type: string}, titulo: {type: string}, descricao: {type: string}, icone: {type: string}, desbloqueada: {type: boolean}, progressoAtual: {type: integer}, progressoTotal: {type: integer}}}
+    IntegranteDeGrupo: {type: object, required: [id, nome], properties: {id: {type: string, format: uuid}, nome: {type: string}}}
+    ConfiguracaoDeGrupos: {type: object, required: [minimoIntegrantes, maximoIntegrantes], description: 'maximoGrupos nulo = sem limite.', properties: {minimoIntegrantes: {type: integer, minimum: 1}, maximoIntegrantes: {type: integer, minimum: 1, description: 'Não pode ser menor que o mínimo.'}, maximoGrupos: {type: integer, minimum: 1, nullable: true}}}
+    GrupoStatus: {type: string, enum: [PENDENTE, APROVADO, REPROVADO]}
+    GrupoInput: {type: object, required: [nome, integrantesIds], description: 'integrantesIds são os colegas; quem solicita entra sozinho no grupo.', properties: {nome: {type: string, minLength: 1, maxLength: 80}, integrantesIds: {type: array, items: {type: string, format: uuid}}}}
+    Grupo: {type: object, required: [id, turmaId, nome, status, criadoPorId, integrantes], properties: {id: {type: string, format: uuid}, turmaId: {type: string, format: uuid}, nome: {type: string}, status: {$ref: '#/components/schemas/GrupoStatus'}, criadoPorId: {type: string, format: uuid}, integrantes: {type: array, items: {$ref: '#/components/schemas/IntegranteDeGrupo'}}}}
+    Notificacao: {type: object, required: [id, tipo, texto, turmaId, criadaEm, lida, paraProfessor], description: 'Nos prazos próximos (tipo PRAZO_PROXIMO) o id é "prazo-<atividadeId>", criadaEm é o prazo final e lida é sempre true.', properties: {id: {type: string}, tipo: {type: string, enum: [AVISO_NOVO, ATIVIDADE_NOVA, ATIVIDADE_ALTERADA, COMENTARIO_NOVO, RESPOSTA_NOVA, NOTA_PUBLICADA, PRAZO_PROXIMO]}, texto: {type: string}, turmaId: {type: string, format: uuid}, atividadeId: {type: string, format: uuid, nullable: true}, avisoId: {type: string, format: uuid, nullable: true}, criadaEm: {type: string, format: date-time}, lida: {type: boolean}, paraProfessor: {type: boolean, description: 'O destinatário é o professor da turma (o front usa para escolher o link).'}}}
+    Notificacoes: {type: object, required: [naoLidas, itens, prazosProximos], properties: {naoLidas: {type: integer, minimum: 0, description: 'Todas as não lidas, mesmo as que passam do limite de 50 itens.'}, itens: {type: array, items: {$ref: '#/components/schemas/Notificacao'}}, prazosProximos: {type: array, items: {$ref: '#/components/schemas/Notificacao'}}}}
+    PerfilDocente: {type: object, required: [nivelDocente, tituloNivel, avaliacoesRealizadas, turmasLecionadas, feedbacksComComentario, respostasNoMural, conquistas], properties: {nivelDocente: {type: integer, minimum: 1}, tituloNivel: {type: string}, avaliacoesRealizadas: {type: integer, minimum: 0}, turmasLecionadas: {type: integer, minimum: 0}, feedbacksComComentario: {type: integer, minimum: 0}, respostasNoMural: {type: integer, minimum: 0}, conquistas: {type: array, items: {$ref: '#/components/schemas/Conquista'}}}}
+    PerfilGamificacao: {type: object, required: [nivel, xpTotal, xpParaProximoNivel, entregasConcluidas, entregasNoNivelAtual, entregasParaSubirNivel, streakSemanas, recordeStreakSemanas, conquistas], properties: {nivel: {type: integer, minimum: 1}, xpTotal: {type: integer, minimum: 0}, xpParaProximoNivel: {type: integer, minimum: 0}, entregasConcluidas: {type: integer, minimum: 0}, entregasNoNivelAtual: {type: integer, minimum: 0}, entregasParaSubirNivel: {type: integer, minimum: 0}, streakSemanas: {type: integer, minimum: 0}, recordeStreakSemanas: {type: integer, minimum: 0}, conquistas: {type: array, items: {$ref: '#/components/schemas/Conquista'}}, docente: {allOf: [{$ref: '#/components/schemas/PerfilDocente'}], nullable: true}}}

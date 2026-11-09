@@ -3,9 +3,7 @@ import type { components } from '@/lib/api.generated';
 type S = components['schemas'];
 
 export type EstadoAtividade = S['EstadoAtividade'];
-export type Complexidade = S['Complexidade'];
 export type AtividadeTipo = S['AtividadeTipo'];
-export type AtividadeModalidade = S['AtividadeModalidade'];
 
 export type TurmaDb = {
   id: string;
@@ -25,9 +23,7 @@ export type AtividadeDb = {
   turmaId: string;
   nome: string;
   descricao?: string;
-  complexidade?: Complexidade;
   tipo: AtividadeTipo;
-  modalidade?: AtividadeModalidade;
   prazoFinal: string;
   disponivelEm: string;
   aceitaAtraso?: boolean;
@@ -55,9 +51,36 @@ export type AvisoDb = {
   comentarios?: ComentarioDb[];
 };
 
+export type GrupoDb = {
+  id: string;
+  turmaId: string;
+  nome: string;
+  status: 'PENDENTE' | 'APROVADO' | 'REPROVADO';
+  criadoPorId: string;
+  integrantesIds: string[];
+};
+
+export type ConfiguracaoDeGruposDb = { minimoIntegrantes: number; maximoIntegrantes: number; maximoGrupos: number | null };
+
+export const CONFIGURACAO_PADRAO_DE_GRUPOS: ConfiguracaoDeGruposDb = { minimoIntegrantes: 2, maximoIntegrantes: 5, maximoGrupos: null };
+
+export type NotificacaoDb = {
+  id: string;
+  usuarioId: string;
+  tipo: 'AVISO_NOVO' | 'ATIVIDADE_NOVA' | 'ATIVIDADE_ALTERADA' | 'COMENTARIO_NOVO' | 'RESPOSTA_NOVA' | 'NOTA_PUBLICADA';
+  texto: string;
+  turmaId: string;
+  atividadeId: string | null;
+  avisoId: string | null;
+  criadaEm: string;
+  lida: boolean;
+};
+
 export type ComentarioDb = {
   id: string;
-  avisoId: string;
+  avisoId: string | null;
+  atividadeId?: string | null;
+  comentarioPaiId?: string | null;
   autorId: string;
   autorNome: string;
   texto: string;
@@ -89,30 +112,23 @@ export function gerarCodigo(existentes: string[]): string {
   }
 }
 
-const POSICAO_COMPLEXIDADE: Record<string, number> = { BAIXA: 0, MEDIA: 1, ALTA: 2 };
-
 export type FiltrosDeAtividade = {
   estado?: EstadoAtividade;
   tipo?: AtividadeTipo;
-  modalidade?: AtividadeModalidade;
-  complexidade?: Complexidade;
-  ordenar?: 'prazo' | 'complexidade';
+  ordenar?: 'prazo';
   direcao?: 'asc' | 'desc';
 };
 
 export function filtrarEOrdenarAtividades<T extends AtividadeDb & { estado?: EstadoAtividade }>(
   lista: T[],
-  { estado, tipo, modalidade, complexidade, ordenar = 'prazo', direcao = 'asc' }: FiltrosDeAtividade,
+  { estado, tipo, ordenar = 'prazo', direcao = 'asc' }: FiltrosDeAtividade,
 ): T[] {
   const filtradas = lista.filter(
-    (a) =>
-      (!estado || a.estado === estado) &&
-      (!tipo || a.tipo === tipo) &&
-      (!modalidade || !a.modalidade || a.modalidade === modalidade) &&
-      (!complexidade || !a.complexidade || a.complexidade === complexidade),
+    (a) => (!estado || a.estado === estado) && (!tipo || a.tipo === tipo),
   );
 
-  const chave = (a: T) => (ordenar === 'complexidade' && a.complexidade ? POSICAO_COMPLEXIDADE[a.complexidade] : new Date(a.prazoFinal).getTime());
+  void ordenar;
+  const chave = (a: T) => new Date(a.prazoFinal).getTime();
   const sinal = direcao === 'desc' ? -1 : 1;
 
   return [...filtradas].sort((a, b) => sinal * (chave(a) - chave(b)) || a.nome.localeCompare(b.nome));

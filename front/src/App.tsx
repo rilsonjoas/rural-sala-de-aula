@@ -2,7 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AppShell } from './components/shell/app-shell';
 import { PublicLayout } from './components/shell/public-layout';
-import { PublicOnly, RequireAuth, RequireRole } from './features/session/guards';
+import { PublicOnly, RequireAuth } from './features/session/guards';
 import { SessionWatcher } from './features/session/session-watcher';
 import { AuthPage } from './features/auth/auth-page';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -11,6 +11,8 @@ import { EntregasPage } from './features/entregas/entregas-page';
 import { MinhasAtividadesPage } from './features/atividades/minhas-page';
 import { TurmaPage } from './features/atividades/turma-page';
 import { TurmasPage } from './features/turmas/turmas-page';
+import { CalendarioPage } from './features/calendario/calendario-page';
+import { ConquistasPage } from './features/gamificacao/conquistas-page';
 
 export default function App() {
   return (
@@ -34,6 +36,9 @@ export default function App() {
             <Route path="/atividades" element={<MinhasAtividadesPage />} />
             <Route path="/atividades/:atividadeId" element={<DetalheAtividadePage />} />
             <Route path="/atividades/:atividadeId/entregas" element={<EntregasPage />} />
+
+            <Route path="/calendario" element={<CalendarioPage />} />
+            <Route path="/conquistas" element={<ConquistasPage />} />
 
             <Route path="*" element={<NotFoundPage />} />
           </Route>

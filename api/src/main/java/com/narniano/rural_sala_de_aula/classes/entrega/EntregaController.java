@@ -67,10 +67,13 @@ public class EntregaController {
         Arquivo arquivo = resultado.getKey();
         byte[] bytes = resultado.getValue();
 
-        return ResponseEntity.ok()
+        ResponseEntity.BodyBuilder resposta = ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + arquivo.getNomeOriginal() + "\"")
                 .contentType(MediaType.parseMediaType(arquivo.getTipoConteudo()))
-                .contentLength(bytes.length)
-                .body(bytes);
+                .contentLength(bytes.length);
+        if (arquivo.getHashSha256() != null) {
+            resposta.header("X-Content-SHA256", arquivo.getHashSha256());
+        }
+        return resposta.body(bytes);
     }
 }

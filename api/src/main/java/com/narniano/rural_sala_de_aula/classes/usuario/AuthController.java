@@ -1,5 +1,7 @@
 package com.narniano.rural_sala_de_aula.classes.usuario;
 
+import com.narniano.rural_sala_de_aula.common.security.IpDoCliente;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,14 +16,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/api/v1/auth/register")
-    public ResponseEntity<ResponseUsuarioDTO> register(@RequestBody @Valid RequestUsuarioDTO dto, HttpSession session) {
-        ResponseUsuarioDTO response = authService.register(dto, session);
+    public ResponseEntity<ResponseUsuarioDTO> register(@RequestBody @Valid RequestUsuarioDTO dto, HttpSession session, HttpServletRequest request) {
+        ResponseUsuarioDTO response = authService.register(dto, session, IpDoCliente.de(request));
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/api/v1/auth/login")
-    public ResponseEntity<ResponseUsuarioDTO> login(@RequestBody @Valid LoginRequestDTO dto, HttpSession session) {
-        ResponseUsuarioDTO response = authService.login(dto, session);
+    public ResponseEntity<ResponseUsuarioDTO> login(@RequestBody @Valid LoginRequestDTO dto, HttpSession session, HttpServletRequest request) {
+        ResponseUsuarioDTO response = authService.login(dto, session, IpDoCliente.de(request));
         return ResponseEntity.ok(response);
     }
 

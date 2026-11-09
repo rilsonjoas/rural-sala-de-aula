@@ -14,6 +14,11 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
 
+# Commit no ar: quem builda passa --build-arg GIT_COMMIT=<sha>; aparece em /api/v1/health.
+# Fica depois do COPY do jar para nao invalidar o cache do build do Maven.
+ARG GIT_COMMIT=dev
+ENV APP_COMMIT=${GIT_COMMIT}
+
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -83,7 +83,7 @@ public class TurmaService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Não encontramos uma turma com esse código. Confira com o professor."));
 
         if (turma.getProfessor().getId().equals(aluno.getId())) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Você é o professor desta turma.");
+            throw new AppException(HttpStatus.CONFLICT, "Você é o professor desta turma.");
         }
 
         if (inscricaoRepository.existsByTurmaIdAndAlunoId(turma.getId(), aluno.getId())) {
@@ -94,6 +94,21 @@ public class TurmaService {
         inscricaoRepository.save(inscricao);
 
         return mapearParaDTO(turma, aluno);
+    }
+
+    /** Sai da turma. As entregas e notas ficam com a turma (o professor segue vendo o historico). */
+    @Transactional
+    public void sairDaTurma(UUID turmaId, Usuario aluno) {
+        Turma turma = turmaRepository.findById(turmaId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+
+        if (turma.getProfessor().getId().equals(aluno.getId())) {
+            throw new AppException(HttpStatus.CONFLICT, "O professor não sai da própria turma.");
+        }
+
+        Inscricao inscricao = inscricaoRepository.findByTurmaIdAndAlunoId(turmaId, aluno.getId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+        inscricaoRepository.delete(inscricao);
     }
 
     private ResponseTurmaDTO mapearParaDTO(Turma turma, Usuario usuario) {
@@ -135,7 +150,7 @@ public class TurmaService {
                 turma.getNome(),
                 turma.getDisciplina(),
                 turma.getSemestre(),
-                turma.getDiasAula(),
+                turma.getDiasAula() != null ? new ArrayList<>(turma.getDiasAula()) : new ArrayList<>(),
                 codigo,
                 turma.getDescricao(),
                 pendentes,

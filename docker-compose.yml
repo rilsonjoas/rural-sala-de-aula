@@ -24,8 +24,9 @@ services:
       DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-rural_sala_de_aula}
       DATABASE_USERNAME: ${POSTGRES_USER:-sala}
       DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-sala}
-      FRONT_ORIGINS: ${FRONT_ORIGINS:-http://localhost:5173,http://localhost:8081}
-      OPENAPI_ENABLED: ${OPENAPI_ENABLED:-true}
+      APP_SEED_ENABLED: ${APP_SEED_ENABLED:-true}
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -54,3 +55,4 @@ services:
 
 volumes:
   db_data:
+  uploads_data:

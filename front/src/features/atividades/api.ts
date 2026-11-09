@@ -33,6 +33,15 @@ export function useAtividade(atividadeId: string) {
   });
 }
 
+export function useAtualizarAtividade(atividadeId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (corpo: AtividadeInput) =>
+      (await api.PUT('/atividades/{atividadeId}', { params: { path: { atividadeId } }, body: corpo })).data!,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ATIVIDADES_KEY }),
+  });
+}
+
 export function useCriarAtividade(turmaId: string) {
   const queryClient = useQueryClient();
   return useMutation({

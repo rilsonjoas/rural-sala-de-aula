@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "generate:api": "openapi-typescript ../docs/openapi.yaml -o src/lib/api.generated.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e:real": "playwright test -c playwright.real.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

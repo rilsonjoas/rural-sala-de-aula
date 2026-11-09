@@ -21,7 +21,7 @@ describe('shell', () => {
     expect(screen.getByRole('heading', { name: 'Rural Sala de Aula', level: 1 })).toBeInTheDocument();
   });
 
-  it('aluno vê Turmas e Atividades na navegação', async () => {
+  it('mostra Turmas e Atividades na navegação', async () => {
     await entrarComo(ALUNA);
     renderApp('/turmas');
 
@@ -30,13 +30,13 @@ describe('shell', () => {
     expect(within(nav).getByRole('link', { name: 'Atividades' })).toHaveAttribute('href', '/atividades');
   });
 
-  it('professor vê só Turmas', async () => {
+  it('professor vê Turmas e Atividades, como qualquer usuário', async () => {
     await entrarComo(PROFESSOR);
     renderApp('/turmas');
 
     const nav = await screen.findByRole('navigation', { name: 'Navegação principal' });
     expect(within(nav).getByRole('link', { name: 'Turmas' })).toBeInTheDocument();
-    expect(within(nav).queryByRole('link', { name: 'Atividades' })).not.toBeInTheDocument();
+    expect(within(nav).getByRole('link', { name: 'Atividades' })).toBeInTheDocument();
   });
 
   it('marca o link da página atual com aria-current', async () => {
@@ -58,7 +58,7 @@ describe('shell', () => {
 });
 
 describe('menu da conta', () => {
-  it('o botão mostra as iniciais e abre nome, papel e Sair', async () => {
+  it('o botão mostra as iniciais e abre nome, e-mail e Sair', async () => {
     const usuario = userEvent.setup();
     await entrarComo(ALUNA);
     renderApp('/turmas');
@@ -69,18 +69,8 @@ describe('menu da conta', () => {
     await usuario.click(botao);
 
     expect(await screen.findByText('Maria Clara Albuquerque')).toBeInTheDocument();
-    expect(screen.getByText('Aluno')).toBeInTheDocument();
+    expect(screen.getByText(ALUNA.email)).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Sair' })).toBeInTheDocument();
-  });
-
-  it('mostra o papel Professor para o professor', async () => {
-    const usuario = userEvent.setup();
-    await entrarComo(PROFESSOR);
-    renderApp('/turmas');
-
-    await usuario.click(await screen.findByRole('button', { name: 'Menu da conta' }));
-
-    expect(await screen.findByText('Professor')).toBeInTheDocument();
   });
 
   it('Sair encerra a sessão e volta para /entrar', async () => {
@@ -120,7 +110,7 @@ describe('troca de tela', () => {
     await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 });
     expect(document.title).toBe('Minhas turmas · Rural Sala de Aula');
 
-    await usuario.click((await screen.findAllByRole('link', { name: /Ver atividades/ }))[0]);
+    await usuario.click((await screen.findAllByRole('link', { name: /Ver turma/ }))[0]);
 
     expect(await screen.findByRole('heading', { name: /Turma [AB] —/, level: 2 })).toBeInTheDocument();
     expect(document.title).toMatch(/^Turma [AB] — .+ · Rural Sala de Aula$/);

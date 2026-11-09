@@ -1,4 +1,4 @@
-import type { AtividadeDb, AvaliacaoDb, EntregaDb, InscricaoDb, TurmaDb } from './domain';
+import type { AtividadeDb, AvaliacaoDb, AvisoDb, ComentarioDb, ConfiguracaoDeGruposDb, EntregaDb, GrupoDb, NotificacaoDb, InscricaoDb, TurmaDb } from './domain';
 import {
   ALUNA,
   ALUNO,
@@ -17,6 +17,13 @@ type Estado = {
   entregas: EntregaDb[];
   avaliacoes: AvaliacaoDb[];
   avisos: AvisoDb[];
+  comentariosAtividade: ComentarioDb[];
+  notificacoes: NotificacaoDb[];
+  grupos: GrupoDb[];
+  /** Por turma; sem entrada vale CONFIGURACAO_PADRAO_DE_GRUPOS. */
+  configuracoesDeGrupos: Record<string, ConfiguracaoDeGruposDb>;
+  /** "Atividade nova" só vale para atividades abertas depois deste instante (como a V5 na API). */
+  inicioNotificacoes: string;
   sessaoUsuarioId: string | null;
 };
 
@@ -24,6 +31,11 @@ function estadoInicial(): Estado {
   return {
     usuarios: USUARIOS_INICIAIS.map((u) => ({ ...u })),
     ...dadosIniciais(),
+    comentariosAtividade: [],
+    notificacoes: [],
+    grupos: [],
+    configuracoesDeGrupos: {},
+    inicioNotificacoes: new Date().toISOString(),
     sessaoUsuarioId: null,
   };
 }

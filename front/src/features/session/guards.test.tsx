@@ -63,18 +63,19 @@ describe('guardas de rota', () => {
     expect(await screen.findByRole('heading', { name: /Lista 1/, level: 2 })).toBeInTheDocument();
   });
 
-  it('professor em /atividades (tela do aluno) vai para /turmas', async () => {
+  it('professor também acessa /atividades, a tela dele como aluno das outras turmas', async () => {
     await entrarComo(PROFESSOR);
     renderApp('/atividades');
 
-    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Minhas atividades', level: 2 })).toBeInTheDocument();
   });
 
-  it('aluno em /atividades/:id/entregas (tela do professor) vai para /turmas', async () => {
+  it('quem não leciona a turma não vê as entregas em /atividades/:id/entregas', async () => {
     await entrarComo(ALUNA);
     renderApp(`/atividades/${IDATIVIDADE}/entregas`);
 
-    expect(await screen.findByRole('heading', { name: 'Minhas turmas', level: 2 })).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não conseguimos carregar as entregas.');
+    expect(screen.queryByText('Nenhum aluno entregou ainda.')).not.toBeInTheDocument();
   });
 
   it('professor acessa /atividades/:id/entregas', async () => {

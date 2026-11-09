@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { limparFiltros, ORDENACOES, temFiltroAtivo, type Filtros, type Ordenacao } from './filtros';
 
 export type GrupoDeChips = {
-  chave: 'estado' | 'tipo' | 'modalidade' | 'complexidade' | 'turmaId';
+  chave: 'estado' | 'tipo' | 'turmaId';
   rotulo: string;
   opcoes: { valor: string; rotulo: string }[];
 };

@@ -5,6 +5,8 @@ import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.Entreg
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.ResponseEntregaIndividualDTO;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
+import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
+import com.narniano.rural_sala_de_aula.classes.notificacao.TipoNotificacao;
 import com.narniano.rural_sala_de_aula.classes.turma.Turma;
 import com.narniano.rural_sala_de_aula.classes.turma.TurmaRepository;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
@@ -27,6 +29,7 @@ public class AtividadeService {
     private final TurmaRepository turmaRepository;
     private final InscricaoRepository inscricaoRepository;
     private final EntregaIndividualRepository entregaRepository;
+    private final NotificacaoService notificacaoService;
 
     @Transactional
     public ResponseAtividadeDTO cadastrar(UUID turmaId, RequestAtividadeDTO dto, Usuario usuario) {
@@ -38,13 +41,7 @@ public class AtividadeService {
         }
 
         LocalDateTime disponivelEm = dto.disponivelEm() != null ? dto.disponivelEm() : LocalDateTime.now();
-        if (dto.prazoFinal().isBefore(disponivelEm)) {
-            throw new AppException(
-                    HttpStatus.UNPROCESSABLE_ENTITY,
-                    "O prazo final não pode ser antes de quando a atividade fica disponível.",
-                    List.of(new ErrorResponseDTO.CampoErroDTO("prazoFinal", "O prazo final não pode ser antes de quando a atividade fica disponível."))
-            );
-        }
+        validarPrazo(dto.prazoFinal(), disponivelEm);
 
         Atividade atividade = new Atividade();
         atividade.setTurma(turma);
@@ -59,8 +56,87 @@ public class AtividadeService {
         return mapearParaDTO(salva, null, null);
     }
 
+    @Transactional
+    public ResponseAtividadeDTO atualizar(UUID atividadeId, RequestAtividadeDTO dto, Usuario usuario) {
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Atividade não encontrada."));
+
+        if (!atividade.getTurma().getProfessor().getId().equals(usuario.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Somente o professor da turma pode editar atividades.");
+        }
+
+        LocalDateTime disponivelEm = dto.disponivelEm() != null ? dto.disponivelEm() : atividade.getDisponivelEm();
+        validarPrazo(dto.prazoFinal(), disponivelEm);
+
+        // so avisa os alunos se a atividade ja estava visivel para eles e algo relevante mudou
+        boolean jaVisivel = !atividade.getDisponivelEm().isAfter(LocalDateTime.now());
+        String novoNome = dto.nome().trim();
+        String novaDescricao = dto.descricao() != null ? dto.descricao().trim() : null;
+        boolean novoAceitaAtraso = dto.aceitaAtraso() != null ? dto.aceitaAtraso() : atividade.isAceitaAtraso();
+        boolean mudou = !novoNome.equals(atividade.getNome())
+                || !Objects.equals(novaDescricao, atividade.getDescricao())
+                || dto.tipo() != atividade.getTipo()
+                || !disponivelEm.equals(atividade.getDisponivelEm())
+                || !dto.prazoFinal().equals(atividade.getPrazoFinal())
+                || novoAceitaAtraso != atividade.isAceitaAtraso();
+
+        atividade.setNome(novoNome);
+        atividade.setDescricao(novaDescricao);
+        atividade.setTipo(dto.tipo());
+        atividade.setDisponivelEm(disponivelEm);
+        atividade.setPrazoFinal(dto.prazoFinal());
+        atividade.setAceitaAtraso(novoAceitaAtraso);
+        Atividade salva = atividadeRepository.save(atividade);
+        if (jaVisivel && mudou) {
+            notificacaoService.notificarAlunosDaTurma(salva.getTurma(), usuario, TipoNotificacao.ATIVIDADE_ALTERADA,
+                    "A atividade " + salva.getNome() + " foi alterada.", salva, null);
+        }
+        return mapearParaDTO(salva, null, null);
+    }
+
     @Transactional(readOnly = true)
-    public List<ResponseAtividadeDTO> listarPorTurma(UUID turmaId, Usuario usuario) {
+    public List<AlunoResumoDTO> listarSemEntrega(UUID atividadeId, Usuario professor) {
+        Atividade atividade = atividadeRepository.findById(atividadeId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Atividade não encontrada."));
+
+        if (!atividade.getTurma().getProfessor().getId().equals(professor.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Acesso restrito ao professor da turma.");
+        }
+
+        Set<UUID> jaEntregaram = new HashSet<>();
+        entregaRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId)
+                .forEach(e -> jaEntregaram.add(e.getAluno().getId()));
+
+        return inscricaoRepository.findByTurmaId(atividade.getTurma().getId()).stream()
+                .map(i -> i.getAluno())
+                .filter(aluno -> !jaEntregaram.contains(aluno.getId()))
+                .map(aluno -> new AlunoResumoDTO(aluno.getId(), aluno.getNome(), aluno.getEmail()))
+                .sorted(Comparator.comparing(AlunoResumoDTO::nome, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    private void validarPrazo(LocalDateTime prazoFinal, LocalDateTime disponivelEm) {
+        if (prazoFinal.isBefore(disponivelEm)) {
+            throw new AppException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "O prazo final não pode ser antes de quando a atividade fica disponível.",
+                    List.of(new ErrorResponseDTO.CampoErroDTO("prazoFinal", "O prazo final não pode ser antes de quando a atividade fica disponível."))
+            );
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<ResponseAtividadeDTO> listarPorTurma(
+            UUID turmaId,
+            Usuario usuario,
+            String estadoFiltro,
+            TipoAtividade tipoFiltro,
+            String ordenar,
+            String direcao
+    ) {
+        String estado = normalizarEstado(estadoFiltro);
+        Comparator<ResponseAtividadeDTO> ordem = ordenacao(ordenar, direcao);
+
         Turma turma = turmaRepository.findById(turmaId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
 
@@ -75,19 +151,25 @@ public class AtividadeService {
         LocalDateTime agora = LocalDateTime.now();
 
         if (isProfessor) {
+            // o estado e do aluno (depende da entrega dele): o professor so filtra por tipo
             return atividades.stream()
+                    .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                     .map(a -> mapearParaDTO(a, null, null))
+                    .sorted(ordem)
                     .toList();
         }
 
         return atividades.stream()
                 .filter(a -> !a.getDisponivelEm().isAfter(agora))
+                .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                 .map(a -> {
                     Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
-                    String estado = calcularEstado(a, entrega.orElse(null), agora);
+                    String estadoAtual = calcularEstado(a, entrega.orElse(null), agora);
                     BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
-                    return mapearParaDTO(a, estado, nota);
+                    return mapearParaDTO(a, estadoAtual, nota);
                 })
+                .filter(dto -> estado == null || dto.estado().equals(estado))
+                .sorted(ordem)
                 .toList();
     }
 
@@ -96,8 +178,12 @@ public class AtividadeService {
             Usuario usuario,
             String estadoFiltro,
             TipoAtividade tipoFiltro,
-            UUID turmaIdFiltro
+            UUID turmaIdFiltro,
+            String ordenar,
+            String direcao
     ) {
+        String estado = normalizarEstado(estadoFiltro);
+        Comparator<ResponseAtividadeDTO> ordem = ordenacao(ordenar, direcao);
         List<Atividade> disponiveis = atividadeRepository.findDisponiveisParaAluno(usuario.getId());
         LocalDateTime agora = LocalDateTime.now();
 
@@ -106,13 +192,43 @@ public class AtividadeService {
                 .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                 .map(a -> {
                     Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
-                    String estado = calcularEstado(a, entrega.orElse(null), agora);
+                    String estadoAtual = calcularEstado(a, entrega.orElse(null), agora);
                     BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
-                    return mapearParaDTO(a, estado, nota);
+                    return mapearParaDTO(a, estadoAtual, nota);
                 })
-                .filter(dto -> estadoFiltro == null || estadoFiltro.isBlank() || dto.estado().equalsIgnoreCase(estadoFiltro.trim()))
-                .sorted(Comparator.comparing(ResponseAtividadeDTO::prazoFinal))
+                .filter(dto -> estado == null || dto.estado().equals(estado))
+                .sorted(ordem)
                 .toList();
+    }
+
+    private static final Set<String> ESTADOS = Set.of(
+            "PENDENTE", "ENTREGUE", "ENTREGUE_COM_ATRASO", "CONCLUIDA", "ATRASADA"
+    );
+
+    private String normalizarEstado(String estadoFiltro) {
+        if (estadoFiltro == null || estadoFiltro.isBlank()) {
+            return null;
+        }
+        String estado = estadoFiltro.trim().toUpperCase();
+        if (!ESTADOS.contains(estado)) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Estado inválido. Use PENDENTE, ENTREGUE, ENTREGUE_COM_ATRASO, CONCLUIDA ou ATRASADA.");
+        }
+        return estado;
+    }
+
+    private Comparator<ResponseAtividadeDTO> ordenacao(String ordenar, String direcao) {
+        if (!"prazo".equalsIgnoreCase(ordenar)) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "Ordenação inválida. Use ordenar=prazo.");
+        }
+        Comparator<ResponseAtividadeDTO> porPrazo = Comparator.comparing(ResponseAtividadeDTO::prazoFinal);
+        if ("desc".equalsIgnoreCase(direcao)) {
+            return porPrazo.reversed();
+        }
+        if (!"asc".equalsIgnoreCase(direcao)) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "Direção inválida. Use asc ou desc.");
+        }
+        return porPrazo;
     }
 
     @Transactional(readOnly = true)
@@ -194,6 +310,7 @@ public class AtividadeService {
         Arquivo arq = e.getArquivos().isEmpty() ? null : e.getArquivos().get(0);
         String nomeOriginal = arq != null ? arq.getNomeOriginal() : "arquivo.pdf";
         Long tamanhoBytes = arq != null ? arq.getTamanhoBytes() : 0L;
+        String hashSha256 = arq != null ? arq.getHashSha256() : null;
 
         return new ResponseEntregaIndividualDTO(
                 e.getId(),
@@ -202,6 +319,7 @@ public class AtividadeService {
                 e.getAluno().getNome(),
                 nomeOriginal,
                 tamanhoBytes,
+                hashSha256,
                 e.getEnviadaEm(),
                 e.isAtrasada(),
                 e.getNota(),

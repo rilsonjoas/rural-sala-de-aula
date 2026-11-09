@@ -5,6 +5,7 @@ import com.narniano.rural_sala_de_aula.classes.arquivo.ArquivoRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
 import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeService;
+import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividual;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.ResponseEntregaIndividualDTO;
@@ -47,6 +48,7 @@ class EntregaServiceTest {
     @Mock private InscricaoRepository inscricaoRepository;
     @Mock private ArquivoRepository arquivoRepository;
     @Mock private AtividadeService atividadeService;
+    @Mock private NotificacaoService notificacaoService;
     @Mock private Usuario aluno;
     @Mock private Usuario professor;
 

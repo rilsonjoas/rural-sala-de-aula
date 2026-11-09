@@ -9,192 +9,343 @@ import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.Entreg
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.ResponseEntregaIndividualDTO;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
+import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import com.narniano.rural_sala_de_aula.common.exception.AppException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 
+import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /*
-Foram realizados testes unitários das principais funcionalidades e validações do EntregaService.
-Os testes verificam situações como:
-
-    arquivos inválidos
-    tamanho máximo permitido
-    extensões não aceitas
-    permissões de acesso
-    listagem e avaliação de entregas
-    download autorizado e não autorizado de arquivos
+ * Foram realizados testes unitários das principais funcionalidades e validações
+ * do EntregaService, incluindo arquivos inválidos, tamanho e extensão,
+ * permissões, listagem, avaliação e download autorizado ou não autorizado.
  */
-
 @ExtendWith(MockitoExtension.class)
-class EntregaServiceTest {
+class TesteEntregaService {
 
-    @Mock private EntregaIndividualRepository entregaRepository;
-    @Mock private AtividadeRepository atividadeRepository;
-    @Mock private InscricaoRepository inscricaoRepository;
-    @Mock private ArquivoRepository arquivoRepository;
-    @Mock private AtividadeService atividadeService;
-    @Mock private Usuario aluno;
-    @Mock private Usuario professor;
+    @Mock
+    private EntregaIndividualRepository entregaRepository;
 
-    @InjectMocks private EntregaService entregaService;
+    @Mock
+    private AtividadeRepository atividadeRepository;
+
+    @Mock
+    private InscricaoRepository inscricaoRepository;
+
+    @Mock
+    private ArquivoRepository arquivoRepository;
+
+    @Mock
+    private AtividadeService atividadeService;
+
+    @Mock
+    private NotificacaoService notificacaoService;
+
+    @InjectMocks
+    private EntregaService entregaService;
 
     private UUID atividadeId;
-    private UUID entregaId;
+    private UUID alunoId;
+    private UUID professorId;
 
     @BeforeEach
     void setUp() {
         atividadeId = UUID.randomUUID();
-        entregaId = UUID.randomUUID();
+        alunoId = UUID.randomUUID();
+        professorId = UUID.randomUUID();
     }
 
+    // Arquivo inválido ou não enviado
     @Test
-    void deveRejeitarArquivoVazio() {
-        MockMultipartFile arquivo = new MockMultipartFile(
-                "arquivo", new byte[0]);
+    void deveRecusarArquivoVazio() {
+        Usuario aluno = mock(Usuario.class);
+        MockMultipartFile arquivo =
+                new MockMultipartFile("arquivo", "teste.pdf",
+                        "application/pdf", new byte[0]);
 
-        assertThrows(AppException.class,
+        AppException exception = assertThrows(AppException.class,
                 () -> entregaService.enviar(atividadeId, arquivo, aluno));
 
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, exception.getStatus());
         verifyNoInteractions(atividadeRepository);
     }
 
+    // Arquivo acima do limite de 25 MB
     @Test
-    void deveRejeitarArquivoMaiorQue25MB() {
-        MockMultipartFile arquivo = mock(MockMultipartFile.class);
+    void deveRecusarArquivoMaiorQue25MB() {
+        Usuario aluno = mock(Usuario.class);
 
-        when(arquivo.isEmpty()).thenReturn(false);
-        when(arquivo.getSize()).thenReturn(26L * 1024 * 1024);
+        byte[] conteudo = new byte[25 * 1024 * 1024 + 1];
 
-        assertThrows(AppException.class,
+        MockMultipartFile arquivo =
+                new MockMultipartFile("arquivo", "grande.pdf",
+                        "application/pdf", conteudo);
+
+        AppException exception = assertThrows(AppException.class,
                 () -> entregaService.enviar(atividadeId, arquivo, aluno));
 
+        assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, exception.getStatus());
         verifyNoInteractions(atividadeRepository);
     }
 
+    // Extensão não permitida
     @Test
-    void deveRejeitarExtensaoNaoPermitida() {
-        MockMultipartFile arquivo = new MockMultipartFile(
-                "arquivo", "arquivo.exe",
-                "application/octet-stream", "teste".getBytes());
+    void deveRecusarExtensaoNaoPermitida() {
+        Usuario aluno = mock(Usuario.class);
 
-        assertThrows(AppException.class,
+        MockMultipartFile arquivo =
+                new MockMultipartFile("arquivo", "virus.exe",
+                        "application/octet-stream", "conteudo".getBytes());
+
+        AppException exception = assertThrows(AppException.class,
                 () -> entregaService.enviar(atividadeId, arquivo, aluno));
 
+        assertEquals(HttpStatus.UNSUPPORTED_MEDIA_TYPE, exception.getStatus());
         verifyNoInteractions(atividadeRepository);
     }
 
+    // Aluno sem matrícula na turma
     @Test
-    void deveListarEntregasDaAtividade() {
-        Atividade atividade = mock(Atividade.class, RETURNS_DEEP_STUBS);
-        EntregaIndividual entrega = mock(EntregaIndividual.class);
-        ResponseEntregaIndividualDTO dto = mock(ResponseEntregaIndividualDTO.class);
+    void deveRecusarAlunoNaoMatriculado() {
+        Usuario aluno = mock(Usuario.class);
+        Atividade atividade = mock(Atividade.class);
+        var turma = mock(com.narniano.rural_sala_de_aula.classes.turma.Turma.class);
 
-        UUID professorId = UUID.randomUUID();
+        when(aluno.getId()).thenReturn(alunoId);
+        when(atividadeRepository.findById(atividadeId))
+                .thenReturn(Optional.of(atividade));
+        when(atividade.getTurma()).thenReturn(turma);
+        when(turma.getId()).thenReturn(UUID.randomUUID());
+        when(inscricaoRepository.existsByTurmaIdAndAlunoId(any(), eq(alunoId)))
+                .thenReturn(false);
+
+        MockMultipartFile arquivo =
+                new MockMultipartFile("arquivo", "teste.pdf",
+                        "application/pdf", "conteudo".getBytes());
+
+        AppException exception = assertThrows(AppException.class,
+                () -> entregaService.enviar(atividadeId, arquivo, aluno));
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+        verify(entregaRepository, never()).save(any());
+    }
+
+    // Listagem permitida para o professor
+    @Test
+    void deveListarEntregasParaProfessorDaTurma() {
+        Usuario professor = mock(Usuario.class);
+        Usuario professorTurma = mock(Usuario.class);
+        Atividade atividade = mock(Atividade.class);
+        var turma = mock(com.narniano.rural_sala_de_aula.classes.turma.Turma.class);
+
+        EntregaIndividual entrega1 = mock(EntregaIndividual.class);
+        EntregaIndividual entrega2 = mock(EntregaIndividual.class);
+
+        ResponseEntregaIndividualDTO dto1 = mock(ResponseEntregaIndividualDTO.class);
+        ResponseEntregaIndividualDTO dto2 = mock(ResponseEntregaIndividualDTO.class);
 
         when(professor.getId()).thenReturn(professorId);
-        when(atividade.getTurma().getProfessor().getId()).thenReturn(professorId);
-        when(atividadeRepository.findById(atividadeId)).thenReturn(Optional.of(atividade));
+        when(professorTurma.getId()).thenReturn(professorId);
+        when(atividadeRepository.findById(atividadeId))
+                .thenReturn(Optional.of(atividade));
+
+        when(atividade.getTurma()).thenReturn(turma);
+        when(turma.getProfessor()).thenReturn(professorTurma);
+
         when(entregaRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId))
-                .thenReturn(List.of(entrega));
-        when(atividadeService.mapearEntregaParaDTO(entrega)).thenReturn(dto);
+                .thenReturn(List.of(entrega1, entrega2));
+
+        when(atividadeService.mapearEntregaParaDTO(entrega1)).thenReturn(dto1);
+        when(atividadeService.mapearEntregaParaDTO(entrega2)).thenReturn(dto2);
 
         List<ResponseEntregaIndividualDTO> resultado =
                 entregaService.listarPorAtividade(atividadeId, professor);
 
-        assertEquals(1, resultado.size());
-        assertEquals(dto, resultado.getFirst());
-        verify(entregaRepository).findByAtividadeIdOrderByEnviadaEmAsc(atividadeId);
+        assertEquals(2, resultado.size());
+        assertEquals(dto1, resultado.get(0));
+        assertEquals(dto2, resultado.get(1));
     }
 
+    // Usuário que não é professor não pode listar
     @Test
-    void deveImpedirProfessorNaoAutorizadoDeListar() {
-        Atividade atividade = mock(Atividade.class, RETURNS_DEEP_STUBS);
+    void deveRecusarListagemPorUsuarioNaoAutorizado() {
+        Usuario usuario = mock(Usuario.class);
+        Usuario professor = mock(Usuario.class);
+        Atividade atividade = mock(Atividade.class);
+        var turma = mock(com.narniano.rural_sala_de_aula.classes.turma.Turma.class);
 
-        when(atividade.getTurma().getProfessor().getId()).thenReturn(UUID.randomUUID());
+        when(usuario.getId()).thenReturn(UUID.randomUUID());
         when(professor.getId()).thenReturn(UUID.randomUUID());
-        when(atividadeRepository.findById(atividadeId)).thenReturn(Optional.of(atividade));
 
-        assertThrows(AppException.class,
-                () -> entregaService.listarPorAtividade(atividadeId, professor));
+        when(atividadeRepository.findById(atividadeId))
+                .thenReturn(Optional.of(atividade));
 
-        verifyNoInteractions(entregaRepository);
+        when(atividade.getTurma()).thenReturn(turma);
+        when(turma.getProfessor()).thenReturn(professor);
+
+        AppException exception = assertThrows(AppException.class,
+                () -> entregaService.listarPorAtividade(atividadeId, usuario));
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
     }
 
+    // Avaliação de uma entrega pelo professor responsável
     @Test
     void deveAvaliarEntrega() {
-        EntregaIndividual entrega = mock(EntregaIndividual.class, RETURNS_DEEP_STUBS);
-        AvaliacaoInputDTO avaliacao = mock(AvaliacaoInputDTO.class);
-        ResponseEntregaIndividualDTO dto = mock(ResponseEntregaIndividualDTO.class);
+        UUID entregaId = UUID.randomUUID();
 
-        UUID professorId = UUID.randomUUID();
+        Usuario professor = mock(Usuario.class);
+        Usuario professorTurma = mock(Usuario.class);
+        Usuario aluno = mock(Usuario.class);
+
+        EntregaIndividual entrega = mock(EntregaIndividual.class);
+        EntregaIndividual entregaSalva = mock(EntregaIndividual.class);
+        Atividade atividade = mock(Atividade.class);
+        var turma = mock(com.narniano.rural_sala_de_aula.classes.turma.Turma.class);
+
+        AvaliacaoInputDTO avaliacao =
+                new AvaliacaoInputDTO(new BigDecimal(9.5), "Muito bom");
+
+        ResponseEntregaIndividualDTO dto =
+                mock(ResponseEntregaIndividualDTO.class);
 
         when(professor.getId()).thenReturn(professorId);
-        when(entrega.getAtividade().getTurma().getProfessor().getId()).thenReturn(professorId);
-        when(entregaRepository.findById(entregaId)).thenReturn(Optional.of(entrega));
-        when(entregaRepository.save(entrega)).thenReturn(entrega);
-        when(atividadeService.mapearEntregaParaDTO(entrega)).thenReturn(dto);
+        when(professorTurma.getId()).thenReturn(professorId);
+
+        when(entregaRepository.findById(entregaId))
+                .thenReturn(Optional.of(entrega));
+
+        when(entrega.getAtividade()).thenReturn(atividade);
+        when(atividade.getTurma()).thenReturn(turma);
+        when(turma.getProfessor()).thenReturn(professorTurma);
+
+        when(entregaRepository.save(entrega)).thenReturn(entregaSalva);
+        when(entregaSalva.getAluno()).thenReturn(aluno);
+        when(entregaSalva.getAtividade()).thenReturn(atividade);
+        when(atividade.getNome()).thenReturn("Atividade");
+
+        when(atividadeService.mapearEntregaParaDTO(entregaSalva))
+                .thenReturn(dto);
 
         ResponseEntregaIndividualDTO resultado =
                 entregaService.avaliar(entregaId, avaliacao, professor);
 
         assertEquals(dto, resultado);
+
+        verify(entrega).setNota(new BigDecimal(9.5));
+        verify(entrega).setComentarioPrivado("Muito bom");
         verify(entregaRepository).save(entrega);
-        verify(atividadeService).mapearEntregaParaDTO(entrega);
+        verify(notificacaoService).notificar(
+                eq(aluno),
+                any(),
+                anyString(),
+                eq(turma),
+                eq(atividade),
+                isNull()
+        );
     }
 
+    // Download autorizado para o aluno que realizou a entrega
     @Test
-    void deveImpedirPessoaNaoAutorizadaDeBaixarArquivo() {
-        EntregaIndividual entrega = mock(EntregaIndividual.class, RETURNS_DEEP_STUBS);
+    void devePermitirDownloadParaAlunoDaEntrega() throws IOException {
+        UUID entregaId = UUID.randomUUID();
 
-        when(entrega.getAtividade().getTurma().getProfessor().getId())
-                .thenReturn(UUID.randomUUID());
-        when(entrega.getAluno().getId()).thenReturn(UUID.randomUUID());
-        when(aluno.getId()).thenReturn(UUID.randomUUID());
-        when(entregaRepository.findById(entregaId)).thenReturn(Optional.of(entrega));
+        Usuario usuario = mock(Usuario.class);
+        Usuario aluno = mock(Usuario.class);
+        Usuario professor = mock(Usuario.class);
 
-        assertThrows(AppException.class,
-                () -> entregaService.baixarArquivo(entregaId, aluno));
+        EntregaIndividual entrega = mock(EntregaIndividual.class);
+        Atividade atividade = mock(Atividade.class);
+        var turma = mock(com.narniano.rural_sala_de_aula.classes.turma.Turma.class);
 
-        verifyNoInteractions(arquivoRepository);
-    }
-
-    @Test
-    void deveRetornarArquivoParaAluno() throws Exception {
-        EntregaIndividual entrega = mock(EntregaIndividual.class, RETURNS_DEEP_STUBS);
         Arquivo arquivo = mock(Arquivo.class);
 
-        UUID alunoId = UUID.randomUUID();
-        Path caminho = Files.createTempFile("entrega", ".txt");
-        byte[] conteudo = "teste".getBytes();
+        Path arquivoTemp = Files.createTempFile("entrega", ".pdf");
+        byte[] conteudo = "arquivo de teste".getBytes();
+        Files.write(arquivoTemp, conteudo);
 
-        Files.write(caminho, conteudo);
+        try {
+            when(usuario.getId()).thenReturn(alunoId);
+            when(aluno.getId()).thenReturn(alunoId);
+            when(professor.getId()).thenReturn(UUID.randomUUID());
 
-        when(aluno.getId()).thenReturn(alunoId);
-        when(entrega.getAluno().getId()).thenReturn(alunoId);
-        when(entregaRepository.findById(entregaId)).thenReturn(Optional.of(entrega));
-        when(arquivoRepository.findByEntregaId(entregaId)).thenReturn(List.of(arquivo));
-        when(arquivo.getCaminho()).thenReturn(caminho.toString());
+            when(entregaRepository.findById(entregaId))
+                    .thenReturn(Optional.of(entrega));
 
-        Map.Entry<Arquivo, byte[]> resultado =
-                entregaService.baixarArquivo(entregaId, aluno);
+            when(entrega.getAtividade()).thenReturn(atividade);
+            when(entrega.getAluno()).thenReturn(aluno);
 
-        assertEquals(arquivo, resultado.getKey());
-        assertArrayEquals(conteudo, resultado.getValue());
+            when(atividade.getTurma()).thenReturn(turma);
+            when(turma.getProfessor()).thenReturn(professor);
 
-        Files.deleteIfExists(caminho);
+            when(arquivoRepository.findByEntregaId(entregaId))
+                    .thenReturn(List.of(arquivo));
+
+            when(arquivo.getCaminho()).thenReturn(arquivoTemp.toString());
+            when(arquivo.getHashSha256()).thenReturn(null);
+
+            Map.Entry<Arquivo, byte[]> resultado =
+                    entregaService.baixarArquivo(entregaId, usuario);
+
+            assertEquals(arquivo, resultado.getKey());
+            assertArrayEquals(conteudo, resultado.getValue());
+
+        } finally {
+            Files.deleteIfExists(arquivoTemp);
+        }
+    }
+
+    // Download recusado para usuário que não é aluno nem professor
+    @Test
+    void deveRecusarDownloadNaoAutorizado() {
+        UUID entregaId = UUID.randomUUID();
+
+        Usuario usuario = mock(Usuario.class);
+        Usuario aluno = mock(Usuario.class);
+        Usuario professor = mock(Usuario.class);
+
+        EntregaIndividual entrega = mock(EntregaIndividual.class);
+        Atividade atividade = mock(Atividade.class);
+        var turma = mock(com.narniano.rural_sala_de_aula.classes.turma.Turma.class);
+
+        when(usuario.getId()).thenReturn(UUID.randomUUID());
+        when(aluno.getId()).thenReturn(UUID.randomUUID());
+        when(professor.getId()).thenReturn(UUID.randomUUID());
+
+        when(entregaRepository.findById(entregaId))
+                .thenReturn(Optional.of(entrega));
+
+        when(entrega.getAtividade()).thenReturn(atividade);
+        when(entrega.getAluno()).thenReturn(aluno);
+
+        when(atividade.getTurma()).thenReturn(turma);
+        when(turma.getProfessor()).thenReturn(professor);
+
+        AppException exception = assertThrows(AppException.class,
+                () -> entregaService.baixarArquivo(entregaId, usuario));
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatus());
+        verifyNoInteractions(arquivoRepository);
     }
 }

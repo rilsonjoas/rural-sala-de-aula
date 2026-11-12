@@ -7,7 +7,14 @@ import com.narniano.rural_sala_de_aula.classes.arquivo.ArquivoRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
 import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeService;
+import com.narniano.rural_sala_de_aula.classes.atividade.TipoAtividade;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregaEmGrupo;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregaEmGrupoRepository;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregasDeGrupo;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividual;
+import com.narniano.rural_sala_de_aula.classes.grupo.Grupo;
+import com.narniano.rural_sala_de_aula.classes.grupo.GrupoIntegrante;
+import com.narniano.rural_sala_de_aula.classes.grupo.GrupoIntegranteRepository;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.ResponseEntregaIndividualDTO;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
@@ -47,6 +54,9 @@ public class EntregaService {
     private final ArquivoRepository arquivoRepository;
     private final AtividadeService atividadeService;
     private final NotificacaoService notificacaoService;
+    private final EntregasDeGrupo entregasDeGrupo;
+    private final EntregaEmGrupoRepository entregaEmGrupoRepository;
+    private final GrupoIntegranteRepository integranteRepository;
 
     @Transactional
     public ResponseEntregaIndividualDTO enviar(UUID atividadeId, MultipartFile file, Usuario aluno) {
@@ -77,6 +87,10 @@ public class EntregaService {
             throw new AppException(HttpStatus.FORBIDDEN, "O prazo encerrou e esta atividade não aceita entregas com atraso.");
         }
 
+        if (atividade.getTipo() == TipoAtividade.PROJETO_EM_GRUPO) {
+            return enviarEmNomeDoGrupo(atividade, file, nomeOriginal, extensao, aluno, agora);
+        }
+
         entregaRepository.travarEnvio(atividadeId + ":" + aluno.getId());
         Optional<EntregaIndividual> existenteOpt = entregaRepository.findByAtividadeIdAndAlunoId(atividadeId, aluno.getId());
         EntregaIndividual entrega;
@@ -96,6 +110,41 @@ public class EntregaService {
 
         EntregaIndividual salva = entregaRepository.save(entrega);
 
+        anexarArquivo(salva, file, nomeOriginal, extensao, agora);
+
+        return atividadeService.mapearEntregaParaDTO(salva);
+    }
+
+    /** Projeto em grupo: um integrante do grupo APROVADO envia em nome do grupo; o reenvio substitui o arquivo. */
+    private ResponseEntregaIndividualDTO enviarEmNomeDoGrupo(Atividade atividade, MultipartFile file, String nomeOriginal,
+                                                             String extensao, Usuario aluno, LocalDateTime agora) {
+        Grupo grupo = entregasDeGrupo.grupoAprovadoDoAluno(atividade.getTurma().getId(), aluno.getId())
+                .orElseThrow(() -> new AppException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Este é um projeto em grupo. Entre em um grupo aprovado da turma para entregar."));
+
+        entregaRepository.travarEnvio(atividade.getId() + ":grupo:" + grupo.getId());
+        Optional<EntregaEmGrupo> existente = entregaEmGrupoRepository.findByAtividadeIdAndGrupoId(atividade.getId(), grupo.getId());
+        EntregaEmGrupo entrega;
+        if (existente.isPresent()) {
+            entrega = existente.get();
+            if (entrega.getNota() != null) {
+                throw new AppException(HttpStatus.CONFLICT, "Esta entrega já foi avaliada e não aceita novo envio.");
+            }
+        } else {
+            entrega = new EntregaEmGrupo();
+            entrega.setAtividade(atividade);
+            entrega.setGrupo(grupo);
+        }
+        entrega.setEnviadaPor(aluno);
+        entrega.setEnviadaEm(agora);
+
+        EntregaEmGrupo salva = entregaEmGrupoRepository.save(entrega);
+        anexarArquivo(salva, file, nomeOriginal, extensao, agora);
+        return atividadeService.mapearEntregaParaDTO(salva);
+    }
+
+    /** Grava o arquivo, registra o hash e troca o anexo anterior da entrega (o arquivo antigo só sai do disco após o commit). */
+    private void anexarArquivo(Entrega salva, MultipartFile file, String nomeOriginal, String extensao, LocalDateTime agora) {
         String nomeArmazenado = salva.getId() + "_" + UUID.randomUUID() + "." + extensao;
         String caminhoRelativo = salvarArquivoNoDisco(file, nomeArmazenado);
         String hash = calcularSha256(Paths.get(caminhoRelativo).toAbsolutePath());
@@ -118,8 +167,6 @@ public class EntregaService {
         salva.getArquivos().clear();
         salva.getArquivos().add(arquivo);
         apagarDoDiscoAposCommit(caminhosSubstituidos);
-
-        return atividadeService.mapearEntregaParaDTO(salva);
     }
 
     @Transactional(readOnly = true)
@@ -131,15 +178,23 @@ public class EntregaService {
             throw new AppException(HttpStatus.FORBIDDEN, "Acesso restrito ao professor da turma.");
         }
 
-        return entregaRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId).stream()
+        List<Entrega> entregas = new ArrayList<>(entregaRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId));
+        if (atividade.getTipo() == TipoAtividade.PROJETO_EM_GRUPO) {
+            entregas.addAll(entregaEmGrupoRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId));
+            entregas.sort(Comparator.comparing(Entrega::getEnviadaEm));
+        }
+        return entregas.stream()
                 .map(atividadeService::mapearEntregaParaDTO)
                 .toList();
     }
 
     @Transactional
     public ResponseEntregaIndividualDTO avaliar(UUID entregaId, AvaliacaoInputDTO dto, Usuario professor) {
-        EntregaIndividual entrega = entregaRepository.findById(entregaId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Entrega não encontrada."));
+        Optional<EntregaIndividual> individual = entregaRepository.findById(entregaId);
+        if (individual.isEmpty()) {
+            return avaliarEmGrupo(entregaId, dto, professor);
+        }
+        EntregaIndividual entrega = individual.get();
 
         if (!entrega.getAtividade().getTurma().getProfessor().getId().equals(professor.getId())) {
             throw new AppException(HttpStatus.FORBIDDEN, "Acesso restrito ao professor da turma.");
@@ -155,13 +210,37 @@ public class EntregaService {
         return atividadeService.mapearEntregaParaDTO(salva);
     }
 
+    /** A nota do projeto em grupo vale para todos os integrantes, e todos são avisados. */
+    private ResponseEntregaIndividualDTO avaliarEmGrupo(UUID entregaId, AvaliacaoInputDTO dto, Usuario professor) {
+        EntregaEmGrupo entrega = entregaEmGrupoRepository.findById(entregaId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Entrega não encontrada."));
+
+        if (!entrega.getAtividade().getTurma().getProfessor().getId().equals(professor.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Acesso restrito ao professor da turma.");
+        }
+
+        entrega.setNota(dto.nota());
+        entrega.setComentarioPrivado(dto.comentarioPrivado() != null ? dto.comentarioPrivado().trim() : null);
+
+        EntregaEmGrupo salva = entregaEmGrupoRepository.save(entrega);
+        for (GrupoIntegrante integrante : integranteRepository.findByGrupoIdOrderByEntrouEmAsc(salva.getGrupo().getId())) {
+            notificacaoService.notificar(integrante.getAluno(), TipoNotificacao.NOTA_PUBLICADA,
+                    "A entrega de " + salva.getAtividade().getNome() + " do grupo " + salva.getGrupo().getNome() + " foi avaliada.",
+                    salva.getAtividade().getTurma(), salva.getAtividade(), null);
+        }
+        return atividadeService.mapearEntregaParaDTO(salva);
+    }
+
     @Transactional(readOnly = true)
     public Map.Entry<Arquivo, byte[]> baixarArquivo(UUID entregaId, Usuario usuario) {
-        EntregaIndividual entrega = entregaRepository.findById(entregaId)
+        Entrega entrega = entregaRepository.findById(entregaId).map(e -> (Entrega) e)
+                .or(() -> entregaEmGrupoRepository.findById(entregaId).map(e -> (Entrega) e))
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Entrega não encontrada."));
 
         boolean isProfessor = entrega.getAtividade().getTurma().getProfessor().getId().equals(usuario.getId());
-        boolean isAluno = entrega.getAluno().getId().equals(usuario.getId());
+        boolean isAluno = entrega instanceof EntregaEmGrupo emGrupo
+                ? integranteRepository.findByGrupoIdAndAlunoId(emGrupo.getGrupo().getId(), usuario.getId()).isPresent()
+                : ((EntregaIndividual) entrega).getAluno().getId().equals(usuario.getId());
 
         if (!isProfessor && !isAluno) {
             throw new AppException(HttpStatus.FORBIDDEN, "Acesso não autorizado ao arquivo desta entrega.");

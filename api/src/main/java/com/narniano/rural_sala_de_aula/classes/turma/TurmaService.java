@@ -2,6 +2,8 @@ package com.narniano.rural_sala_de_aula.classes.turma;
 
 import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
 import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeRepository;
+import com.narniano.rural_sala_de_aula.classes.atividade.TipoAtividade;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregasDeGrupo;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividual;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.inscricao.Inscricao;
@@ -28,6 +30,7 @@ public class TurmaService {
     private final InscricaoRepository inscricaoRepository;
     private final AtividadeRepository atividadeRepository;
     private final EntregaIndividualRepository entregaRepository;
+    private final EntregasDeGrupo entregasDeGrupo;
 
     @Transactional
     public ResponseTurmaDTO cadastrar(RequestTurmaDTO dto, Usuario professor) {
@@ -129,7 +132,9 @@ public class TurmaService {
                     continue;
                 }
                 Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
-                boolean entregue = entrega.isPresent();
+                boolean entregue = entrega.isPresent()
+                        || (a.getTipo() == TipoAtividade.PROJETO_EM_GRUPO
+                        && entregasDeGrupo.doAluno(a.getId(), turma.getId(), usuario.getId()).isPresent());
 
                 if (!entregue) {
                     if (agora.isAfter(a.getPrazoFinal())) {

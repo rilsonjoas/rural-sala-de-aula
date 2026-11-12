@@ -31,7 +31,7 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 |---|---|---|
 | RF06 | Solicitar e participar de grupos | **Feito (12/11/2026)**: back-end (migration V6, `GrupoService`, `GrupoController`) e front (aba Grupos), em produção desde 12/11 (`5874a90`). **Entrega em nome do grupo feita (13/11/2026, sem deploy)**: em atividade `PROJETO_EM_GRUPO` qualquer integrante de grupo aprovado envia e reenvia (uma entrega por grupo e atividade, migration V7), o professor vê uma linha por grupo, avalia uma vez e a nota vale para todos os integrantes, que são avisados |
 | RF07 | Sair do grupo | **Feito (12/11/2026, sem deploy)**: back-end (migration V6, `GrupoService`, `GrupoController`) e front ligados; contrato em `docs/openapi.yaml` (tag Grupos); a entrega em nome do grupo ainda não existe |
-| RF08 | Calendário com carga semanal (pesada, média, livre) | **Front feito (05/11/2026, sem deploy)**: `/calendario`, 4 semanas por vez, carga só pela quantidade de prazos (0 livre, 1–2 média, 3+ pesada), sem complexidade. Usa o `GET /atividades`; o professor não tem visão agregada |
+| RF08 | Calendário com carga semanal (pesada, média, livre) | **Feito**: `/calendario`, 4 semanas por vez, carga só pela quantidade de prazos (0 livre, 1–2 média, 3+ pesada), sem complexidade. Aluno e professor: o front junta `GET /atividades` com as atividades das turmas que o usuário leciona (13/11/2026) |
 | RF12 | Configurar e aprovar grupos | **Feito (12/11/2026, sem deploy)**: back-end (migration V6, `GrupoService`, `GrupoController`) e front ligados; contrato em `docs/openapi.yaml` (tag Grupos); a entrega em nome do grupo ainda não existe |
 
 ## Requisitos não funcionais

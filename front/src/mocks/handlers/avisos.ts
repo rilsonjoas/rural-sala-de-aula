@@ -8,7 +8,7 @@ import type { AvisoDb, ComentarioDb } from '../domain';
 const API = '*/api/v1';
 
 export const avisosHandlers = [
-  http.get(`${API}/turmas/:turmaId/avisos`, ({ params }) => {
+  http.get(`${API}/turmas/:turmaId/avisos`, ({ params, request }) => {
     const usuario = usuarioDaSessao();
     if (!usuario) return naoAutenticado();
     const turma = db.turmas.find((t) => t.id === params.turmaId);
@@ -18,6 +18,9 @@ export const avisosHandlers = [
     if (!isMember) return problem(403, 'Você não é membro desta turma.');
 
     const professor = turma.professorId === usuario.id;
+    const consulta = new URL(request.url).searchParams;
+    const limite = consulta.get('limite') ? Number(consulta.get('limite')) : undefined;
+    const deslocamento = Number(consulta.get('deslocamento') ?? 0);
     const avisos = (db.avisos ?? [])
       .filter((a) => a.turmaId === turma.id)
       .filter((a) => professor || !a.destinatariosIds || a.destinatariosIds.includes(usuario.id))
@@ -28,7 +31,8 @@ export const avisosHandlers = [
         destinatarios: professor && destinatariosIds ? destinatariosIds.map((id) => ({ id, nome: nomeDoUsuario(id) })) : null,
       }));
 
-    return HttpResponse.json(avisos);
+    const fatia = limite === undefined ? avisos : avisos.slice(deslocamento, deslocamento + limite);
+    return HttpResponse.json(fatia, { headers: { 'X-Total-Count': String(avisos.length) } });
   }),
 
   http.post(`${API}/turmas/:turmaId/avisos`, async ({ params, request }) => {

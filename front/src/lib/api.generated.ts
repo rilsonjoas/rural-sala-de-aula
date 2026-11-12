@@ -69,6 +69,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/exclusao": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Exclui a própria conta (exige a senha) e encerra a sessão. Saem junto inscrições, grupos, notificações, entregas individuais (com os arquivos) e comentários. 409 para quem ainda leciona turmas (exclua as turmas antes); 403 para senha incorreta. */
+        post: operations["excluirConta"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me": {
         parameters: {
             query?: never;
@@ -113,7 +130,8 @@ export interface paths {
         get: operations["getTurma"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Somente o professor da turma a exclui. Saem junto atividades, entregas (e os arquivos), avisos, comentários, grupos e inscrições. Não tem volta. */
+        delete: operations["deleteTurma"];
         options?: never;
         head?: never;
         patch?: never;
@@ -128,7 +146,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Lista avisos postados no mural da turma. */
+        /** Lista os avisos que o usuário pode ver, do mais novo para o mais antigo. Sem limite devolve todos; com limite e deslocamento devolve só a fatia, e o total vem no cabeçalho X-Total-Count. */
         get: operations["listAvisos"];
         put?: never;
         /** Posta um aviso no mural da turma. */
@@ -881,6 +899,32 @@ export interface operations {
             };
         };
     };
+    excluirConta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    senha: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Conta excluída */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
     getMe: {
         parameters: {
             query?: never;
@@ -973,9 +1017,34 @@ export interface operations {
             404: components["responses"]["Problem"];
         };
     };
-    listAvisos: {
+    deleteTurma: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                turmaId: components["parameters"]["TurmaId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Excluída */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listAvisos: {
+        parameters: {
+            query?: {
+                limite?: number;
+                deslocamento?: number;
+            };
             header?: never;
             path: {
                 turmaId: components["parameters"]["TurmaId"];
@@ -987,6 +1056,8 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    /** @description Total de avisos visíveis (antes do corte) */
+                    "X-Total-Count"?: number;
                     [name: string]: unknown;
                 };
                 content: {

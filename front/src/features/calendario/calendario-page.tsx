@@ -4,11 +4,11 @@ import { Link } from 'react-router-dom';
 import { ErrorState } from '@/components/error-state';
 import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
-import { useMinhasAtividades } from '@/features/atividades/api';
-import { FILTROS_VAZIOS, ROTULO_TIPO } from '@/features/atividades/filtros';
+import { ROTULO_TIPO } from '@/features/atividades/filtros';
 import { formatDataHora, plural } from '@/lib/format';
 import { usePageTitle } from '@/lib/use-page-title';
 import { cn } from '@/lib/utils';
+import { useAtividadesDoCalendario } from './api';
 import { agruparPorSemana, inicioDaSemana, type Carga, type Semana } from './carga';
 
 const SEMANAS_POR_JANELA = 4;
@@ -106,14 +106,14 @@ function SemanaSecao({ semana }: { semana: Semana }) {
 
 export function CalendarioPage() {
   usePageTitle('Calendário');
-  const atividades = useMinhasAtividades(FILTROS_VAZIOS);
+  const atividades = useAtividadesDoCalendario();
   const [deslocamento, setDeslocamento] = useState(0); // em janelas de quatro semanas
   const inicio = useMemo(() => {
     const base = inicioDaSemana(new Date());
     return new Date(base.getFullYear(), base.getMonth(), base.getDate() + 7 * SEMANAS_POR_JANELA * deslocamento);
   }, [deslocamento]);
   const semanas = useMemo(
-    () => agruparPorSemana(atividades.data ?? [], inicio, SEMANAS_POR_JANELA),
+    () => agruparPorSemana(atividades.data, inicio, SEMANAS_POR_JANELA),
     [atividades.data, inicio],
   );
 
@@ -124,7 +124,7 @@ export function CalendarioPage() {
           Calendário
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground">
-          Prazos finais por semana, de segunda a domingo. A carga conta só os prazos: nenhum é livre, 1 ou 2 é média e 3 ou mais é pesada.
+          Prazos finais por semana, de segunda a domingo, das turmas em que você estuda e das que você leciona. A carga conta só os prazos: nenhum é livre, 1 ou 2 é média e 3 ou mais é pesada.
         </p>
       </div>
 

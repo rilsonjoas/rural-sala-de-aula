@@ -1,18 +1,27 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import type { components } from '@/lib/api.generated';
 
 export type Aviso = components['schemas']['Aviso'];
 export type Comentario = components['schemas']['Comentario'];
 
+const AVISOS_POR_PAGINA = 10;
+
+/** O mural carrega os avisos de dez em dez; o total vem no cabeçalho X-Total-Count. */
 export function useAvisos(turmaId: string) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['avisos', turmaId],
-    queryFn: async () => {
-      const { data } = await api.GET('/turmas/{turmaId}/avisos', {
-        params: { path: { turmaId } },
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const { data, response } = await api.GET('/turmas/{turmaId}/avisos', {
+        params: { path: { turmaId }, query: { limite: AVISOS_POR_PAGINA, deslocamento: pageParam } },
       });
-      return data ?? [];
+      const itens = data ?? [];
+      return { itens, total: Number(response.headers.get('X-Total-Count') ?? itens.length) };
+    },
+    getNextPageParam: (ultima, todas) => {
+      const carregados = todas.reduce((n, pagina) => n + pagina.itens.length, 0);
+      return carregados < ultima.total ? carregados : undefined;
     },
     enabled: Boolean(turmaId),
   });

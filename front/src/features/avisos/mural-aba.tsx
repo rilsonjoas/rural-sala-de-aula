@@ -21,7 +21,7 @@ export function MuralAba({ turmaId, podePublicar }: { turmaId: string; podePubli
   const gruposAtivos = (grupos.data ?? []).filter((g) => g.status !== 'REPROVADO');
   const semDestino = direcionar && gruposIds.length === 0 && alunosIds.length === 0;
 
-  const avisos = avisosQuery.data ?? [];
+  const avisos = avisosQuery.data?.pages.flatMap((pagina) => pagina.itens) ?? [];
 
   async function handlePostarAviso(e: React.FormEvent) {
     e.preventDefault();
@@ -130,6 +130,13 @@ export function MuralAba({ turmaId, podePublicar }: { turmaId: string; podePubli
           {avisos.map((aviso) => (
             <AvisoCard key={aviso.id} aviso={aviso} turmaId={turmaId} />
           ))}
+          {avisosQuery.hasNextPage ? (
+            <div className="flex justify-center">
+              <Button type="button" variant="outline" disabled={avisosQuery.isFetchingNextPage} onClick={() => void avisosQuery.fetchNextPage()}>
+                {avisosQuery.isFetchingNextPage ? 'Carregando…' : 'Carregar avisos mais antigos'}
+              </Button>
+            </div>
+          ) : null}
         </div>
       )}
     </div>

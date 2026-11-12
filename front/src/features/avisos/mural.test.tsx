@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
+import { db } from '@/mocks/db';
 import { ALUNA, PROFESSOR, TURMA_A } from '@/mocks/fixtures';
 import { entrarComo } from '@/test/auth';
 import { renderApp } from '@/test/render';
@@ -52,5 +53,24 @@ describe('Mural da turma', () => {
     await abrirMural(ALUNA);
     await screen.findByRole('heading', { name: 'Turma A — Algoritmos', level: 2 });
     expect(screen.queryByText('Escreva um comunicado para a turma...')).not.toBeInTheDocument();
+  });
+
+  it('carrega os avisos de dez em dez e o botão traz os mais antigos', async () => {
+    const agora = Date.now();
+    for (let n = 1; n <= 12; n += 1) {
+      db.avisos.push({
+        id: `av-${n}`, turmaId: TURMA_A, autorId: PROFESSOR.id, autorNome: PROFESSOR.nome, texto: `Aviso número ${n}`,
+        horario: new Date(agora - n * 60_000).toISOString(), comentarios: [],
+      });
+    }
+    const user = await abrirMural(ALUNA);
+
+    expect(await screen.findByText('Aviso número 1')).toBeInTheDocument();
+    expect(screen.getByText('Aviso número 10')).toBeInTheDocument();
+    expect(screen.queryByText('Aviso número 11')).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Carregar avisos mais antigos' }));
+    expect(await screen.findByText('Aviso número 12')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Carregar avisos mais antigos' })).not.toBeInTheDocument();
   });
 });

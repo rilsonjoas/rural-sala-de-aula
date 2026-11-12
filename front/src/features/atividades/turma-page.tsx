@@ -1,4 +1,4 @@
-import { ArrowLeft, ClipboardList, Clock, Megaphone, Users } from 'lucide-react';
+import { ArrowLeft, ClipboardList, Clock, Contact, Megaphone, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { EmptyState } from '@/components/empty-state';
@@ -6,6 +6,8 @@ import { ErrorState } from '@/components/error-state';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/features/session/use-session';
 import { CopiarCodigo } from '@/features/turmas/copiar-codigo';
+import { ExcluirTurma } from '@/features/turmas/excluir-turma';
+import { MembrosAba } from '@/features/turmas/membros-aba';
 import { SairDaTurma } from '@/features/turmas/sair-da-turma';
 import { useTurma } from '@/features/turmas/api';
 import { ApiError } from '@/lib/api-error';
@@ -53,13 +55,13 @@ export function TurmaPage() {
   const turma = useTurma(turmaId);
   const professor = Boolean(turma.data && usuario && turma.data.professorId === usuario.id);
   usePageTitle(turma.data?.nome ?? 'Turma');
-  const [abaAtiva, setAbaAtiva] = useState<'mural' | 'atividades' | 'grupos'>('mural');
+  const [abaAtiva, setAbaAtiva] = useState<'mural' | 'atividades' | 'grupos' | 'membros'>('mural');
   const [searchParams] = useSearchParams();
   const abaDaUrl = searchParams.get('aba');
 
   // as notificações de aviso levam a ?aba=mural, mesmo com a turma já aberta na aba Atividades
   useEffect(() => {
-    if (abaDaUrl === 'mural' || abaDaUrl === 'grupos') setAbaAtiva(abaDaUrl);
+    if (abaDaUrl === 'mural' || abaDaUrl === 'grupos' || abaDaUrl === 'membros') setAbaAtiva(abaDaUrl);
   }, [abaDaUrl]);
   const [filtros, setFiltros] = useState<Filtros>(FILTROS_VAZIOS);
   const [folhaAberta, setFolhaAberta] = useState(false);
@@ -134,7 +136,7 @@ export function TurmaPage() {
               </span>
             ) : null}
           </div>
-          {!professor ? <SairDaTurma turmaId={turmaId} turmaNome={turma.data.nome} /> : null}
+          {!professor ? <SairDaTurma turmaId={turmaId} turmaNome={turma.data.nome} /> : <ExcluirTurma turmaId={turmaId} turmaNome={turma.data.nome} />}
           {professor && turma.data.codigo ? (
             <div className="flex items-center justify-between gap-3 rounded-lg bg-secondary p-3">
               <div>
@@ -195,12 +197,27 @@ export function TurmaPage() {
           <Users className="size-4" aria-hidden="true" />
           <span>Grupos</span>
         </button>
+        <button
+          type="button"
+          onClick={() => setAbaAtiva('membros')}
+          className={cn(
+            'px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors -mb-px flex items-center gap-2',
+            abaAtiva === 'membros'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground',
+          )}
+        >
+          <Contact className="size-4" aria-hidden="true" />
+          <span>Membros</span>
+        </button>
       </div>
 
       {abaAtiva === 'mural' ? (
         <MuralAba turmaId={turmaId} podePublicar={professor} />
       ) : abaAtiva === 'grupos' ? (
         <GruposAba turmaId={turmaId} professor={professor} />
+      ) : abaAtiva === 'membros' ? (
+        <MembrosAba turmaId={turmaId} professorNome={turma.data?.professorNome ?? ''} />
       ) : (
         <div className="space-y-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

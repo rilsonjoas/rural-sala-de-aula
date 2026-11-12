@@ -3,6 +3,13 @@ package com.narniano.rural_sala_de_aula.classes.aviso;
 import com.narniano.rural_sala_de_aula.classes.comentario.ComentarioService;
 import com.narniano.rural_sala_de_aula.classes.comentario.RequestComentarioDTO;
 import com.narniano.rural_sala_de_aula.classes.comentario.ResponseComentarioDTO;
+import com.narniano.rural_sala_de_aula.classes.grupo.Grupo;
+import com.narniano.rural_sala_de_aula.classes.grupo.GrupoIntegrante;
+import com.narniano.rural_sala_de_aula.classes.grupo.GrupoIntegranteRepository;
+import com.narniano.rural_sala_de_aula.classes.grupo.GrupoRepository;
+import com.narniano.rural_sala_de_aula.classes.grupo.IntegranteGrupoDTO;
+import com.narniano.rural_sala_de_aula.classes.grupo.StatusGrupo;
+import com.narniano.rural_sala_de_aula.classes.usuario.UsuarioRepository;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
 import com.narniano.rural_sala_de_aula.classes.notificacao.NotificacaoService;
 import com.narniano.rural_sala_de_aula.classes.notificacao.TipoNotificacao;
@@ -17,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +40,9 @@ public class AvisoService {
     private final TurmaRepository turmaRepository;
     private final InscricaoRepository inscricaoRepository;
     private final NotificacaoService notificacaoService;
+    private final GrupoRepository grupoRepository;
+    private final GrupoIntegranteRepository integranteRepository;
+    private final UsuarioRepository usuarioRepository;
 
     @Transactional
     public ResponseAvisoDTO criarAviso(UUID turmaId, RequestAvisoDTO dto, Usuario autor) {
@@ -40,15 +54,27 @@ public class AvisoService {
             throw new AppException(HttpStatus.FORBIDDEN, "Só quem leciona a turma pode publicar avisos.");
         }
 
+        Set<UUID> destinatarios = resolverDestinatarios(turma, dto);
+        boolean direcionado = !destinatarios.isEmpty();
+
         Aviso aviso = new Aviso();
         aviso.setTurma(turma);
         aviso.setAutor(autor);
         aviso.setTexto(dto.texto().trim());
         aviso.setHorario(LocalDateTime.now());
+        aviso.setAlcance(direcionado ? AlcanceAviso.DIRECIONADO : AlcanceAviso.TURMA);
+        aviso.setDestinatarios(destinatarios);
 
         Aviso salvo = avisoRepository.save(aviso);
-        notificacaoService.notificarAlunosDaTurma(turma, autor, TipoNotificacao.AVISO_NOVO,
-                "Novo aviso em " + turma.getNome() + ".", null, salvo);
+        String texto = "Novo aviso em " + turma.getNome() + ".";
+        List<IntegranteGrupoDTO> nomes = null;
+        if (direcionado) {
+            List<Usuario> alunos = usuarioRepository.findAllById(destinatarios);
+            alunos.forEach(a -> notificacaoService.notificar(a, TipoNotificacao.AVISO_NOVO, texto, turma, null, salvo));
+            nomes = alunos.stream().map(a -> new IntegranteGrupoDTO(a.getId(), a.getNome())).toList();
+        } else {
+            notificacaoService.notificarAlunosDaTurma(turma, autor, TipoNotificacao.AVISO_NOVO, texto, null, salvo);
+        }
         return new ResponseAvisoDTO(
                 salvo.getId(),
                 turma.getId(),
@@ -56,8 +82,40 @@ public class AvisoService {
                 autor.getNome(),
                 salvo.getTexto(),
                 salvo.getHorario(),
-                Collections.emptyList()
+                Collections.emptyList(),
+                direcionado,
+                nomes
         );
+    }
+
+    /** Alunos dos grupos escolhidos mais os alunos escolhidos; vazio quando o aviso é para a turma toda. */
+    private Set<UUID> resolverDestinatarios(Turma turma, RequestAvisoDTO dto) {
+        List<UUID> gruposIds = dto.gruposIds() == null ? List.of() : dto.gruposIds();
+        List<UUID> alunosIds = dto.alunosIds() == null ? List.of() : dto.alunosIds();
+        if (gruposIds.isEmpty() && alunosIds.isEmpty()) {
+            return new LinkedHashSet<>();
+        }
+
+        Set<UUID> resultado = new LinkedHashSet<>();
+        Map<UUID, Grupo> gruposDaTurma = grupoRepository.findByTurmaId(turma.getId()).stream()
+                .filter(g -> g.getStatus() != StatusGrupo.REPROVADO)
+                .collect(Collectors.toMap(Grupo::getId, g -> g));
+        for (UUID grupoId : gruposIds) {
+            if (!gruposDaTurma.containsKey(grupoId)) {
+                throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "Um dos grupos escolhidos não existe nesta turma.");
+            }
+            integranteRepository.findByGrupoIdOrderByEntrouEmAsc(grupoId).forEach(i -> resultado.add(i.getAluno().getId()));
+        }
+        for (UUID alunoId : alunosIds) {
+            if (!inscricaoRepository.existsByTurmaIdAndAlunoId(turma.getId(), alunoId)) {
+                throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "Todos os destinatários precisam ser alunos desta turma.");
+            }
+            resultado.add(alunoId);
+        }
+        if (resultado.isEmpty()) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "Os grupos escolhidos não têm alunos para receber o aviso.");
+        }
+        return resultado;
     }
 
     @Transactional(readOnly = true)
@@ -67,11 +125,17 @@ public class AvisoService {
 
         validarMembroDaTurma(turma, usuario);
 
+        boolean professor = turma.getProfessor().getId().equals(usuario.getId());
         List<Aviso> avisos = avisoRepository.findByTurmaIdOrderByHorarioDesc(turmaId);
         return avisos.stream()
+                .filter(a -> professor || podeVer(a, usuario))
                 .map(a -> {
                     List<ResponseComentarioDTO> comentarios = comentarioService.listarDoAviso(a.getId());
-
+                    boolean direcionado = a.getAlcance() == AlcanceAviso.DIRECIONADO;
+                    List<IntegranteGrupoDTO> nomes = professor && direcionado
+                            ? usuarioRepository.findAllById(a.getDestinatarios()).stream()
+                                    .map(u -> new IntegranteGrupoDTO(u.getId(), u.getNome())).toList()
+                            : null;
                     return new ResponseAvisoDTO(
                             a.getId(),
                             turma.getId(),
@@ -79,10 +143,26 @@ public class AvisoService {
                             a.getAutor().getNome(),
                             a.getTexto(),
                             a.getHorario(),
-                            comentarios
+                            comentarios,
+                            direcionado,
+                            nomes
                     );
                 })
                 .toList();
+    }
+
+    /** Aviso da turma toda, ou direcionado a este usuário (o professor da turma vê todos, tratado à parte). */
+    private boolean podeVer(Aviso aviso, Usuario usuario) {
+        return aviso.getAlcance() != AlcanceAviso.DIRECIONADO
+                || aviso.getAutor().getId().equals(usuario.getId())
+                || aviso.getDestinatarios().contains(usuario.getId());
+    }
+
+    private void exigirVisivel(Aviso aviso, Usuario usuario) {
+        boolean professor = aviso.getTurma().getProfessor().getId().equals(usuario.getId());
+        if (!professor && !podeVer(aviso, usuario)) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Aviso não encontrado.");
+        }
     }
 
     @Transactional
@@ -91,6 +171,7 @@ public class AvisoService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Aviso não encontrado."));
 
         validarMembroDaTurma(aviso.getTurma(), autor);
+        exigirVisivel(aviso, autor);
 
         return comentarioService.criarNoAviso(aviso, dto, autor);
     }
@@ -101,6 +182,7 @@ public class AvisoService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Aviso não encontrado."));
 
         validarMembroDaTurma(aviso.getTurma(), usuario);
+        exigirVisivel(aviso, usuario);
 
         return comentarioService.listarDoAviso(avisoId);
     }

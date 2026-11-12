@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -30,6 +32,16 @@ public class Aviso {
 
     @Column(name = "horario", nullable = false)
     private LocalDateTime horario = LocalDateTime.now();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "alcance", nullable = false, length = 20)
+    private AlcanceAviso alcance = AlcanceAviso.TURMA;
+
+    /** Alunos que recebem o aviso direcionado (vazio quando o alcance é a turma toda). */
+    @ElementCollection
+    @CollectionTable(name = "aviso_destinatario", joinColumns = @JoinColumn(name = "aviso_id"))
+    @Column(name = "aluno_id")
+    private Set<UUID> destinatarios = new HashSet<>();
 
     @Column(name = "texto", nullable = false, length = 3000)
     @Size(max = 3000)

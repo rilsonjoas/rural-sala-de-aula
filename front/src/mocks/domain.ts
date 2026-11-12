@@ -52,6 +52,8 @@ export type AvisoDb = {
   texto: string;
   horario: string;
   comentarios?: ComentarioDb[];
+  /** Alunos que recebem o aviso direcionado; ausente = turma toda. */
+  destinatariosIds?: string[];
 };
 
 export type GrupoDb = {

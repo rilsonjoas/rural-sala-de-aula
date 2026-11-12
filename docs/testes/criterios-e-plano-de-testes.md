@@ -110,7 +110,7 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 |---|---|---|---|---|---|
 | CA-13.1 O professor publica aviso para a turma | CT-13.1 | texto | publicar | aviso aparece no topo do mural para todos | Auto (`mural.test.tsx`) |
 | CA-13.2 Texto em branco é recusado | CT-13.2 | texto vazio | publicar | erro; nenhum aviso | Manual (sem teste automatizado hoje) |
-| CA-13.3 Direcionar a grupos ou alunos **não** está implementado | CT-13.3 | — | — | registrado como lacuna; sem teste | Manual (anotar) |
+| CA-13.3 O professor direciona o aviso a grupos ou alunos específicos; só eles veem e são notificados | CT-13.3 | aviso para o grupo Time Alfa; aluno de fora do grupo | publicar e abrir o mural de cada um | integrantes veem o aviso e são notificados; o aluno de fora não vê o aviso; o professor vê para quem foi | Auto (`avisos-direcionados.test.tsx`, `AvisoServiceTest`, `e2e-real/grupos.spec.ts`, smoke) |
 
 ### RF14 Comentar e responder (aviso e atividade)
 

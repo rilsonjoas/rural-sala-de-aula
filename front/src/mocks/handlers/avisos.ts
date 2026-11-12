@@ -1,8 +1,8 @@
 import { HttpResponse, http } from 'msw';
 import { db, usuarioDaSessao } from '../db';
 import { naoAutenticado, naoEncontrado, problem } from './problem';
-import { notificarAlunosNoMock, notificarComentarioNoMock } from './notificacoes';
-import { estaInscrito } from './projecoes';
+import { notificarAlunosNoMock, notificarComentarioNoMock, notificarNoMock } from './notificacoes';
+import { estaInscrito, nomeDoUsuario } from './projecoes';
 import type { AvisoDb, ComentarioDb } from '../domain';
 
 const API = '*/api/v1';
@@ -17,9 +17,16 @@ export const avisosHandlers = [
     const isMember = turma.professorId === usuario.id || estaInscrito(turma.id, usuario.id);
     if (!isMember) return problem(403, 'Você não é membro desta turma.');
 
+    const professor = turma.professorId === usuario.id;
     const avisos = (db.avisos ?? [])
       .filter((a) => a.turmaId === turma.id)
-      .sort((a, b) => new Date(b.horario).getTime() - new Date(a.horario).getTime());
+      .filter((a) => professor || !a.destinatariosIds || a.destinatariosIds.includes(usuario.id))
+      .sort((a, b) => new Date(b.horario).getTime() - new Date(a.horario).getTime())
+      .map(({ destinatariosIds, ...resto }) => ({
+        ...resto,
+        direcionado: Boolean(destinatariosIds),
+        destinatarios: professor && destinatariosIds ? destinatariosIds.map((id) => ({ id, nome: nomeDoUsuario(id) })) : null,
+      }));
 
     return HttpResponse.json(avisos);
   }),
@@ -33,9 +40,19 @@ export const avisosHandlers = [
     const isMember = turma.professorId === usuario.id || estaInscrito(turma.id, usuario.id);
     if (!isMember) return problem(403, 'Você não é membro desta turma.');
 
-    const { texto } = (await request.json()) as { texto?: string };
+    const { texto, gruposIds = [], alunosIds = [] } = (await request.json()) as { texto?: string; gruposIds?: string[]; alunosIds?: string[] };
     if (!texto?.trim()) {
       return problem(422, 'O texto do aviso não pode ser vazio.');
+    }
+
+    // RF13: com grupos ou alunos escolhidos o aviso é direcionado; sem nenhum, vai para a turma toda
+    let destinatariosIds: string[] | undefined;
+    if (gruposIds.length > 0 || alunosIds.length > 0) {
+      const grupos = gruposIds.map((id) => db.grupos.find((g) => g.id === id && g.turmaId === turma.id && g.status !== 'REPROVADO'));
+      if (grupos.some((g) => !g)) return problem(422, 'Um dos grupos escolhidos não existe nesta turma.');
+      if (alunosIds.some((id) => !estaInscrito(turma.id, id))) return problem(422, 'Todos os destinatários precisam ser alunos desta turma.');
+      destinatariosIds = [...new Set([...grupos.flatMap((g) => g!.integrantesIds), ...alunosIds])];
+      if (destinatariosIds.length === 0) return problem(422, 'Os grupos escolhidos não têm alunos para receber o aviso.');
     }
 
     const novo: AvisoDb = {
@@ -46,13 +63,28 @@ export const avisosHandlers = [
       texto: texto.trim(),
       horario: new Date().toISOString(),
       comentarios: [],
+      ...(destinatariosIds ? { destinatariosIds } : {}),
     };
 
     if (!db.avisos) db.avisos = [];
     db.avisos.unshift(novo);
-    notificarAlunosNoMock(turma.id, usuario.id, 'AVISO_NOVO', `Novo aviso em ${turma.nome}.`, null, novo.id);
+    const texto_ = `Novo aviso em ${turma.nome}.`;
+    if (destinatariosIds) {
+      for (const id of destinatariosIds) notificarNoMock(id, 'AVISO_NOVO', texto_, turma.id, null, novo.id);
+    } else {
+      notificarAlunosNoMock(turma.id, usuario.id, 'AVISO_NOVO', texto_, null, novo.id);
+    }
 
-    return HttpResponse.json(novo, { status: 201 });
+    const publico: Partial<AvisoDb> = { ...novo };
+    delete publico.destinatariosIds;
+    return HttpResponse.json(
+      {
+        ...publico,
+        direcionado: Boolean(destinatariosIds),
+        destinatarios: destinatariosIds ? destinatariosIds.map((id) => ({ id, nome: nomeDoUsuario(id) })) : null,
+      },
+      { status: 201 },
+    );
   }),
 
   http.post(`${API}/avisos/:avisoId/comentarios`, async ({ params, request }) => {

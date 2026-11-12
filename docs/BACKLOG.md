@@ -23,7 +23,7 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 - **RF14, comentário em atividade:** `GET/POST /atividades/{id}/comentarios` (migration V4). Professor e alunos comentam e respondem (um nível); o aluno só vê atividade já aberta. O mural segue igual.
 - **RF17, notificações:** `GET /notificacoes`, `POST /notificacoes/{id}/lida` e `POST /notificacoes/lidas` (migration V5), com sino no cabeçalho do front. Gera notificação para aviso novo, atividade alterada, nota publicada, comentário novo (avisa o professor) e resposta (avisa o autor do comentário respondido). "Atividade nova" é gerada na leitura (janela de 14 dias, depois da V5) e "prazo próximo" (48 h, não entregue) é calculado na hora e não conta como não lida. A lista corta em 50 itens; o contador conta todas as não lidas.
 - **Decidido: notificação só dentro do app** (sem e-mail, push nem WebSocket; o sino consulta a API a cada 60 s).
-- Fora desta entrega: preferências de notificação, apagar notificação, editar ou excluir comentário e direcionar aviso a grupos ou alunos específicos (RF13 completo depende dos grupos).
+- Fora desta entrega: preferências de notificação, apagar notificação, editar ou excluir comentário (o direcionamento de aviso a grupos ou alunos, RF13, foi feito em 13/11/2026).
 
 ## Requisitos funcionais (do documento de requisitos)
 

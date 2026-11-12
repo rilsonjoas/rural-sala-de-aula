@@ -635,6 +635,10 @@ export interface components {
             /** Format: date-time */
             horario: string;
             comentarios?: components["schemas"]["Comentario"][];
+            /** @description Verdadeiro quando o aviso foi para grupos ou alunos específicos. Quem não é destinatário não o vê (e o comentário dá 404). */
+            direcionado?: boolean;
+            /** @description Só para o professor, nos avisos direcionados. */
+            destinatarios?: components["schemas"]["IntegranteDeGrupo"][] | null;
         };
         AlunoResumo: {
             /** Format: uuid */
@@ -1004,11 +1008,10 @@ export interface operations {
             content: {
                 "application/json": {
                     texto: string;
-                    /**
-                     * Format: uuid
-                     * @description Comentário que está sendo respondido. Resposta a uma resposta fica sob o comentário original (um nível).
-                     */
-                    comentarioPaiId?: string;
+                    /** @description Grupos (não reprovados) da turma que recebem o aviso. Junto com alunosIds define os destinatários; sem nenhum dos dois o aviso vai para a turma toda. */
+                    gruposIds?: string[];
+                    /** @description Alunos da turma que recebem o aviso. */
+                    alunosIds?: string[];
                 };
             };
         };
@@ -1023,6 +1026,7 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     leaveTurma: {

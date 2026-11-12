@@ -21,10 +21,10 @@ export function useAvisos(turmaId: string) {
 export function useCriarAviso(turmaId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (texto: string) => {
+    mutationFn: async (aviso: { texto: string; gruposIds?: string[]; alunosIds?: string[] }) => {
       const { data } = await api.POST('/turmas/{turmaId}/avisos', {
         params: { path: { turmaId } },
-        body: { texto },
+        body: aviso,
       });
       return data as Aviso;
     },

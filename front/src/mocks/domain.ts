@@ -32,7 +32,10 @@ export type AtividadeDb = {
 export type EntregaDb = {
   id: string;
   atividadeId: string;
+  /** Quem enviou (na entrega do grupo, o integrante que enviou o arquivo). */
   alunoId: string;
+  /** Preenchido na entrega em nome do grupo (atividade PROJETO_EM_GRUPO). */
+  grupoId?: string;
   nomeOriginal: string;
   tamanhoBytes: number;
   enviadaEm: string;

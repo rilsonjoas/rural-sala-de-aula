@@ -156,7 +156,11 @@ export const atividadesHandlers = [
     const turma = db.turmas.find((t) => t.id === atividade.turmaId)!;
     if (turma.professorId !== usuario.id) return proibido('Acesso restrito ao professor da turma.');
 
-    const entregaram = new Set(db.entregas.filter((e) => e.atividadeId === atividade.id).map((e) => e.alunoId));
+    const entregaram = new Set<string>();
+    for (const e of db.entregas.filter((x) => x.atividadeId === atividade.id)) {
+      const grupo = e.grupoId ? db.grupos.find((g) => g.id === e.grupoId) : undefined;
+      for (const id of grupo ? grupo.integrantesIds : [e.alunoId]) entregaram.add(id);
+    }
     const lista = db.inscricoes
       .filter((i) => i.turmaId === turma.id && !entregaram.has(i.alunoId))
       .map((i) => db.usuarios.find((u) => u.id === i.alunoId)!)

@@ -13,6 +13,8 @@ const caio = pessoa('Caio');
 const nomeGrupo = `Time ${sufixo}`;
 
 let tid = '';
+let aid = '';
+const nomeProjeto = `Projeto ${sufixo}`;
 const contextos: BrowserContext[] = [];
 
 async function entrar(browser: Browser, quem: { nome: string; email: string }): Promise<Page> {
@@ -38,6 +40,11 @@ test.beforeAll(async ({ browser }) => {
   expect(t.status()).toBe(201);
   const turma = await t.json();
   tid = turma.id;
+  const a = await pProf.context().request.post(`/api/v1/turmas/${tid}/atividades`, {
+    data: { nome: nomeProjeto, descricao: 'projeto em grupo', tipo: 'PROJETO_EM_GRUPO', prazoFinal: '2030-05-20T23:59:00Z', disponivelEm: '2026-01-01T00:00:00Z' },
+  });
+  expect(a.status()).toBe(201);
+  aid = (await a.json()).id;
   for (const quem of [ana, beto, caio]) {
     const p = await entrar(browser, quem);
     const r = await p.context().request.post('/api/v1/inscricoes', { data: { codigo: turma.codigo } });
@@ -80,6 +87,37 @@ test('RF12 a professora aprova a solicitação', async () => {
 
   const aprovados = pProf.getByRole('region', { name: 'Grupos aprovados' });
   await expect(aprovados.getByText(nomeGrupo)).toBeVisible();
+});
+
+test('RF06 sem grupo aprovado o aluno é levado aos grupos; com grupo aprovado entrega em nome do grupo', async () => {
+  // Caio ainda não tem grupo aprovado (antes de entrar no grupo da Ana e do Beto)
+  await pCaio.goto(`/atividades/${aid}`);
+  await expect(pCaio.getByText(/a entrega é feita em nome de um grupo aprovado/)).toBeVisible();
+  await expect(pCaio.getByRole('button', { name: 'Enviar entrega' })).toHaveCount(0);
+
+  await pAna.goto(`/atividades/${aid}`);
+  const secao = pAna.getByRole('region', { name: 'Entrega do grupo' });
+  await secao.getByLabel('Escolher arquivo').setInputFiles({ name: 'projeto.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 projeto do grupo') });
+  await secao.getByRole('button', { name: 'Enviar entrega' }).click();
+  await expect(secao.getByText(new RegExp(`Grupo ${nomeGrupo}: .*enviada por ${ana.nome}`))).toBeVisible();
+
+  // o colega de grupo vê a mesma entrega
+  await pBeto.goto(`/atividades/${aid}`);
+  await expect(pBeto.getByRole('region', { name: 'Entrega do grupo' }).getByText('projeto.pdf')).toBeVisible();
+});
+
+test('RF15 e RF16 a professora vê uma linha por grupo e avalia; a nota vale para o colega de grupo', async () => {
+  await pProf.goto(`/atividades/${aid}/entregas`);
+  const item = pProf.getByRole('row', { name: new RegExp(`Grupo ${nomeGrupo}`) });
+  await expect(item).toBeVisible();
+  await item.getByRole('button', { name: `Avaliar entrega de Grupo ${nomeGrupo}` }).click();
+  const folha = pProf.getByRole('dialog');
+  await folha.getByLabel('Nota (0 a 10)').fill('9');
+  await folha.getByRole('button', { name: 'Salvar avaliação' }).click();
+  await expect(pProf.getByText('Avaliação salva.')).toBeVisible();
+
+  await pBeto.goto(`/atividades/${aid}`);
+  await expect(pBeto.getByRole('region', { name: 'Entrega do grupo' }).getByText('Nota 9,0')).toBeVisible();
 });
 
 test('RF06 outro aluno vê o grupo aprovado e entra nele', async () => {

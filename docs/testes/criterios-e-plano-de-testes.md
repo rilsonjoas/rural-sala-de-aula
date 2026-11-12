@@ -60,6 +60,8 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 | CA-06.1 O aluno solicita grupo com nome e colegas e entra como integrante | CT-06.1 | nome "Time Alfa", 1 colega | "Solicitar grupo" | grupo pendente, com os dois, "Aguardando aprovação" | Auto (`grupos-aba.test.tsx`, `mocks/grupos.test.ts`) |
 | CA-06.2 Pedido fora das regras é recusado com a regra | CT-06.2 | grupo com menos que o mínimo | enviar | mensagem "pelo menos 2 integrantes" | Auto (`grupos-aba.test.tsx`) |
 | CA-06.3 O aluno entra em grupo aprovado com vaga, uma vez só | CT-06.3 | grupo aprovado com vaga | "Entrar" | passa a ser integrante; sem outros "Entrar" | Auto (`grupos-aba.test.tsx`) |
+| CA-06.4 Em projeto em grupo, um integrante de grupo aprovado entrega em nome do grupo; sem grupo aprovado não se entrega | CT-06.4 | atividade em grupo; aluno com e sem grupo aprovado | enviar o arquivo | com grupo: entrega do grupo, visível aos colegas e ao professor (uma linha por grupo); sem grupo: aviso com link para a aba Grupos | Auto (`entrega-em-grupo.test.tsx`, `EntregaEmGrupoServiceTest`, `e2e-real/grupos.spec.ts`, smoke) |
+| CA-06.5 A nota do grupo vale para todos os integrantes, que são avisados | CT-06.5 | professor avalia a entrega do grupo | salvar nota | cada integrante vê a nota e recebe a notificação | Auto (`entrega-em-grupo.test.tsx`, `EntregaEmGrupoServiceTest`, smoke) |
 | CA-07.1 Sair é permitido, salvo se o grupo aprovado ficar abaixo do mínimo | CT-07.1 | grupo aprovado no mínimo | sair | erro com a regra; grupo intacto | Auto (`mocks/grupos.test.ts`) |
 | CA-07.2 Sair de grupo pendente e vazio o descarta | CT-07.2 | grupo pendente de 1 pessoa | sair e confirmar | grupo some; volta a poder solicitar | Auto (`mocks/grupos.test.ts`) |
 

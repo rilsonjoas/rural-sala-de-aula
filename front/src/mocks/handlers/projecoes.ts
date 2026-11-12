@@ -12,8 +12,20 @@ type S = components['schemas'];
 
 export const agora = () => new Date();
 
+/** O grupo aprovado do aluno na turma, se houver. */
+export function grupoAprovadoDoAluno(turmaId: string, alunoId: string) {
+  return db.grupos.find((g) => g.turmaId === turmaId && g.status === 'APROVADO' && g.integrantesIds.includes(alunoId));
+}
+
+/** Em projeto em grupo vale a entrega do grupo aprovado do aluno (a individual é alternativa); nas demais, a individual. */
 export function entregaDoAluno(atividadeId: string, alunoId: string) {
-  return db.entregas.find((e) => e.atividadeId === atividadeId && e.alunoId === alunoId);
+  const atividade = db.atividades.find((a) => a.id === atividadeId);
+  if (atividade?.tipo === 'PROJETO_EM_GRUPO') {
+    const grupo = grupoAprovadoDoAluno(atividade.turmaId, alunoId);
+    const doGrupo = grupo && db.entregas.find((e) => e.atividadeId === atividadeId && e.grupoId === grupo.id);
+    if (doGrupo) return doGrupo;
+  }
+  return db.entregas.find((e) => e.atividadeId === atividadeId && !e.grupoId && e.alunoId === alunoId);
 }
 
 export function avaliacaoDaEntrega(entregaId: string) {
@@ -89,7 +101,15 @@ export function paraAtividadeApi(atividade: AtividadeDb, usuario: UsuarioComSenh
 export function paraEntregaApi(entrega: EntregaDb): S['Entrega'] {
   const atividade = db.atividades.find((a) => a.id === entrega.atividadeId)!;
   const avaliacao = avaliacaoDaEntrega(entrega.id);
+  const grupo = entrega.grupoId ? db.grupos.find((g) => g.id === entrega.grupoId) : undefined;
   return {
+    ...(grupo
+      ? {
+          grupoId: grupo.id,
+          grupoNome: grupo.nome,
+          integrantes: grupo.integrantesIds.map((id) => ({ id, nome: nomeDoUsuario(id) })),
+        }
+      : {}),
     id: entrega.id,
     atividadeId: entrega.atividadeId,
     alunoId: entrega.alunoId,

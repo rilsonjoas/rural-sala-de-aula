@@ -163,3 +163,22 @@ test('RF12 a professora muda as regras e a aluna vê o novo limite', async () =>
   await abaGrupos(pAna);
   await expect(pAna.getByText('Grupos de 1 a 3 integrantes · até 4 grupos na turma')).toBeVisible();
 });
+
+test('RF13 o aviso só para o grupo chega aos integrantes e não aos outros alunos', async () => {
+  const texto = `Reunião do grupo ${sufixo}`;
+  await pProf.goto(`/turmas/${tid}`);
+  await pProf.getByText('Escreva um comunicado para a turma...').click();
+  await pProf.getByPlaceholder(/Escreva um comunicado ou orientação/).fill(texto);
+  await pProf.getByRole('radio', { name: 'Só para grupos ou alunos' }).click();
+  await pProf.getByRole('group', { name: 'Grupos' }).getByRole('checkbox', { name: nomeGrupo }).click();
+  await pProf.getByRole('button', { name: 'Postar' }).click();
+  await expect(pProf.getByText(texto)).toBeVisible();
+  await expect(pProf.getByText(new RegExp(`Só para: .*${ana.nome}`))).toBeVisible();
+
+  await pBeto.goto(`/turmas/${tid}`);
+  await expect(pBeto.getByText(texto)).toBeVisible();
+
+  await pCaio.goto(`/turmas/${tid}`);
+  await expect(pCaio.getByText('Nenhum aviso postado ainda.')).toBeVisible();
+  await expect(pCaio.getByText(texto)).toHaveCount(0);
+});

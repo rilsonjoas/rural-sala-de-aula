@@ -110,7 +110,7 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 |---|---|---|---|---|---|
 | CA-13.1 O professor publica aviso para a turma | CT-13.1 | texto | publicar | aviso aparece no topo do mural para todos | Auto (`mural.test.tsx`) |
 | CA-13.2 Texto em branco é recusado | CT-13.2 | texto vazio | publicar | erro; nenhum aviso | Manual (sem teste automatizado hoje) |
-| CA-13.3 Direcionar a grupos ou alunos **não** está implementado | CT-13.3 | — | — | registrado como lacuna; sem teste | Manual (anotar) |
+| CA-13.3 O professor direciona o aviso a grupos ou alunos específicos; só eles veem e são notificados | CT-13.3 | aviso para o grupo Time Alfa; aluno de fora do grupo | publicar e abrir o mural de cada um | integrantes veem o aviso e são notificados; o aluno de fora não vê o aviso; o professor vê para quem foi | Auto (`avisos-direcionados.test.tsx`, `AvisoServiceTest`, `e2e-real/grupos.spec.ts`, smoke) |
 
 ### RF14 Comentar e responder (aviso e atividade)
 
@@ -163,7 +163,7 @@ Antes de executar, subir o ambiente: `docker compose up -d --build` (app em `htt
 
 ## 5. Revisão dos critérios (passo 1 do trabalho)
 
-Antes de escrever mais testes, o grupo percorre a seção 2 e marca, em cada CA: **ok**, **ajustar** ou **faltando**. Pontos que merecem decisão do grupo: o que fazer com CA-13.3 (direcionamento de aviso, não implementado), o limiar da carga do calendário (0 / 1–2 / 3+) e as regras de saída de grupo.
+Antes de escrever mais testes, o grupo percorre a seção 2 e marca, em cada CA: **ok**, **ajustar** ou **faltando**. Pontos que merecem decisão do grupo: o limiar da carga do calendário (0 / 1–2 / 3+) e as regras de saída de grupo.
 
 ## 6. Guia de testes de unidade em JUnit (para o Luiz Felipe)
 

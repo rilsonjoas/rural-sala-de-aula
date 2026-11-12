@@ -9,4 +9,7 @@ import java.util.UUID;
 @Repository
 public interface ArquivoRepository extends JpaRepository<Arquivo, UUID> {
     List<Arquivo> findByEntregaId(UUID entregaId);
+
+    /** Todos os arquivos das entregas das atividades da turma (para apagar do disco ao excluir a turma). */
+    List<Arquivo> findByEntregaAtividadeTurmaId(UUID turmaId);
 }

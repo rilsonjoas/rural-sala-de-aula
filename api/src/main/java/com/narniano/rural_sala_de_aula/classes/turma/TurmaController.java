@@ -50,6 +50,16 @@ public class TurmaController {
         return ResponseEntity.noContent().build();
     }
 
+    @DeleteMapping("/{turmaId}")
+    public ResponseEntity<Void> excluirTurma(
+            @PathVariable UUID turmaId,
+            HttpSession session
+    ) {
+        Usuario usuario = authService.getUsuarioAutenticado(session);
+        turmaService.excluir(turmaId, usuario);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{turmaId}")
     public ResponseEntity<ResponseTurmaDTO> obterTurma(
             @PathVariable UUID turmaId,

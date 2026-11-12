@@ -3,6 +3,7 @@ package com.narniano.rural_sala_de_aula.classes.aviso;
 import com.narniano.rural_sala_de_aula.classes.comentario.RequestComentarioDTO;
 import com.narniano.rural_sala_de_aula.classes.comentario.ResponseComentarioDTO;
 import com.narniano.rural_sala_de_aula.classes.usuario.AuthService;
+import com.narniano.rural_sala_de_aula.common.PaginaDTO;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -24,11 +25,13 @@ public class AvisoController {
     @GetMapping("/api/v1/turmas/{turmaId}/avisos")
     public ResponseEntity<List<ResponseAvisoDTO>> listarAvisos(
             @PathVariable UUID turmaId,
+            @RequestParam(required = false) Integer limite,
+            @RequestParam(required = false) Integer deslocamento,
             HttpSession session
     ) {
         Usuario usuario = authService.getUsuarioAutenticado(session);
-        List<ResponseAvisoDTO> avisos = avisoService.listarPorTurma(turmaId, usuario);
-        return ResponseEntity.ok(avisos);
+        PaginaDTO<ResponseAvisoDTO> pagina = avisoService.listarPagina(turmaId, usuario, limite, deslocamento);
+        return ResponseEntity.ok().header("X-Total-Count", String.valueOf(pagina.total())).body(pagina.itens());
     }
 
     @PostMapping("/api/v1/turmas/{turmaId}/avisos")

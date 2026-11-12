@@ -53,6 +53,29 @@ export const authHandlers = [
     return HttpResponse.json(semSenha(usuario));
   }),
 
+  http.post(`${API}/me/exclusao`, async ({ request }) => {
+    const usuario = usuarioDaSessao();
+    if (!usuario) return problem(401, 'Usuário não autenticado.');
+    const { senha } = (await request.json()) as { senha?: string };
+    if (senha !== usuario.senha) return problem(403, 'Senha incorreta. A conta não foi excluída.');
+    const lecionadas = db.turmas.filter((t) => t.professorId === usuario.id).length;
+    if (lecionadas > 0) {
+      return problem(409, `Você leciona ${lecionadas} ${lecionadas === 1 ? 'turma' : 'turmas'}. Exclua ${lecionadas === 1 ? 'a turma' : 'as turmas'} antes de excluir a conta.`);
+    }
+
+    const minhasEntregas = new Set(db.entregas.filter((e) => e.alunoId === usuario.id && !e.grupoId).map((e) => e.id));
+    db.entregas = db.entregas.filter((e) => !minhasEntregas.has(e.id));
+    db.avaliacoes = db.avaliacoes.filter((a) => !minhasEntregas.has(a.entregaId));
+    db.comentariosAtividade = db.comentariosAtividade.filter((c) => c.autorId !== usuario.id);
+    db.inscricoes = db.inscricoes.filter((i) => i.alunoId !== usuario.id);
+    db.notificacoes = db.notificacoes.filter((n) => n.usuarioId !== usuario.id);
+    db.grupos.forEach((g) => (g.integrantesIds = g.integrantesIds.filter((id) => id !== usuario.id)));
+    db.grupos = db.grupos.filter((g) => g.integrantesIds.length > 0);
+    db.usuarios = db.usuarios.filter((u) => u.id !== usuario.id);
+    db.sessaoUsuarioId = null;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
   http.post(`${API}/auth/logout`, () => {
     db.sessaoUsuarioId = null;
     return new HttpResponse(null, { status: 204 });

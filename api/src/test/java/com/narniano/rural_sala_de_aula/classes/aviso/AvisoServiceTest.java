@@ -13,6 +13,7 @@ import com.narniano.rural_sala_de_aula.classes.turma.Turma;
 import com.narniano.rural_sala_de_aula.classes.turma.TurmaRepository;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import com.narniano.rural_sala_de_aula.classes.usuario.UsuarioRepository;
+import com.narniano.rural_sala_de_aula.common.PaginaDTO;
 import com.narniano.rural_sala_de_aula.common.exception.AppException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -197,5 +198,31 @@ class AvisoServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, assertThrows(AppException.class,
                 () -> service.criarComentario(paraAna.getId(), new com.narniano.rural_sala_de_aula.classes.comentario.RequestComentarioDTO("Oi", null), caio)).getStatus());
         verify(comentarioService, never()).criarNoAviso(any(), any(), any());
+    }
+
+    @Test
+    void a_pagina_devolve_so_a_fatia_pedida_e_o_total_e_busca_os_comentarios_so_dela() {
+        Aviso novo = avisoDirecionado(ana);
+        novo.setAlcance(AlcanceAviso.TURMA);
+        novo.setTexto("novo");
+        Aviso meio = avisoDirecionado(ana);
+        meio.setAlcance(AlcanceAviso.TURMA);
+        meio.setTexto("meio");
+        Aviso velho = avisoDirecionado(ana);
+        velho.setAlcance(AlcanceAviso.TURMA);
+        velho.setTexto("velho");
+        when(avisoRepository.findByTurmaIdOrderByHorarioDesc(turma.getId())).thenReturn(List.of(novo, meio, velho));
+        when(comentarioService.listarDoAviso(any())).thenReturn(List.of());
+
+        PaginaDTO<ResponseAvisoDTO> pagina = service.listarPagina(turma.getId(), ana, 1, 1);
+
+        assertEquals(3, pagina.total());
+        assertEquals(List.of("meio"), pagina.itens().stream().map(ResponseAvisoDTO::texto).toList());
+        verify(comentarioService, times(1)).listarDoAviso(any());
+
+        assertEquals(3, service.listarPagina(turma.getId(), ana, null, null).itens().size()); // sem parâmetros: tudo
+        assertEquals(List.of(), service.listarPagina(turma.getId(), ana, 10, 5).itens()); // além do fim: vazio
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY,
+                assertThrows(AppException.class, () -> service.listarPagina(turma.getId(), ana, 0, 0)).getStatus());
     }
 }

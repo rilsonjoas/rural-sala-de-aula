@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 import type { components } from '@/lib/api.generated';
 import { db, usuarioDaSessao } from '../db';
 import { gerarCodigo, type TurmaDb } from '../domain';
-import { dadosInvalidos, naoAutenticado, naoEncontrado, problem } from './problem';
+import { dadosInvalidos, naoAutenticado, naoEncontrado, problem, proibido } from './problem';
 import { estaInscrito, paraTurmaApi } from './projecoes';
 
 type TurmaInput = components['schemas']['TurmaInput'];
@@ -11,6 +11,22 @@ const API = '*/api/v1';
 function turmaVisivel(turma: TurmaDb | undefined, usuarioId: string) {
   if (!turma) return false;
   return turma.professorId === usuarioId || estaInscrito(turma.id, usuarioId);
+}
+
+/** Leva junto tudo o que depende da turma, como o ON DELETE CASCADE da API. */
+export function excluirTurmaDoMock(turmaId: string) {
+  const atividades = new Set(db.atividades.filter((a) => a.turmaId === turmaId).map((a) => a.id));
+  const entregas = new Set(db.entregas.filter((e) => atividades.has(e.atividadeId)).map((e) => e.id));
+  db.turmas = db.turmas.filter((t) => t.id !== turmaId);
+  db.inscricoes = db.inscricoes.filter((i) => i.turmaId !== turmaId);
+  db.atividades = db.atividades.filter((a) => a.turmaId !== turmaId);
+  db.entregas = db.entregas.filter((e) => !entregas.has(e.id));
+  db.avaliacoes = db.avaliacoes.filter((a) => !entregas.has(a.entregaId));
+  db.avisos = db.avisos.filter((a) => a.turmaId !== turmaId);
+  db.comentariosAtividade = db.comentariosAtividade.filter((c) => !c.atividadeId || !atividades.has(c.atividadeId));
+  db.notificacoes = db.notificacoes.filter((n) => n.turmaId !== turmaId);
+  db.grupos = db.grupos.filter((g) => g.turmaId !== turmaId);
+  delete db.configuracoesDeGrupos[turmaId];
 }
 
 export const turmasHandlers = [
@@ -61,6 +77,16 @@ export const turmasHandlers = [
     const turma = db.turmas.find((t) => t.id === params.turmaId);
     if (!turmaVisivel(turma, usuario.id)) return naoEncontrado('Turma não encontrada.');
     return HttpResponse.json(paraTurmaApi(turma!, usuario));
+  }),
+
+  http.delete(`${API}/turmas/:turmaId`, ({ params }) => {
+    const usuario = usuarioDaSessao();
+    if (!usuario) return naoAutenticado();
+    const turma = db.turmas.find((t) => t.id === params.turmaId);
+    if (!turma) return naoEncontrado('Turma não encontrada.');
+    if (turma.professorId !== usuario.id) return proibido('Somente o professor da turma pode excluí-la.');
+    excluirTurmaDoMock(turma.id);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.delete(`${API}/turmas/:turmaId/inscricao`, ({ params }) => {

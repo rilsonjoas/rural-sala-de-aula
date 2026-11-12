@@ -72,6 +72,7 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 | CA-08.1 A carga da semana é livre com 0 prazos, média com 1 ou 2, pesada com 3 ou mais | CT-08.1 | 0, 1, 2, 3 e 7 prazos | classificar | livre, média, média, pesada, pesada | Auto (`carga.test.ts`) |
 | CA-08.2 Semana vai de segunda a domingo | CT-08.2 | prazo no domingo 23:59 e na segunda 00:00 | agrupar | cada um na sua semana | Auto (`carga.test.ts`) |
 | CA-08.3 Mostra 4 semanas e navega para antes e depois | CT-08.3 | clicar "Semanas seguintes/anteriores" | navegar | janela se desloca; "Voltar para esta semana" volta | Auto (`calendario-page.test.tsx`) |
+| CA-08.4 O professor vê no calendário os prazos das turmas que leciona | CT-08.4 | professor com turma e atividade com prazo nas próximas semanas | abrir `/calendario` | a atividade aparece na semana do prazo, com link e sem estado de entrega | Auto (`calendario-page.test.tsx`, `e2e-real/fechamento.spec.ts`) |
 
 ### RF09 Cadastrar turmas
 

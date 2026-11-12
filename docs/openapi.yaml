@@ -45,6 +45,16 @@ paths:
       operationId: logout
       responses:
         '204': {description: Sem conteúdo}
+  /me/exclusao:
+    post:
+      tags: [Auth]
+      operationId: excluirConta
+      summary: 'Exclui a própria conta (exige a senha) e encerra a sessão. Saem junto inscrições, grupos, notificações, entregas individuais (com os arquivos) e comentários. 409 para quem ainda leciona turmas (exclua as turmas antes); 403 para senha incorreta.'
+      requestBody: {required: true, content: {application/json: {schema: {type: object, required: [senha], properties: {senha: {type: string}}}}}}
+      responses:
+        '204': {description: Conta excluída}
+        '403': {$ref: '#/components/responses/Problem'}
+        '409': {$ref: '#/components/responses/Problem'}
   /me:
     get:
       tags: [Auth]
@@ -77,14 +87,26 @@ paths:
       responses:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/Turma'}}}}
         '404': {$ref: '#/components/responses/Problem'}
+    delete:
+      tags: [Turmas]
+      operationId: deleteTurma
+      parameters: [{$ref: '#/components/parameters/TurmaId'}]
+      summary: 'Somente o professor da turma a exclui. Saem junto atividades, entregas (e os arquivos), avisos, comentários, grupos e inscrições. Não tem volta.'
+      responses:
+        '204': {description: Excluída}
+        '403': {$ref: '#/components/responses/Problem'}
+        '404': {$ref: '#/components/responses/Problem'}
   /turmas/{turmaId}/avisos:
     parameters: [{$ref: '#/components/parameters/TurmaId'}]
     get:
       tags: [Avisos]
       operationId: listAvisos
-      summary: Lista avisos postados no mural da turma.
+      summary: 'Lista os avisos que o usuário pode ver, do mais novo para o mais antigo. Sem limite devolve todos; com limite e deslocamento devolve só a fatia, e o total vem no cabeçalho X-Total-Count.'
+      parameters:
+        - {name: limite, in: query, required: false, schema: {type: integer, minimum: 1, maximum: 100}}
+        - {name: deslocamento, in: query, required: false, schema: {type: integer, minimum: 0}}
       responses:
-        '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Aviso'}}}}}
+        '200': {description: OK, headers: {X-Total-Count: {description: Total de avisos visíveis (antes do corte), schema: {type: integer}}}, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Aviso'}}}}}
     post:
       tags: [Avisos]
       operationId: createAviso

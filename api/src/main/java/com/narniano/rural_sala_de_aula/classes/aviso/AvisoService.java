@@ -16,6 +16,7 @@ import com.narniano.rural_sala_de_aula.classes.notificacao.TipoNotificacao;
 import com.narniano.rural_sala_de_aula.classes.turma.Turma;
 import com.narniano.rural_sala_de_aula.classes.turma.TurmaRepository;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
+import com.narniano.rural_sala_de_aula.common.PaginaDTO;
 import com.narniano.rural_sala_de_aula.common.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -120,15 +121,33 @@ public class AvisoService {
 
     @Transactional(readOnly = true)
     public List<ResponseAvisoDTO> listarPorTurma(UUID turmaId, Usuario usuario) {
+        return listarPagina(turmaId, usuario, null, null).itens();
+    }
+
+    /**
+     * Os avisos que o usuário pode ver, do mais novo para o mais antigo. Sem limite devolve todos;
+     * com limite (1 a 100) e deslocamento devolve só a fatia e o total, e só busca os comentários dela.
+     */
+    @Transactional(readOnly = true)
+    public PaginaDTO<ResponseAvisoDTO> listarPagina(UUID turmaId, Usuario usuario, Integer limite, Integer deslocamento) {
+        if (limite != null && (limite < 1 || limite > 100)) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "O limite deve ficar entre 1 e 100.");
+        }
+        if (deslocamento != null && deslocamento < 0) {
+            throw new AppException(HttpStatus.UNPROCESSABLE_ENTITY, "O deslocamento não pode ser negativo.");
+        }
         Turma turma = turmaRepository.findById(turmaId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
-
         validarMembroDaTurma(turma, usuario);
-
         boolean professor = turma.getProfessor().getId().equals(usuario.getId());
-        List<Aviso> avisos = avisoRepository.findByTurmaIdOrderByHorarioDesc(turmaId);
-        return avisos.stream()
+
+        List<Aviso> visiveis = avisoRepository.findByTurmaIdOrderByHorarioDesc(turmaId).stream()
                 .filter(a -> professor || podeVer(a, usuario))
+                .toList();
+        int inicio = Math.min(deslocamento == null ? 0 : deslocamento, visiveis.size());
+        int fim = limite == null ? visiveis.size() : Math.min(inicio + limite, visiveis.size());
+
+        List<ResponseAvisoDTO> itens = visiveis.subList(inicio, fim).stream()
                 .map(a -> {
                     List<ResponseComentarioDTO> comentarios = comentarioService.listarDoAviso(a.getId());
                     boolean direcionado = a.getAlcance() == AlcanceAviso.DIRECIONADO;
@@ -149,6 +168,7 @@ public class AvisoService {
                     );
                 })
                 .toList();
+        return new PaginaDTO<>(itens, visiveis.size());
     }
 
     /** Aviso da turma toda, ou direcionado a este usuário (o professor da turma vê todos, tratado à parte). */

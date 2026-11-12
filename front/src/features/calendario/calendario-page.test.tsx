@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 import type { Atividade } from '@/features/atividades/filtros';
-import { ALUNA } from '@/mocks/fixtures';
+import { A_LISTA_1, ALUNA, PROFESSOR } from '@/mocks/fixtures';
 import { server } from '@/mocks/server';
 import { entrarComo } from '@/test/auth';
 import { renderApp } from '@/test/render';
@@ -85,5 +85,16 @@ describe('Calendário do aluno', () => {
     await user.click(within(alerta).getByRole('button', { name: /tentar de novo/i }));
 
     expect(await screen.findByText('Atividade a')).toBeInTheDocument();
+  });
+
+  it('o professor vê os prazos das turmas que leciona, sem o estado de entrega', async () => {
+    await entrarComo(PROFESSOR);
+    renderApp('/calendario');
+    await screen.findByRole('heading', { name: 'Calendário', level: 2 });
+
+    const link = await screen.findByRole('link', { name: /Lista 1 — Recursão/ });
+    expect(link).toHaveAttribute('href', `/atividades/${A_LISTA_1}`);
+    const linha = link.closest('li') as HTMLElement;
+    expect(within(linha).queryByText('Pendente')).not.toBeInTheDocument();
   });
 });

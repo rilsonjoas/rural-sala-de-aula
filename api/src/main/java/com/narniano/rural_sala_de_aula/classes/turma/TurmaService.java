@@ -1,5 +1,7 @@
 package com.narniano.rural_sala_de_aula.classes.turma;
 
+import com.narniano.rural_sala_de_aula.classes.arquivo.Arquivo;
+import com.narniano.rural_sala_de_aula.classes.arquivo.ArquivoRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
 import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeRepository;
 import com.narniano.rural_sala_de_aula.classes.atividade.TipoAtividade;
@@ -10,6 +12,7 @@ import com.narniano.rural_sala_de_aula.classes.inscricao.Inscricao;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import com.narniano.rural_sala_de_aula.common.exception.AppException;
+import com.narniano.rural_sala_de_aula.common.storage.ArquivosNoDisco;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -31,6 +34,7 @@ public class TurmaService {
     private final AtividadeRepository atividadeRepository;
     private final EntregaIndividualRepository entregaRepository;
     private final EntregasDeGrupo entregasDeGrupo;
+    private final ArquivoRepository arquivoRepository;
 
     @Transactional
     public ResponseTurmaDTO cadastrar(RequestTurmaDTO dto, Usuario professor) {
@@ -112,6 +116,19 @@ public class TurmaService {
         Inscricao inscricao = inscricaoRepository.findByTurmaIdAndAlunoId(turmaId, aluno.getId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
         inscricaoRepository.delete(inscricao);
+    }
+
+    /** Só o professor exclui; atividades, entregas, avisos, comentários, grupos e inscrições saem junto (ON DELETE CASCADE). */
+    @Transactional
+    public void excluir(UUID turmaId, Usuario professor) {
+        Turma turma = turmaRepository.findById(turmaId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Turma não encontrada."));
+        if (!turma.getProfessor().getId().equals(professor.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Somente o professor da turma pode excluí-la.");
+        }
+        List<String> caminhos = arquivoRepository.findByEntregaAtividadeTurmaId(turmaId).stream().map(Arquivo::getCaminho).toList();
+        turmaRepository.delete(turma);
+        ArquivosNoDisco.apagarAposCommit(caminhos);
     }
 
     private ResponseTurmaDTO mapearParaDTO(Turma turma, Usuario usuario) {

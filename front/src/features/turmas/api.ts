@@ -51,3 +51,17 @@ export function useTurma(turmaId: string) {
     retry: false,
   });
 }
+
+export function useExcluirTurma(turmaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      await api.DELETE('/turmas/{turmaId}', { params: { path: { turmaId } } });
+    },
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['turma', turmaId] });
+      void queryClient.invalidateQueries({ queryKey: TURMAS_KEY });
+      void queryClient.invalidateQueries({ queryKey: ['atividades'] });
+    },
+  });
+}

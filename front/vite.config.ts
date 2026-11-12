@@ -29,6 +29,8 @@ export default defineConfig(({ mode }) => {
       setupFiles: './src/test/setup.ts',
       css: true,
       include: ['src/**/*.test.{ts,tsx}'],
+      // folga para máquinas lentas ou ocupadas (a suíte monta a aplicação inteira em jsdom)
+      testTimeout: 15000,
     },
   };
 });

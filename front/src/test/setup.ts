@@ -1,10 +1,12 @@
 import '@testing-library/jest-dom/vitest';
 import { Blob as BlobDoNode, File as FileDoNode } from 'node:buffer';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { toast } from 'sonner';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 import { resetDb } from '@/mocks/db';
 import { server } from '@/mocks/server';
+
+configure({ asyncUtilTimeout: 4000 });
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {

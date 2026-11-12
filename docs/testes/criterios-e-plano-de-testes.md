@@ -1,6 +1,6 @@
 # Critérios de aceitação e plano de testes
 
-Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (CA) foram escritos a partir de `docs/requisitos.md` e do comportamento atual do sistema, e o grupo decide se estão certos. Complexidade e modalidade da atividade não entram (decisão de escopo, ver `docs/BACKLOG.md`). Grupos (RF06, RF07, RF12) têm só o front sobre API simulada; os casos valem para a API simulada e passam a valer para o back-end quando ele existir.
+Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (CA) foram escritos a partir de `docs/requisitos.md` e do comportamento atual do sistema, e o grupo decide se estão certos. Complexidade e modalidade da atividade não entram (decisão de escopo, ver `docs/BACKLOG.md`). Grupos (RF06, RF07, RF12) têm back-end e front (desde 12/11/2026); os casos valem para os dois lados.
 
 ## 1. Como ler
 
@@ -53,7 +53,7 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 | CA-05.2 Ordena por prazo, nos dois sentidos | CT-05.2 | ordenar | alternar | lista na ordem do prazo pedida | Auto (`minhas.test.tsx`) |
 | CA-05.3 Sem resultado, diz isso e oferece limpar | CT-05.3 | filtros sem resultado | aplicar | "Nenhuma atividade com esses filtros." e botão "Limpar filtros" | Auto (`minhas.test.tsx`) |
 
-### RF06 e RF07 Grupos: solicitar, participar e sair (front com API simulada)
+### RF06 e RF07 Grupos: solicitar, participar e sair
 
 | CA | CT | Entrada | Ação | Resultado esperado | Tipo |
 |---|---|---|---|---|---|
@@ -93,7 +93,7 @@ Rascunho de 05/11/2026. **Revisar em grupo antes de entregar**: os critérios (C
 | CA-11.1 Professor edita nome, descrição, tipo, datas e atraso | CT-11.1 | novo prazo | salvar | atividade atualizada na lista e no detalhe | Auto (`editar-atividade.test.tsx`) |
 | CA-11.2 Edição inválida é recusada | CT-11.2 | prazo antes da disponibilidade | salvar | erro; dados antigos mantidos | Auto (`editar-atividade.test.tsx`) |
 
-### RF12 Configurar e aprovar grupos (front com API simulada)
+### RF12 Configurar e aprovar grupos
 
 | CA | CT | Entrada | Ação | Resultado esperado | Tipo |
 |---|---|---|---|---|---|

@@ -1,3 +1,4 @@
+import { autorDaEntrega, detalheDoGrupo } from './entrega-formatos';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { FileText } from 'lucide-react';
 import { useState } from 'react';
@@ -71,7 +72,8 @@ function Conteudo({ entrega, aoConcluir }: { entrega: Entrega; aoConcluir: () =>
   return (
     <form onSubmit={enviar} noValidate className="space-y-4">
       <div className="space-y-1 rounded-lg bg-secondary p-3">
-        <p className="font-semibold text-primary">{entrega.alunoNome}</p>
+        <p className="font-semibold text-primary">{autorDaEntrega(entrega)}</p>
+        {detalheDoGrupo(entrega) ? <p className="text-sm text-muted-foreground">{detalheDoGrupo(entrega)}</p> : null}
         <p className="flex items-center gap-2 text-sm text-muted-foreground">
           <FileText aria-hidden="true" className="size-4 shrink-0" />
           {entrega.nomeOriginal}

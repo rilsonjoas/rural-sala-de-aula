@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { db, usuarioDaSessao } from '../db';
 import { dadosInvalidos, naoAutenticado, naoEncontrado, problem, proibido } from './problem';
 import { atividadeVisivel } from './atividades';
-import { avaliacaoDaEntrega, entregaDoAluno, paraEntregaApi } from './projecoes';
+import { avaliacaoDaEntrega, entregaDoAluno, grupoAprovadoDoAluno, paraEntregaApi } from './projecoes';
 
 const API = '*/api/v1';
 const LIMITE_BYTES = 25 * 1024 * 1024;
@@ -32,6 +32,12 @@ export const entregasHandlers = [
       return problem(403, 'O prazo encerrou e esta atividade não aceita entregas com atraso.');
     }
 
+    const emGrupo = atividade!.tipo === 'PROJETO_EM_GRUPO';
+    const grupo = emGrupo ? grupoAprovadoDoAluno(atividade!.turmaId, usuario.id) : undefined;
+    if (emGrupo && !grupo) {
+      return problem(422, 'Este é um projeto em grupo. Entre em um grupo aprovado da turma para entregar.');
+    }
+
     const existente = entregaDoAluno(atividade!.id, usuario.id);
     if (existente && avaliacaoDaEntrega(existente.id)) {
       return problem(409, 'Esta entrega já foi avaliada e não aceita novo envio.');
@@ -52,8 +58,9 @@ export const entregasHandlers = [
       enviadaEm: new Date().toISOString(),
       conteudo: `Conteúdo simulado de ${arquivo.name}`,
     };
-    if (existente) Object.assign(existente, dados);
-    const entrega = existente ?? { id: crypto.randomUUID(), atividadeId: atividade!.id, alunoId: usuario.id, ...dados };
+    if (existente) Object.assign(existente, dados, { alunoId: usuario.id });
+    const entrega =
+      existente ?? { id: crypto.randomUUID(), atividadeId: atividade!.id, alunoId: usuario.id, ...(grupo ? { grupoId: grupo.id } : {}), ...dados };
     if (!existente) db.entregas.push(entrega);
 
     return HttpResponse.json(paraEntregaApi(entrega), { status: 201 });
@@ -111,8 +118,13 @@ export const entregasHandlers = [
     }
 
     const atividade = db.atividades.find((a) => a.id === entrega.atividadeId);
+    const grupo = entrega.grupoId ? db.grupos.find((g) => g.id === entrega.grupoId) : undefined;
     if (atividade) {
-      notificarNoMock(entrega.alunoId, 'NOTA_PUBLICADA', `Sua entrega de ${atividade.nome} foi avaliada.`, atividade.turmaId, atividade.id, null);
+      const destinatarios = grupo ? grupo.integrantesIds : [entrega.alunoId];
+      const texto = grupo
+        ? `A entrega de ${atividade.nome} do grupo ${grupo.nome} foi avaliada.`
+        : `Sua entrega de ${atividade.nome} foi avaliada.`;
+      for (const id of destinatarios) notificarNoMock(id, 'NOTA_PUBLICADA', texto, atividade.turmaId, atividade.id, null);
     }
 
     return HttpResponse.json(paraEntregaApi(entrega));

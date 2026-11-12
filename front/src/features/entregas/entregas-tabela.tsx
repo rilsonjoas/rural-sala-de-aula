@@ -1,6 +1,6 @@
 import { NomeDeArquivo } from '@/components/nome-de-arquivo';
 import { formatTamanho } from '@/lib/format';
-import { enviadaEm } from './entrega-formatos';
+import { autorDaEntrega, detalheDoGrupo, enviadaEm } from './entrega-formatos';
 import { AcoesDaEntrega, NotaChip, SituacaoBadge } from './entrega-partes';
 import type { Entrega } from './api';
 
@@ -26,7 +26,10 @@ export function EntregasTabela({ entregas, onAvaliar }: Props) {
         <tbody>
           {entregas.map((e) => (
             <tr key={e.id} className="border-b border-border last:border-0">
-              <td className="px-3 py-3 font-semibold text-primary">{e.alunoNome}</td>
+              <td className="px-3 py-3 font-semibold text-primary">
+                {autorDaEntrega(e)}
+                {detalheDoGrupo(e) ? <span className="block text-xs font-normal text-muted-foreground">{detalheDoGrupo(e)}</span> : null}
+              </td>
               <td className="px-3 py-3">
                 <NomeDeArquivo nome={e.nomeOriginal} />
                 <span className="block text-muted-foreground">{formatTamanho(e.tamanhoBytes)}</span>

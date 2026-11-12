@@ -18,6 +18,9 @@ public interface GrupoIntegranteRepository extends JpaRepository<GrupoIntegrante
 
     long countByGrupoId(UUID grupoId);
 
+    /** O grupo do aluno na turma com o estado informado (usado para achar o grupo APROVADO que entrega em nome dele). */
+    Optional<GrupoIntegrante> findByGrupoTurmaIdAndAlunoIdAndGrupoStatus(UUID turmaId, UUID alunoId, StatusGrupo status);
+
     /** O aluno já está em um grupo da turma que não foi reprovado (pendente ou aprovado)? */
     boolean existsByGrupoTurmaIdAndAlunoIdAndGrupoStatusNot(UUID turmaId, UUID alunoId, StatusGrupo status);
 }

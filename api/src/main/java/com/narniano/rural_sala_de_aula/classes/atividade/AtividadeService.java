@@ -1,7 +1,14 @@
 package com.narniano.rural_sala_de_aula.classes.atividade;
 
 import com.narniano.rural_sala_de_aula.classes.arquivo.Arquivo;
+import com.narniano.rural_sala_de_aula.classes.entrega.Entrega;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregaEmGrupo;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregaEmGrupoRepository;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregasDeGrupo;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividual;
+import com.narniano.rural_sala_de_aula.classes.grupo.GrupoIntegrante;
+import com.narniano.rural_sala_de_aula.classes.grupo.GrupoIntegranteRepository;
+import com.narniano.rural_sala_de_aula.classes.grupo.IntegranteGrupoDTO;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.ResponseEntregaIndividualDTO;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
@@ -29,6 +36,9 @@ public class AtividadeService {
     private final TurmaRepository turmaRepository;
     private final InscricaoRepository inscricaoRepository;
     private final EntregaIndividualRepository entregaRepository;
+    private final EntregasDeGrupo entregasDeGrupo;
+    private final EntregaEmGrupoRepository entregaEmGrupoRepository;
+    private final GrupoIntegranteRepository integranteRepository;
     private final NotificacaoService notificacaoService;
 
     @Transactional
@@ -106,6 +116,12 @@ public class AtividadeService {
         Set<UUID> jaEntregaram = new HashSet<>();
         entregaRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId)
                 .forEach(e -> jaEntregaram.add(e.getAluno().getId()));
+        if (atividade.getTipo() == TipoAtividade.PROJETO_EM_GRUPO) {
+            // quem está num grupo que entregou conta como quem entregou
+            entregaEmGrupoRepository.findByAtividadeIdOrderByEnviadaEmAsc(atividadeId).forEach(e ->
+                    integranteRepository.findByGrupoIdOrderByEntrouEmAsc(e.getGrupo().getId())
+                            .forEach(i -> jaEntregaram.add(i.getAluno().getId())));
+        }
 
         return inscricaoRepository.findByTurmaId(atividade.getTurma().getId()).stream()
                 .map(i -> i.getAluno())
@@ -163,9 +179,9 @@ public class AtividadeService {
                 .filter(a -> !a.getDisponivelEm().isAfter(agora))
                 .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                 .map(a -> {
-                    Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
+                    Optional<Entrega> entrega = entregaDoAluno(a, usuario.getId());
                     String estadoAtual = calcularEstado(a, entrega.orElse(null), agora);
-                    BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
+                    BigDecimal nota = entrega.map(Entrega::getNota).orElse(null);
                     return mapearParaDTO(a, estadoAtual, nota);
                 })
                 .filter(dto -> estado == null || dto.estado().equals(estado))
@@ -191,9 +207,9 @@ public class AtividadeService {
                 .filter(a -> turmaIdFiltro == null || a.getTurma().getId().equals(turmaIdFiltro))
                 .filter(a -> tipoFiltro == null || a.getTipo() == tipoFiltro)
                 .map(a -> {
-                    Optional<EntregaIndividual> entrega = entregaRepository.findByAtividadeIdAndAlunoId(a.getId(), usuario.getId());
+                    Optional<Entrega> entrega = entregaDoAluno(a, usuario.getId());
                     String estadoAtual = calcularEstado(a, entrega.orElse(null), agora);
-                    BigDecimal nota = entrega.map(EntregaIndividual::getNota).orElse(null);
+                    BigDecimal nota = entrega.map(Entrega::getNota).orElse(null);
                     return mapearParaDTO(a, estadoAtual, nota);
                 })
                 .filter(dto -> estado == null || dto.estado().equals(estado))
@@ -249,12 +265,12 @@ public class AtividadeService {
             throw new AppException(HttpStatus.NOT_FOUND, "Atividade ainda não disponível.");
         }
 
-        Optional<EntregaIndividual> entregaOpt = isAluno
-                ? entregaRepository.findByAtividadeIdAndAlunoId(atividadeId, usuario.getId())
+        Optional<Entrega> entregaOpt = isAluno
+                ? entregaDoAluno(atividade, usuario.getId())
                 : Optional.empty();
 
         String estado = isAluno ? calcularEstado(atividade, entregaOpt.orElse(null), agora) : null;
-        BigDecimal nota = entregaOpt.map(EntregaIndividual::getNota).orElse(null);
+        BigDecimal nota = entregaOpt.map(Entrega::getNota).orElse(null);
         ResponseEntregaIndividualDTO minhaEntrega = entregaOpt.map(this::mapearEntregaParaDTO).orElse(null);
 
         return new ResponseAtividadeDetalheDTO(
@@ -274,7 +290,21 @@ public class AtividadeService {
         );
     }
 
-    public String calcularEstado(Atividade atividade, EntregaIndividual entrega, LocalDateTime agora) {
+    /**
+     * A entrega que vale para o aluno nesta atividade: em projeto em grupo, a do grupo aprovado dele
+     * (com a individual como alternativa, para entregas feitas antes dos grupos); nas demais, a individual.
+     */
+    private Optional<Entrega> entregaDoAluno(Atividade atividade, UUID alunoId) {
+        if (atividade.getTipo() == TipoAtividade.PROJETO_EM_GRUPO) {
+            Optional<Entrega> doGrupo = entregasDeGrupo.doAluno(atividade.getId(), atividade.getTurma().getId(), alunoId).map(e -> (Entrega) e);
+            if (doGrupo.isPresent()) {
+                return doGrupo;
+            }
+        }
+        return entregaRepository.findByAtividadeIdAndAlunoId(atividade.getId(), alunoId).map(e -> (Entrega) e);
+    }
+
+    public String calcularEstado(Atividade atividade, Entrega entrega, LocalDateTime agora) {
         if (entrega != null) {
             if (entrega.getNota() != null) {
                 return "CONCLUIDA";
@@ -306,24 +336,43 @@ public class AtividadeService {
         );
     }
 
-    public ResponseEntregaIndividualDTO mapearEntregaParaDTO(EntregaIndividual e) {
+    public ResponseEntregaIndividualDTO mapearEntregaParaDTO(Entrega e) {
         Arquivo arq = e.getArquivos().isEmpty() ? null : e.getArquivos().get(0);
         String nomeOriginal = arq != null ? arq.getNomeOriginal() : "arquivo.pdf";
         Long tamanhoBytes = arq != null ? arq.getTamanhoBytes() : 0L;
         String hashSha256 = arq != null ? arq.getHashSha256() : null;
 
+        Usuario autor;
+        UUID grupoId = null;
+        String grupoNome = null;
+        List<IntegranteGrupoDTO> integrantes = null;
+        if (e instanceof EntregaEmGrupo emGrupo) {
+            autor = emGrupo.getEnviadaPor();
+            grupoId = emGrupo.getGrupo().getId();
+            grupoNome = emGrupo.getGrupo().getNome();
+            integrantes = integranteRepository.findByGrupoIdOrderByEntrouEmAsc(grupoId).stream()
+                    .map(GrupoIntegrante::getAluno)
+                    .map(a -> new IntegranteGrupoDTO(a.getId(), a.getNome()))
+                    .toList();
+        } else {
+            autor = ((EntregaIndividual) e).getAluno();
+        }
+
         return new ResponseEntregaIndividualDTO(
                 e.getId(),
                 e.getAtividade().getId(),
-                e.getAluno().getId(),
-                e.getAluno().getNome(),
+                autor != null ? autor.getId() : null,
+                autor != null ? autor.getNome() : null,
                 nomeOriginal,
                 tamanhoBytes,
                 hashSha256,
                 e.getEnviadaEm(),
                 e.isAtrasada(),
                 e.getNota(),
-                e.getComentarioPrivado()
+                e.getComentarioPrivado(),
+                grupoId,
+                grupoNome,
+                integrantes
         );
     }
 }

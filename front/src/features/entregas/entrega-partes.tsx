@@ -1,3 +1,4 @@
+import { autorDaEntrega } from './entrega-formatos';
 import { AlertTriangle, CheckCircle2, Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -40,14 +41,14 @@ export function AcoesDaEntrega({ entrega, onAvaliar }: { entrega: Entrega; onAva
 
   return (
     <div className="flex gap-2">
-      <Button type="button" variant="secondary" aria-label={`Baixar arquivo de ${entrega.alunoNome}`} onClick={() => void baixar()}>
+      <Button type="button" variant="secondary" aria-label={`Baixar arquivo de ${autorDaEntrega(entrega)}`} onClick={() => void baixar()}>
         <Download aria-hidden="true" className="size-4" />
         Baixar
       </Button>
       <Button
         type="button"
         variant={avaliada ? 'outline' : 'default'}
-        aria-label={`${avaliada ? 'Editar nota' : 'Avaliar entrega'} de ${entrega.alunoNome}`}
+        aria-label={`${avaliada ? 'Editar nota' : 'Avaliar entrega'} de ${autorDaEntrega(entrega)}`}
         onClick={() => onAvaliar(entrega)}
       >
         {avaliada ? 'Editar nota' : 'Avaliar'}

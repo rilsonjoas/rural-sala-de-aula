@@ -610,6 +610,13 @@ export interface components {
             atrasada: boolean;
             nota?: number | null;
             comentarioPrivado?: string | null;
+            /**
+             * Format: uuid
+             * @description Preenchido na entrega em nome do grupo (atividade PROJETO_EM_GRUPO); alunoId e alunoNome são de quem do grupo enviou o arquivo.
+             */
+            grupoId?: string | null;
+            grupoNome?: string | null;
+            integrantes?: components["schemas"]["IntegranteDeGrupo"][] | null;
         };
         LoginRequest: {
             /** Format: email */

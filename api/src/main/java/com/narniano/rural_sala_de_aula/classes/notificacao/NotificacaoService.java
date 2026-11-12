@@ -3,6 +3,8 @@ package com.narniano.rural_sala_de_aula.classes.notificacao;
 import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
 import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeRepository;
 import com.narniano.rural_sala_de_aula.classes.aviso.Aviso;
+import com.narniano.rural_sala_de_aula.classes.atividade.TipoAtividade;
+import com.narniano.rural_sala_de_aula.classes.entrega.entrega_em_grupo.EntregasDeGrupo;
 import com.narniano.rural_sala_de_aula.classes.entrega.entrega_individual.EntregaIndividualRepository;
 import com.narniano.rural_sala_de_aula.classes.inscricao.Inscricao;
 import com.narniano.rural_sala_de_aula.classes.inscricao.InscricaoRepository;
@@ -46,6 +48,7 @@ public class NotificacaoService {
     private final TurmaRepository turmaRepository;
     private final AtividadeRepository atividadeRepository;
     private final EntregaIndividualRepository entregaRepository;
+    private final EntregasDeGrupo entregasDeGrupo;
     private final JdbcTemplate jdbcTemplate;
 
     // "atividade nova" so vale para atividades abertas depois que a V5 foi aplicada
@@ -127,6 +130,8 @@ public class NotificacaoService {
         return atividadeRepository.findDisponiveisParaAluno(aluno.getId()).stream()
                 .filter(a -> !a.getPrazoFinal().isBefore(agora) && !a.getPrazoFinal().isAfter(limite))
                 .filter(a -> !entregaRepository.existsByAtividadeIdAndAlunoId(a.getId(), aluno.getId()))
+                .filter(a -> a.getTipo() != TipoAtividade.PROJETO_EM_GRUPO
+                        || entregasDeGrupo.doAluno(a.getId(), a.getTurma().getId(), aluno.getId()).isEmpty())
                 .map(a -> new ResponseNotificacaoDTO(
                         "prazo-" + a.getId(),
                         "PRAZO_PROXIMO",

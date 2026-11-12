@@ -163,7 +163,7 @@ Antes de executar, subir o ambiente: `docker compose up -d --build` (app em `htt
 
 ## 5. Revisão dos critérios (passo 1 do trabalho)
 
-Antes de escrever mais testes, o grupo percorre a seção 2 e marca, em cada CA: **ok**, **ajustar** ou **faltando**. Pontos que merecem decisão do grupo: o que fazer com CA-13.3 (direcionamento de aviso, não implementado), o limiar da carga do calendário (0 / 1–2 / 3+) e as regras de saída de grupo.
+Antes de escrever mais testes, o grupo percorre a seção 2 e marca, em cada CA: **ok**, **ajustar** ou **faltando**. Pontos que merecem decisão do grupo: o limiar da carga do calendário (0 / 1–2 / 3+) e as regras de saída de grupo.
 
 ## 6. Guia de testes de unidade em JUnit (para o Luiz Felipe)
 

@@ -262,7 +262,7 @@ paths:
     get:
       tags: [Grupos]
       operationId: listAlunosDaTurma
-      summary: PROPOSTA (ainda sem back-end). Alunos inscritos na turma, em ordem alfabética, para montar um grupo. Professor ou aluno da turma.
+      summary: Alunos inscritos na turma, em ordem alfabética, para montar um grupo. Professor ou aluno da turma.
       parameters: [{$ref: '#/components/parameters/TurmaId'}]
       responses:
         '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/IntegranteDeGrupo'}}}}}
@@ -272,7 +272,7 @@ paths:
     get:
       tags: [Grupos]
       operationId: getConfiguracaoDeGrupos
-      summary: PROPOSTA (ainda sem back-end). Regras de formação de grupos da turma (padrão 2 a 5 integrantes, sem limite de grupos). Professor ou aluno da turma.
+      summary: Regras de formação de grupos da turma (padrão 2 a 5 integrantes, sem limite de grupos). Professor ou aluno da turma.
       parameters: [{$ref: '#/components/parameters/TurmaId'}]
       responses:
         '200': {description: OK, content: {application/json: {schema: {$ref: '#/components/schemas/ConfiguracaoDeGrupos'}}}}
@@ -291,7 +291,7 @@ paths:
     get:
       tags: [Grupos]
       operationId: listGrupos
-      summary: PROPOSTA (ainda sem back-end). O professor vê todos os grupos; o aluno vê os aprovados e os próprios (qualquer estado).
+      summary: O professor vê todos os grupos; o aluno vê os aprovados e os próprios (qualquer estado).
       parameters: [{$ref: '#/components/parameters/TurmaId'}]
       responses:
         '200': {description: OK, content: {application/json: {schema: {type: array, items: {$ref: '#/components/schemas/Grupo'}}}}}

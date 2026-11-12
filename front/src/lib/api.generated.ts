@@ -342,7 +342,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** PROPOSTA (ainda sem back-end). Alunos inscritos na turma, em ordem alfabética, para montar um grupo. Professor ou aluno da turma. */
+        /** Alunos inscritos na turma, em ordem alfabética, para montar um grupo. Professor ou aluno da turma. */
         get: operations["listAlunosDaTurma"];
         put?: never;
         post?: never;
@@ -359,7 +359,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** PROPOSTA (ainda sem back-end). Regras de formação de grupos da turma (padrão 2 a 5 integrantes, sem limite de grupos). Professor ou aluno da turma. */
+        /** Regras de formação de grupos da turma (padrão 2 a 5 integrantes, sem limite de grupos). Professor ou aluno da turma. */
         get: operations["getConfiguracaoDeGrupos"];
         /** Somente o PROFESSOR dono da turma (RF12). Mudar as regras não desfaz grupos já aprovados. */
         put: operations["putConfiguracaoDeGrupos"];
@@ -377,7 +377,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** PROPOSTA (ainda sem back-end). O professor vê todos os grupos; o aluno vê os aprovados e os próprios (qualquer estado). */
+        /** O professor vê todos os grupos; o aluno vê os aprovados e os próprios (qualquer estado). */
         get: operations["listGrupos"];
         put?: never;
         /** O aluno solicita um grupo (RF06). Ele entra como integrante; nasce PENDENTE. 422 se faltar ou sobrar integrante em relação à configuração, se algum aluno não for da turma ou já estiver em grupo, ou se o limite de grupos da turma já foi atingido. */

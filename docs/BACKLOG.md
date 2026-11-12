@@ -29,10 +29,10 @@ Tudo o que **não** é P1. Sem datas. O escopo da entrega de 19/10/2026 está no
 
 | RF | O que é | Observações |
 |---|---|---|
-| RF06 | Solicitar e participar de grupos | atividade "Em grupo" já pode ser cadastrada, mas o aluno entrega individualmente até a entrega em nome do grupo entrar. **Front feito (05/11/2026, sem deploy)** sobre API simulada, na aba Grupos da turma. O contrato é **proposta** em `docs/openapi.yaml` (tag Grupos); o back-end ainda não existe |
-| RF07 | Sair do grupo | **Front feito (05/11/2026, sem deploy)** sobre API simulada, na aba Grupos da turma. O contrato é **proposta** em `docs/openapi.yaml` (tag Grupos); o back-end ainda não existe |
+| RF06 | Solicitar e participar de grupos | atividade "Em grupo" já pode ser cadastrada, mas o aluno entrega individualmente até a entrega em nome do grupo entrar. **Feito (12/11/2026, sem deploy)**: back-end (migration V6, `GrupoService`, `GrupoController`) e front ligados; contrato em `docs/openapi.yaml` (tag Grupos) |
+| RF07 | Sair do grupo | **Feito (12/11/2026, sem deploy)**: back-end (migration V6, `GrupoService`, `GrupoController`) e front ligados; contrato em `docs/openapi.yaml` (tag Grupos); a entrega em nome do grupo ainda não existe |
 | RF08 | Calendário com carga semanal (pesada, média, livre) | **Front feito (05/11/2026, sem deploy)**: `/calendario`, 4 semanas por vez, carga só pela quantidade de prazos (0 livre, 1–2 média, 3+ pesada), sem complexidade. Usa o `GET /atividades`; o professor não tem visão agregada |
-| RF12 | Configurar e aprovar grupos | **Front feito (05/11/2026, sem deploy)** sobre API simulada, na aba Grupos da turma. O contrato é **proposta** em `docs/openapi.yaml` (tag Grupos); o back-end ainda não existe |
+| RF12 | Configurar e aprovar grupos | **Feito (12/11/2026, sem deploy)**: back-end (migration V6, `GrupoService`, `GrupoController`) e front ligados; contrato em `docs/openapi.yaml` (tag Grupos); a entrega em nome do grupo ainda não existe |
 
 ## Requisitos não funcionais
 

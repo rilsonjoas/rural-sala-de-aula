@@ -747,6 +747,12 @@ check("PAG", "limite invalido e recusado (422)", s == 422, f"{s} {b}")
 s, b = aluno.call("GET", f"/turmas/{tgid}/avisos?limite=2&deslocamento=9999")
 check("PAG", "alem do fim devolve lista vazia (200)", s == 200 and b == [], f"{s} {b}")
 
+# ---------------- excluir a turma do projeto em grupo (grupo aprovado com entrega avaliada)
+s, b = prof.call("DELETE", f"/turmas/{tgid}")
+check("EXCL", "excluir turma com grupo aprovado, entrega em nome do grupo avaliada e aviso direcionado (204)", s == 204, f"{s} {b}")
+s, b = bia.call("GET", f"/atividades/{pid}")
+check("EXCL", "a atividade do projeto em grupo sumiu junto (404)", s == 404, f"{s} {b}")
+
 # ---------------- resumo
 falhas = [r for r in RESULTS if not r[2]]
 print(f"\nResumo: {len(RESULTS) - len(falhas)}/{len(RESULTS)} verificacoes passaram")

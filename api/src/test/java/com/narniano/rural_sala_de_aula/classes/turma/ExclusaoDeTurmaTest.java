@@ -2,10 +2,13 @@ package com.narniano.rural_sala_de_aula.classes.turma;
 
 import com.narniano.rural_sala_de_aula.classes.arquivo.Arquivo;
 import com.narniano.rural_sala_de_aula.classes.arquivo.ArquivoRepository;
+import com.narniano.rural_sala_de_aula.classes.atividade.Atividade;
+import com.narniano.rural_sala_de_aula.classes.atividade.AtividadeRepository;
 import com.narniano.rural_sala_de_aula.classes.usuario.Usuario;
 import com.narniano.rural_sala_de_aula.common.exception.AppException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -17,6 +20,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -27,6 +31,7 @@ class ExclusaoDeTurmaTest {
 
     @Mock TurmaRepository turmaRepository;
     @Mock ArquivoRepository arquivoRepository;
+    @Mock AtividadeRepository atividadeRepository;
     @InjectMocks TurmaService service;
 
     private Usuario usuario(String nome) {
@@ -56,6 +61,22 @@ class ExclusaoDeTurmaTest {
 
         verify(turmaRepository).delete(t);
         verify(arquivoRepository).findByEntregaAtividadeTurmaId(t.getId());
+    }
+
+    @Test
+    void as_atividades_saem_antes_da_turma_para_que_as_entregas_dos_grupos_nao_travem_a_exclusao_dos_grupos() {
+        Usuario professor = usuario("Helena");
+        Turma t = turma(professor);
+        List<Atividade> atividades = List.of(new Atividade(), new Atividade());
+        when(arquivoRepository.findByEntregaAtividadeTurmaId(t.getId())).thenReturn(List.of());
+        when(atividadeRepository.findByTurmaId(t.getId())).thenReturn(atividades);
+
+        service.excluir(t.getId(), professor);
+
+        InOrder ordem = inOrder(atividadeRepository, turmaRepository);
+        ordem.verify(atividadeRepository).deleteAll(atividades);
+        ordem.verify(atividadeRepository).flush();
+        ordem.verify(turmaRepository).delete(t);
     }
 
     @Test

@@ -127,6 +127,10 @@ public class TurmaService {
             throw new AppException(HttpStatus.FORBIDDEN, "Somente o professor da turma pode excluí-la.");
         }
         List<String> caminhos = arquivoRepository.findByEntregaAtividadeTurmaId(turmaId).stream().map(Arquivo::getCaminho).toList();
+        // As atividades saem primeiro (e com elas as entregas, inclusive as dos grupos): sem isso, ao apagar os grupos
+        // da turma o banco ainda encontraria a entrega do grupo e recusaria a exclusão (entrega_em_grupo -> grupo).
+        atividadeRepository.deleteAll(atividadeRepository.findByTurmaId(turmaId));
+        atividadeRepository.flush();
         turmaRepository.delete(turma);
         ArquivosNoDisco.apagarAposCommit(caminhos);
     }
